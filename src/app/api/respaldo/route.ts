@@ -87,6 +87,8 @@ export const POST = ruta(async (req: NextRequest) => {
       // Respaldos anteriores a los módulos no traen `modulo`: van a ENGORDE (el default).
       modulo: a.modulo ? opcion(a.modulo, MODULOS, "Módulo") : "ENGORDE",
       codigo: texto(a.codigo, "Código", LARGO.corto),
+      // Respaldos anteriores a las pajillas no lo traen: son toros/animales físicos.
+      esPajilla: a.esPajilla === true,
       fechaBaja: fecha(a.fechaBaja, "Fecha de baja"),
       motivoBaja: texto(a.motivoBaja, "Motivo de baja", LARGO.notas),
       padreExterno: texto(a.padreExterno, "Padre externo"),

@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   ruta, leerJson, texto, opcion, datosAnimal, SEXOS, ESTADOS, MODULOS, LARGO, ErrorValidacion,
-  ANIMAL_SIN_FOTO,
+  ANIMAL_SIN_FOTO, mensajeAreteRepetido,
 } from "@/lib/validar";
 
 // GET /api/animales?sexo=MACHO&estado=ACTIVO&modulo=ENGORDE&q=texto
@@ -39,7 +39,8 @@ export const GET = ruta(async (req: NextRequest) => {
 // POST /api/animales  -> crear animal
 export const POST = ruta(async (req: NextRequest) => {
   const body = await leerJson(req);
-  if (!body.arete || !body.sexo) {
+  // Una pajilla solo trae el código (datosAnimal lo usa como arete y fija el sexo).
+  if (body.esPajilla !== true && (!body.arete || !body.sexo)) {
     throw new ErrorValidacion("El arete y el sexo son obligatorios.");
   }
   const datos = datosAnimal(body);
@@ -50,7 +51,7 @@ export const POST = ruta(async (req: NextRequest) => {
     return NextResponse.json(animal, { status: 201 });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-      throw new ErrorValidacion(`Ya existe un animal con el arete ${datos.arete}.`, 409);
+      throw new ErrorValidacion(mensajeAreteRepetido(datos), 409);
     }
     throw e;
   }

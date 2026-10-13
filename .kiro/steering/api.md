@@ -19,7 +19,7 @@ caracteres (notas/descripción ≤ 2000; arete/raza ≤ 60).
 | `POST /api/sesion` | `{ clave, recordar }` (`recordar: false` → sesión hasta cerrar el navegador; si no, 1 año) | 200 + cookie · 401 · 429 |
 | `DELETE /api/sesion` | — | 200 (cierra sesión) |
 | `GET /api/animales` | `?sexo=MACHO\|HEMBRA&estado=ACTIVO\|VENDIDO\|MUERTO&modulo=ENGORDE\|LECHERIA\|REPRODUCTOR&q=texto` | `Animal[]` |
-| `POST /api/animales` | `arete*`, `sexo*`, `modulo` (ENGORDE\|LECHERIA\|REPRODUCTOR; por defecto ENGORDE), `codigo` (≤ 60), `nombre`, `raza`, `fechaNacimiento`, `descripcion`, `estado`, `fechaBaja`, `motivoBaja`, `padreId`\|`padreExterno`, `madreId`\|`madreExterno` | 201 `Animal` |
+| `POST /api/animales` | `arete*`, `sexo*`, `modulo` (ENGORDE\|LECHERIA\|REPRODUCTOR; por defecto ENGORDE), `codigo` (≤ 60), `nombre`, `raza`, `fechaNacimiento`, `descripcion`, `estado`, `fechaBaja`, `motivoBaja`, `padreId`\|`padreExterno`, `madreId`\|`madreExterno`. **Pajilla**: `{ esPajilla: true, codigo*, estado?, fechaBaja?, motivoBaja? }` (sin arete ni sexo: arete = codigo, sexo MACHO, módulo REPRODUCTOR) | 201 `Animal` · 409 si el arete (o el código de la pajilla) ya existe |
 | `GET /api/animales/[id]` | — | `Animal` |
 | `PUT /api/animales/[id]` | igual que POST; si no se manda `modulo`, se conserva el actual | `Animal` |
 | `PATCH /api/animales/[id]` | `{ fotoUrl }`: data URL JPEG/PNG/WebP base64 ≤ 3 MB, o `null`. El servidor la re-codifica (sin EXIF/GPS) y genera `fotoMiniatura` (160 px, ~10 KB) | `{ id, fotoMiniatura }` · 400 si no es una imagen real |

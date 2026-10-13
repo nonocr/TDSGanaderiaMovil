@@ -185,6 +185,14 @@ export function datosAnimal(body: Record<string, unknown>) {
   };
 }
 
+// Mensaje cuando el arete ya existe (P2002). En una pajilla el arete es su código, que también
+// puede chocar con el arete de un animal físico.
+export function mensajeAreteRepetido(datos: { arete: string; esPajilla: boolean }): string {
+  return datos.esPajilla
+    ? `El código ${datos.arete} ya está en uso (otra pajilla o el arete de un animal).`
+    : `Ya existe un animal con el arete ${datos.arete}.`;
+}
+
 // Columnas de Animal que devuelve la API: todo menos la foto completa (`fotoUrl`, puede pesar
 // cientos de KB); la miniatura sí va.
 export const ANIMAL_SIN_FOTO = {

@@ -1,6 +1,7 @@
 package com.tierradesuenos.ganaderia;
 
 import android.app.DownloadManager;
+import android.content.ClipData;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -16,18 +17,23 @@ import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.URLUtil;
+import android.webkit.ValueCallback;
 import android.webkit.WebView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.FileProvider;
 import androidx.webkit.WebViewCompat;
 import androidx.webkit.WebViewFeature;
 
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebChromeClient;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -37,6 +43,7 @@ import java.util.Collections;
  *  1. Descargar un archivo generado en la página ("Descargar respaldo": enlace blob:).
  *  2. Descargar un archivo del servidor ("Exportar CSV": /api/exportar).
  *  3. Imprimir (window.print() en la ficha del animal).
+ * Además, la foto del animal ofrece cámara O galería (Capacitor solo ofrece una de las dos).
  * Aquí se resuelven del lado nativo, sin tocar el código de la web.
  */
 public class MainActivity extends BridgeActivity {
@@ -75,6 +82,7 @@ public class MainActivity extends BridgeActivity {
         WebView webView = getBridge().getWebView();
 
         webView.addJavascriptInterface(new PuenteNativo(webView), "TDSNativo");
+        webView.setWebChromeClient(new SelectorConCamara());
 
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
             WebViewCompat.addDocumentStartJavaScript(webView, SCRIPT_PUENTE, Collections.singleton(ORIGEN));
@@ -109,6 +117,66 @@ public class MainActivity extends BridgeActivity {
                 Toast.makeText(this, "No se pudo descargar el archivo.", Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    // --- Foto del animal: cámara O galería ---------------------------------------------------
+    // Capacitor, para <input type="file" accept="image/*"> sin `capture`, abre solo la galería (y
+    // con `capture` solo la cámara). En el navegador del celular se ofrecen las dos; aquí igual.
+
+    private ValueCallback<Uri[]> callbackFoto;
+    private Uri fotoCamara;
+
+    private final ActivityResultLauncher<Intent> elegirFoto = registerForActivityResult(
+        new ActivityResultContracts.StartActivityForResult(),
+        (resultado) -> {
+            if (callbackFoto == null) return;
+            Uri[] elegida = null;
+            if (resultado.getResultCode() == RESULT_OK) {
+                Intent datos = resultado.getData();
+                if (datos != null && datos.getData() != null) {
+                    elegida = new Uri[] { datos.getData() }; // galería
+                } else if (fotoCamara != null) {
+                    elegida = new Uri[] { fotoCamara }; // cámara (escribe en EXTRA_OUTPUT)
+                }
+            }
+            callbackFoto.onReceiveValue(elegida);
+            callbackFoto = null;
+        }
+    );
+
+    private class SelectorConCamara extends BridgeWebChromeClient {
+        SelectorConCamara() {
+            super(MainActivity.this.getBridge());
+        }
+
+        @Override
+        public boolean onShowFileChooser(WebView w, ValueCallback<Uri[]> callback, FileChooserParams params) {
+            boolean esImagen = Arrays.asList(params.getAcceptTypes()).contains("image/*");
+            if (!esImagen || params.isCaptureEnabled()) {
+                return super.onShowFileChooser(w, callback, params); // p. ej. el respaldo (.json)
+            }
+            if (callbackFoto != null) callbackFoto.onReceiveValue(null);
+            callbackFoto = callback;
+
+            Intent galeria = new Intent(Intent.ACTION_GET_CONTENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("image/*");
+            Intent selector = Intent.createChooser(galeria, "Foto del animal");
+            try {
+                File archivo = new File(getCacheDir(), "foto-" + System.currentTimeMillis() + ".jpg");
+                fotoCamara = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fileprovider", archivo);
+                Intent camara = new Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                    .putExtra(MediaStore.EXTRA_OUTPUT, fotoCamara)
+                    .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                camara.setClipData(ClipData.newRawUri("", fotoCamara));
+                selector.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] { camara });
+            } catch (Exception e) {
+                Log.w(TAG, "Sin opción de cámara en el selector", e);
+                fotoCamara = null;
+            }
+            elegirFoto.launch(selector);
+            return true;
+        }
     }
 
     /** Métodos que la página puede llamar como window.TDSNativo.*. */

@@ -4,6 +4,7 @@ import { llamarApi } from "@/lib/api-cliente";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
+// IconoImprimir se mantiene importado para el botón de imprimir oculto (ver abajo).
 import { IconoEditar, IconoImprimir, IconoBasura } from "@/components/iconos";
 
 const BOTON =
@@ -46,16 +47,18 @@ export function AccionesAnimal({
 
   return (
     <div className="no-print flex w-full flex-col gap-2 sm:w-auto sm:items-end">
-      <div className="grid grid-cols-3 gap-2 sm:flex">
+      <div className="grid grid-cols-2 gap-2 sm:flex">
         <Link href={`/animales/${animalId}/editar`} className={`${BOTON} ${NEUTRO}`}>
           <IconoEditar className="h-4 w-4 shrink-0" />
           Editar
         </Link>
-        {/* Abre el diálogo de impresión: desde ahí se imprime o se guarda como PDF. */}
-        <button type="button" onClick={() => window.print()} className={`${BOTON} ${NEUTRO}`}>
+        {/* Botón de imprimir oculto a petición del dueño (2026-10-13). No se borra por si
+            se quiere restaurar: basta con descomentar este bloque y volver la rejilla de arriba
+            a `grid-cols-3`. Abre el diálogo de impresión (imprimir o guardar como PDF). */}
+        {/* <button type="button" onClick={() => window.print()} className={`${BOTON} ${NEUTRO}`}>
           <IconoImprimir className="h-4 w-4 shrink-0" />
           Imprimir
-        </button>
+        </button> */}
         <button
           type="button"
           onClick={eliminar}

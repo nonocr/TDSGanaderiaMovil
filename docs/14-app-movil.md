@@ -71,6 +71,6 @@ Funciona igual en la app Android, en el iPhone instalado y en el navegador.
 
 ## Limitaciones conocidas
 
-- **Foto del animal**: en la app Android el botón abre la galería/archivos; la cámara se usa
-  desde la app de cámara y luego se elige la foto. Para un botón "Tomar foto" directo, el
-  frontend tendría que agregar `capture` al campo de archivo (pedido a Kiro, opcional).
+- **Foto del animal**: el campo NO usa `capture` a propósito (decisión del dueño): así el
+  celular deja elegir entre tomar la foto o sacarla de la galería. En la app Android eso lo hace
+  `MainActivity` (`SelectorConCamara`), porque Capacitor por sí solo ofrece solo una de las dos.
