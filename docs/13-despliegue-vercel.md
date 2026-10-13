@@ -1,7 +1,9 @@
 # 13 — Despliegue en Vercel
 
-La app se publica en Vercel desde el repositorio de GitHub (`nonocr/TDSGanaderia`).
-Cada `git push` a `master` publica una versión nueva sola.
+La app se publica en Vercel desde el repositorio de GitHub **`nonocr/TDSGanaderiaMovil`**
+(desde el 2026-10-13; antes era `nonocr/TDSGanaderia`, que queda solo como histórico).
+Cada `git push` a `master` publica una versión nueva sola. Un solo repo y un solo despliegue
+sirven a la web y a la app Android (que carga esta misma URL, ver `14-app-movil.md`).
 
 ## Preparado en el código
 
