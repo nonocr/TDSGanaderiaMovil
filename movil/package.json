@@ -7,7 +7,7 @@
     "iconos": "capacitor-assets generate --android --iconBackgroundColor #ffffff --iconBackgroundColorDark #1c1917 --splashBackgroundColor #ffffff --splashBackgroundColorDark #1c1917",
     "sync": "cap sync android",
     "abrir": "cap open android",
-    "apk": "cap sync android && cd android && gradlew.bat assembleDebug"
+    "apk": "node scripts/apk.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

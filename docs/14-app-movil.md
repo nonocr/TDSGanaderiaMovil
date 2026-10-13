@@ -32,12 +32,17 @@ Cada `git push` actualiza también la app instalada; no hay que reinstalar.
 Requisitos en la PC: **Android Studio** (trae Java y el Android SDK).
 
 ```powershell
-cd movil
-npm install
+cd movil          # ¡desde la carpeta movil, no desde la raíz!
+npm install       # solo la primera vez
 npm run apk
 ```
 
-El archivo queda en `movil/android/app/build/outputs/apk/debug/app-debug.apk`.
+El archivo queda en **`movil/TDS-Ganaderia.apk`** (no se sube al repo). La primera vez tarda
+~5 min (Gradle descarga dependencias); después ~1 min.
+
+- `scripts/apk.mjs` usa solo el Java y el SDK de Android Studio si no hay `JAVA_HOME`/`ANDROID_HOME`.
+- Gradle está en **9.1** (`android/gradle/wrapper/gradle-wrapper.properties`): el Java que trae
+  Android Studio es el 25 y Gradle 8.x no lo soporta ("Unsupported class file major version 69").
 También se puede abrir en Android Studio con `npm run abrir` (Build → Build APK).
 
 > El APK "debug" basta para instalarlo a mano en los teléfonos de la familia. Para publicarlo
