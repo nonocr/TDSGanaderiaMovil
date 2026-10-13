@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">TDS Ganadería</string>
+    <string name="title_activity_main">TDS Ganadería</string>
+    <string name="package_name">com.tierradesuenos.ganaderia</string>
+    <string name="custom_url_scheme">com.tierradesuenos.ganaderia</string>
+</resources>

@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+/* En oscuro, los controles nativos (desplegables de <select>, calendario de fechas,
+   barras de scroll) también deben ir en oscuro. */
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-stone-100 text-stone-800 antialiased dark:bg-stone-950 dark:text-stone-200;
+}
+
+/* Transiciones suaves y discretas en elementos interactivos */
+a,
+button,
+select,
+input,
+textarea {
+  @apply transition-colors duration-150;
+}
+
+/* Mobile-first: en pantallas táctiles los inputs usan 16px para que iOS NO haga
+   zoom automático al enfocarlos. En escritorio se mantienen compactos (14px). */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Mejor comportamiento al tocar: sin resaltado azul de tap y con selección cómoda. */
+button,
+a,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* --- Campos de fecha: más claros y con el icono de calendario de la marca --- */
+input[type="date"] {
+  position: relative;
+  cursor: pointer;
+  /* Los navegadores móviles dan a la fecha un ancho mínimo propio que la hace desbordar
+     su columna y tapar los campos vecinos. Forzamos a que obedezca al contenedor. */
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  /* iOS Safari: sin la apariencia nativa, respeta el ancho y la altura como los demás campos. */
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 2.6rem;
+  line-height: 1.25;
+}
+
+/* iOS: el valor de la fecha alineado a la izquierda como el texto de los otros campos. */
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+}
+
+/* El icono del calendario (Chrome/Edge/Safari): color de marca y área cómoda de toque. */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0.25rem;
+  margin-left: auto;
+  border-radius: 0.375rem;
+  /* Teñir el icono con el verde de la marca (marca-600 #4b7a3f). */
+  filter: invert(38%) sepia(18%) saturate(1200%) hue-rotate(55deg) brightness(92%);
+  transition: background-color 0.15s ease;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(94, 145, 66, 0.14); /* marca-500 translúcido */
+}
+
+/* En modo oscuro, aclarar el icono para que no quede negro/invisible. */
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(62%) sepia(30%) saturate(500%) hue-rotate(55deg) brightness(95%);
+}
+
+/* --- Impresión: reporte limpio y con color de marca --- */
+@page {
+  /* Márgenes del papel. Reduce el espacio donde el navegador pone la URL/fecha. */
+  margin: 12mm 14mm;
+}
+
+@media print {
+  /* Forzar que se impriman fondos y colores (si no, el navegador los omite). */
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Elementos marcados como no imprimibles (navegación, botones de acción). */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Quitar el margen que deja el sidebar en escritorio. */
+  .print-main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Fondo blanco de papel; el texto conserva sus colores. */
+  body {
+    background: #fff !important;
+  }
+
+  /* Evitar que las tarjetas se corten entre páginas cuando sea posible. */
+  .print-evitar-corte {
+    break-inside: avoid;
+  }
+
+  /* Las tarjetas en papel: borde suave de marca y un pelín de relieve. */
+  .print-main .shadow-card,
+  .print-main [class*="rounded-xl"] {
+    box-shadow: none !important;
+  }
+
+  /* --- Imprimir SIEMPRE en claro, aunque el modo oscuro esté activo. ---
+     Se hace SOLO en impresión (no toca la pantalla). Primero neutralizamos
+     todo a claro, y luego restauramos los colores de marca que sí deben verse. */
+  html,
+  html.dark {
+    color-scheme: light !important;
+  }
+
+  /* En modo oscuro: aplanar fondos a blanco y texto a oscuro para el papel. */
+  html.dark .print-main,
+  html.dark .print-main * {
+    background-color: transparent !important;
+    background-image: none !important;
+    border-color: #e7e5e4 !important; /* stone-200 */
+    color: #292524 !important; /* stone-800 */
+  }
+
+  /* Restaurar acentos de marca que SÍ deben imprimirse en color. */
+  html.dark .print-main .bg-marca-500,
+  html.dark .print-main .print\:bg-marca-500 {
+    background-color: #5e9142 !important; /* marca-500 */
+  }
+  html.dark .print-main .bg-marca-600,
+  html.dark .print-main .print\:bg-marca-600 {
+    background-color: #4b7a3f !important; /* marca-600 */
+    color: #ffffff !important;
+  }
+  html.dark .print-main .bg-marca-600 *,
+  html.dark .print-main .print\:bg-marca-600 * {
+    color: #ffffff !important; /* texto de la cabecera verde en blanco */
+  }
+  html.dark .print-main .print\:text-marca-700 {
+    color: #3b6132 !important; /* marca-700: títulos de sección */
+  }
+}

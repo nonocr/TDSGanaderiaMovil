@@ -1,0 +1,501 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { MODULO_LABEL } from "@/lib/tipos";
+import { hoyLocalISO } from "@/lib/fechas";
+
+type Opcion = { id: string; arete: string; nombre: string | null };
+
+export type ValoresAnimal = {
+  id?: string;
+  arete?: string;
+  nombre?: string | null;
+  sexo?: string;
+  raza?: string | null;
+  fechaNacimiento?: string | null; // ISO o yyyy-mm-dd
+  descripcion?: string | null;
+  estado?: string;
+  modulo?: string;
+  codigo?: string | null;
+  esPajilla?: boolean;
+  fechaBaja?: string | null; // ISO o yyyy-mm-dd
+  motivoBaja?: string | null;
+  padreId?: string | null;
+  madreId?: string | null;
+  padreExterno?: string | null;
+  madreExterno?: string | null;
+};
+
+function soloFecha(iso: string | null | undefined): string {
+  if (!iso) return "";
+  return iso.slice(0, 10);
+}
+
+export function FormularioAnimal({
+  machos,
+  hembras,
+  valores,
+  moduloInicial,
+}: {
+  machos: Opcion[];
+  hembras: Opcion[];
+  valores?: ValoresAnimal;
+  // Módulo preseleccionado al dar de alta (p. ej. desde la página de Lechería).
+  moduloInicial?: string;
+}) {
+  const router = useRouter();
+  const esEdicion = Boolean(valores?.id);
+
+  const [error, setError] = useState<string | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const [padreModo, setPadreModo] = useState<"registrado" | "externo">(
+    valores?.padreExterno ? "externo" : "registrado"
+  );
+  const [madreModo, setMadreModo] = useState<"registrado" | "externo">(
+    valores?.madreExterno ? "externo" : "registrado"
+  );
+  const [estado, setEstado] = useState<string>(valores?.estado ?? "ACTIVO");
+  const esBaja = estado === "VENDIDO" || estado === "MUERTO";
+
+  // El módulo determina qué campos se muestran. Controlado para poder reaccionar al cambio.
+  const [modulo, setModulo] = useState<string>(valores?.modulo ?? moduloInicial ?? "ENGORDE");
+  const esEngorde = modulo === "ENGORDE";
+  const esLecheria = modulo === "LECHERIA";
+  const esReproductor = modulo === "REPRODUCTOR";
+
+  // Dentro de Reproductores: un TORO (animal físico, formulario completo) o una PAJILLA
+  // (semen: solo se captura el código, sin arete ni más datos).
+  const [tipoReproductor, setTipoReproductor] = useState<"TORO" | "PAJILLA">(
+    valores?.esPajilla ? "PAJILLA" : "TORO"
+  );
+  const esPajilla = esReproductor && tipoReproductor === "PAJILLA";
+
+  // Sexo fijo por módulo: lechería = hembra, reproductor = macho. Engorde pregunta.
+  const sexoFijo = esLecheria ? "HEMBRA" : esReproductor ? "MACHO" : null;
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setGuardando(true);
+
+    const fd = new FormData(e.currentTarget);
+
+    let payload: Record<string, unknown>;
+    if (esPajilla) {
+      // Pajilla: solo el código. El backend lo usa como arete y rellena el resto (MACHO,
+      // módulo REPRODUCTOR). Si está dada de baja, se mandan los datos de baja.
+      payload = {
+        modulo: "REPRODUCTOR",
+        esPajilla: true,
+        codigo: fd.get("codigo"),
+        estado: fd.get("estado") ?? "ACTIVO",
+        fechaBaja: fd.get("fechaBaja") || null,
+        motivoBaja: fd.get("motivoBaja") || null,
+      };
+    } else {
+      // En reproductores el campo fecha no se muestra: se conserva la que ya tuviera.
+      const fechaNacimiento = esReproductor
+        ? soloFecha(valores?.fechaNacimiento) || null
+        : (fd.get("fechaNacimiento") as string) || null;
+      payload = {
+        arete: fd.get("arete"),
+        nombre: fd.get("nombre"),
+        // Sexo: el fijo por módulo, o el elegido en engorde.
+        sexo: sexoFijo ?? fd.get("sexo"),
+        raza: fd.get("raza"),
+        fechaNacimiento,
+        descripcion: fd.get("descripcion"),
+        estado: fd.get("estado") ?? "ACTIVO",
+        modulo,
+        // Código solo en reproductores.
+        codigo: esReproductor ? fd.get("codigo") || null : null,
+        esPajilla: false,
+        fechaBaja: fd.get("fechaBaja") || null,
+        motivoBaja: fd.get("motivoBaja") || null,
+      };
+
+      if (padreModo === "registrado") payload.padreId = fd.get("padreId") || null;
+      else payload.padreExterno = fd.get("padreExterno") || null;
+
+      if (madreModo === "registrado") payload.madreId = fd.get("madreId") || null;
+      else payload.madreExterno = fd.get("madreExterno") || null;
+    }
+
+    const url = esEdicion ? `/api/animales/${valores!.id}` : "/api/animales";
+    const method = esEdicion ? "PUT" : "POST";
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? "No se pudo guardar el animal.");
+        setGuardando(false);
+        return;
+      }
+      const animal = await res.json();
+
+      // Engorde en alta: si se indicó peso al nacer, se guarda como el primer registro de
+      // peso, con la fecha de nacimiento (o la de hoy si no hay fecha de nacimiento).
+      // Si falla, el animal ya existe: se avisa y se sigue a su ficha (allí se puede añadir).
+      const pesoNacer = (fd.get("pesoNacer") as string) || "";
+      if (!esEdicion && esEngorde && pesoNacer.trim()) {
+        // En engorde la fecha de nacimiento sale del formulario; si no hay, se usa hoy.
+        const fechaNac = (fd.get("fechaNacimiento") as string) || hoyLocalISO();
+        const resPeso = await fetch("/api/pesos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            animalId: animal.id,
+            fecha: fechaNac,
+            pesoKg: pesoNacer,
+            notas: "Peso al nacer",
+          }),
+        }).catch(() => null);
+        if (!resPeso?.ok) {
+          const data = await resPeso?.json().catch(() => ({}));
+          alert(
+            `El animal se guardó, pero no el peso al nacer${data?.error ? `: ${data.error}` : ""}. ` +
+              "Puedes añadirlo desde su ficha en Registrar → Peso."
+          );
+        }
+      }
+
+      router.push(`/animales/${animal.id}`);
+      router.refresh();
+    } catch {
+      // fetch solo lanza si no hay conexión: sin esto el botón quedaba en "Guardando…".
+      setError("Sin conexión. Revisa la señal e intenta de nuevo.");
+      setGuardando(false);
+    }
+  }
+
+  const campo =
+    "mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm outline-none focus:border-marca-500 focus:ring-2 focus:ring-marca-200 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500";
+  const etiqueta = "block text-sm font-medium text-stone-600 dark:text-stone-400";
+
+  // Evitar que el animal sea su propio progenitor: lo quitamos de las listas.
+  const machosFiltrados = machos.filter((m) => m.id !== valores?.id);
+  const hembrasFiltradas = hembras.filter((h) => h.id !== valores?.id);
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      {error && (
+        <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+          {error}
+        </div>
+      )}
+
+      {/* Módulo: define el resto del formulario. En edición no se cambia (regla de negocio). */}
+      <div>
+        <label htmlFor="fa-modulo" className={etiqueta}>Módulo *</label>
+        {esEdicion ? (
+          <>
+            <input type="hidden" name="modulo" value={modulo} />
+            <p className="mt-1 text-sm text-stone-700 dark:text-stone-200">
+              {MODULO_LABEL[modulo] ?? modulo}{" "}
+              <span className="text-xs text-stone-400">(no se puede cambiar)</span>
+            </p>
+          </>
+        ) : (
+          <>
+            <select
+              id="fa-modulo"
+              name="modulo"
+              required
+              className={campo}
+              value={modulo}
+              onChange={(e) => {
+                setModulo(e.target.value);
+                // En el alta de lechería no se pregunta el estado: siempre Activo.
+                if (e.target.value === "LECHERIA") setEstado("ACTIVO");
+              }}
+            >
+              <option value="ENGORDE">{MODULO_LABEL.ENGORDE} (crías para carne)</option>
+              <option value="LECHERIA">{MODULO_LABEL.LECHERIA} (vacas de leche)</option>
+              <option value="REPRODUCTOR">{MODULO_LABEL.REPRODUCTOR} (toros / pajillas)</option>
+            </select>
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+              A qué grupo pertenece. No se cambia después.
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* Reproductores: ¿toro físico o pajilla (semen)? Solo al dar de alta. */}
+      {esReproductor && !esEdicion && (
+        <div>
+          <span className={etiqueta}>Tipo *</span>
+          <div className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+            <label className="flex items-center gap-2 py-1">
+              <input
+                type="radio"
+                name="tipoReproductor"
+                className="h-4 w-4 accent-marca-600"
+                checked={tipoReproductor === "TORO"}
+                onChange={() => setTipoReproductor("TORO")}
+              />
+              Toro
+            </label>
+            <label className="flex items-center gap-2 py-1">
+              <input
+                type="radio"
+                name="tipoReproductor"
+                className="h-4 w-4 accent-marca-600"
+                checked={tipoReproductor === "PAJILLA"}
+                onChange={() => setTipoReproductor("PAJILLA")}
+              />
+              Pajilla
+            </label>
+          </div>
+          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+            Un toro es un animal físico. Una pajilla es semen comprado: solo se registra su código.
+          </p>
+        </div>
+      )}
+
+      {/* PAJILLA: solo el código. */}
+      {esPajilla ? (
+        <div>
+          <label htmlFor="fa-codigo-pajilla" className={etiqueta}>Código de la pajilla *</label>
+          <input
+            id="fa-codigo-pajilla"
+            name="codigo"
+            maxLength={60}
+            required
+            className={campo}
+            placeholder="Ej. ANGUS-07"
+            defaultValue={valores?.codigo ?? ""}
+          />
+          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+            Luego podrás añadir más datos del código.
+          </p>
+        </div>
+      ) : (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor="fa-arete" className={etiqueta}>Número de arete *</label>
+          <input id="fa-arete" name="arete" maxLength={60} required className={campo} placeholder="Ej. 025" defaultValue={valores?.arete ?? ""} />
+          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+            El número de la chapa/caravana. No se puede repetir entre animales.
+          </p>
+        </div>
+        <div>
+          <label htmlFor="fa-nombre" className={etiqueta}>Nombre (opcional)</label>
+          <input id="fa-nombre" name="nombre" maxLength={120} className={campo} placeholder="Ej. Estrella" defaultValue={valores?.nombre ?? ""} />
+        </div>
+
+        {/* Sexo: solo se pregunta en engorde. En lechería/reproductor es fijo (campo oculto). */}
+        {esEngorde ? (
+          <div>
+            <label htmlFor="fa-sexo" className={etiqueta}>Sexo *</label>
+            <select id="fa-sexo" name="sexo" required className={campo} defaultValue={valores?.sexo ?? "HEMBRA"}>
+              <option value="HEMBRA">Hembra</option>
+              <option value="MACHO">Macho</option>
+            </select>
+          </div>
+        ) : (
+          <input type="hidden" name="sexo" value={sexoFijo ?? "HEMBRA"} />
+        )}
+
+        <div>
+          <label htmlFor="fa-raza" className={etiqueta}>Raza</label>
+          <input id="fa-raza" name="raza" maxLength={60} className={campo} defaultValue={valores?.raza ?? ""} />
+        </div>
+
+        {/* Fecha de nacimiento: en reproductor no hace falta. */}
+        {!esReproductor && (
+          <div>
+            <label htmlFor="fa-nacimiento" className={etiqueta}>Fecha de nacimiento {esLecheria ? "(opcional)" : ""}</label>
+            <input id="fa-nacimiento" type="date" name="fechaNacimiento" className={campo} defaultValue={soloFecha(valores?.fechaNacimiento)} />
+          </div>
+        )}
+
+        {/* Peso al nacer: solo engorde y solo al dar de alta. */}
+        {esEngorde && !esEdicion && (
+          <div>
+            <label htmlFor="fa-peso" className={etiqueta}>Peso al nacer (kg)</label>
+            <input id="fa-peso" type="number" step="0.1" min={0} max={200} name="pesoNacer" className={campo} placeholder="Ej. 32" />
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+              Se guarda como su primer registro de peso.
+            </p>
+          </div>
+        )}
+
+        {/* Código: solo reproductores. */}
+        {esReproductor && (
+          <div>
+            <label htmlFor="fa-codigo" className={etiqueta}>Código</label>
+            <input id="fa-codigo" name="codigo" maxLength={60} className={campo} placeholder="Ej. TORO-123" defaultValue={valores?.codigo ?? ""} />
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+              Código del toro o de la pajilla.
+            </p>
+          </div>
+        )}
+
+        {/* Estado: en el alta mínima de lechería no se pregunta (siempre Activo). En edición sí. */}
+        {(!esLecheria || esEdicion) && (
+          <div>
+            <label htmlFor="fa-estado" className={etiqueta}>Estado</label>
+            <select
+              id="fa-estado"
+              name="estado"
+              className={campo}
+              value={estado}
+              onChange={(e) => setEstado(e.target.value)}
+            >
+              <option value="ACTIVO">Activo</option>
+              <option value="VENDIDO">Vendido</option>
+              <option value="MUERTO">Muerto</option>
+            </select>
+          </div>
+        )}
+      </div>
+      )}
+
+      {/* Estado de la pajilla (para poder darla de baja). Solo en edición de una pajilla. */}
+      {esPajilla && esEdicion && (
+        <div>
+          <label htmlFor="fa-estado-pajilla" className={etiqueta}>Estado</label>
+          <select
+            id="fa-estado-pajilla"
+            name="estado"
+            className={campo}
+            value={estado}
+            onChange={(e) => setEstado(e.target.value)}
+          >
+            <option value="ACTIVO">Activo</option>
+            <option value="VENDIDO">Vendido</option>
+            <option value="MUERTO">Muerto</option>
+          </select>
+        </div>
+      )}
+
+      {/* Datos de baja: solo cuando el animal está Vendido o Muerto. */}
+      {esBaja && (
+        <fieldset className="rounded border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900/60 dark:bg-amber-950/20">
+          <legend className="px-1 text-sm font-semibold text-amber-700 dark:text-amber-400">
+            {estado === "VENDIDO" ? "Datos de la venta" : "Datos de la baja"}
+          </legend>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="fa-fecha-baja" className={etiqueta}>
+                {estado === "VENDIDO" ? "Fecha de venta" : "Fecha de muerte"}
+              </label>
+              <input
+                id="fa-fecha-baja"
+                type="date"
+                name="fechaBaja"
+                className={campo}
+                defaultValue={soloFecha(valores?.fechaBaja)}
+              />
+            </div>
+            <div>
+              <label htmlFor="fa-motivo" className={etiqueta}>Motivo</label>
+              <input
+                id="fa-motivo"
+                name="motivoBaja"
+                maxLength={2000}
+                className={campo}
+                placeholder={
+                  estado === "VENDIDO"
+                    ? "Ej. Vendido a Finca El Roble"
+                    : "Ej. Enfermedad"
+                }
+                defaultValue={valores?.motivoBaja ?? ""}
+              />
+            </div>
+          </div>
+        </fieldset>
+      )}
+
+      {/* Descripción: en el alta mínima de lechería no se pide; en pajilla tampoco. */}
+      {!esPajilla && (!esLecheria || esEdicion) && (
+        <div>
+          <label htmlFor="fa-descripcion" className={etiqueta}>Descripción / notas</label>
+          <textarea id="fa-descripcion" name="descripcion" maxLength={2000} rows={2} className={campo} defaultValue={valores?.descripcion ?? ""} />
+        </div>
+      )}
+
+      {/* Genealogía: una pajilla no tiene padres registrados. */}
+      {!esPajilla && (
+      <>
+      {/* Genealogia: padre */}
+      <fieldset className="rounded border border-stone-200 p-3 dark:border-stone-700">
+        <legend className="px-1 text-sm font-semibold text-stone-600 dark:text-stone-300">Padre (opcional)</legend>
+        <p className="mb-2 text-xs text-stone-500 dark:text-stone-400">
+          Elige &quot;Registrado&quot; si el padre ya está en la app. Elige &quot;De otra finca&quot; si es un
+          animal que no tienes registrado (solo escribes su nombre). Puedes dejarlo en blanco si no lo sabes.
+        </p>
+        <div className="mb-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+          <label className="flex items-center gap-2 py-1">
+            <input type="radio" name="padreModo" className="h-4 w-4 accent-marca-600" checked={padreModo === "registrado"} onChange={() => setPadreModo("registrado")} />
+            Registrado
+          </label>
+          <label className="flex items-center gap-2 py-1">
+            <input type="radio" name="padreModo" className="h-4 w-4 accent-marca-600" checked={padreModo === "externo"} onChange={() => setPadreModo("externo")} />
+            De otra finca
+          </label>
+        </div>
+        {padreModo === "registrado" ? (
+          <select name="padreId" aria-label="Padre registrado" className={campo} defaultValue={valores?.padreId ?? ""}>
+            <option value="">— Sin especificar —</option>
+            {machosFiltrados.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.nombre ? `${m.nombre} (#${m.arete})` : `#${m.arete}`}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input name="padreExterno" aria-label="Nombre del padre de otra finca" maxLength={120} className={campo} placeholder="Ej. Toro de la finca vecina" defaultValue={valores?.padreExterno ?? ""} />
+        )}
+      </fieldset>
+
+      {/* Genealogia: madre */}
+      <fieldset className="rounded border border-stone-200 p-3 dark:border-stone-700">
+        <legend className="px-1 text-sm font-semibold text-stone-600 dark:text-stone-300">Madre (opcional)</legend>
+        <p className="mb-2 text-xs text-stone-500 dark:text-stone-400">
+          Elige &quot;Registrada&quot; si la madre ya está en la app. Elige &quot;De otra finca&quot; si no la tienes
+          registrada (solo escribes su nombre). Puedes dejarlo en blanco si no lo sabes.
+        </p>
+        <div className="mb-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+          <label className="flex items-center gap-2 py-1">
+            <input type="radio" name="madreModo" className="h-4 w-4 accent-marca-600" checked={madreModo === "registrado"} onChange={() => setMadreModo("registrado")} />
+            Registrada
+          </label>
+          <label className="flex items-center gap-2 py-1">
+            <input type="radio" name="madreModo" className="h-4 w-4 accent-marca-600" checked={madreModo === "externo"} onChange={() => setMadreModo("externo")} />
+            De otra finca
+          </label>
+        </div>
+        {madreModo === "registrado" ? (
+          <select name="madreId" aria-label="Madre registrada" className={campo} defaultValue={valores?.madreId ?? ""}>
+            <option value="">— Sin especificar —</option>
+            {hembrasFiltradas.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.nombre ? `${h.nombre} (#${h.arete})` : `#${h.arete}`}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input name="madreExterno" aria-label="Nombre de la madre de otra finca" maxLength={120} className={campo} placeholder="Ej. Vaca no registrada" defaultValue={valores?.madreExterno ?? ""} />
+        )}
+      </fieldset>
+      </>
+      )}
+
+      <button
+        type="submit"
+        disabled={guardando}
+        className="w-full rounded-lg bg-marca-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-marca-700 disabled:opacity-50 sm:w-auto"
+      >
+        {guardando ? "Guardando…" : esEdicion ? "Guardar cambios" : "Guardar animal"}
+      </button>
+    </form>
+  );
+}

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Sin conexión · TDS Ganadería</title>
+  <style>
+    :root { --fondo: #fafaf9; --texto: #1c1917; --suave: #57534e; --marca: #4b7a3f; }
+    @media (prefers-color-scheme: dark) {
+      :root { --fondo: #1c1917; --texto: #f5f5f4; --suave: #a8a29e; --marca: #7fb069; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 24px; background: var(--fondo); color: var(--texto);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; text-align: center;
+    }
+    main { max-width: 340px; }
+    h1 { font-size: 1.25rem; margin: 0 0 8px; }
+    p { color: var(--suave); line-height: 1.5; margin: 0 0 24px; }
+    button {
+      min-height: 48px; width: 100%; border: 0; border-radius: 12px; font-size: 1rem;
+      font-weight: 600; background: var(--marca); color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <!-- Se muestra cuando la app Android no logra abrir la web (sin señal al iniciar). -->
+  <main>
+    <h1>Sin conexión</h1>
+    <p>No se pudo abrir TDS Ganadería. Revisa la señal o los datos móviles e intenta de nuevo.</p>
+    <button type="button" onclick="location.href='https://tdsganaderia.vercel.app/'">Reintentar</button>
+  </main>
+</body>
+</html>

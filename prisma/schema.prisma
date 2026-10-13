@@ -1,0 +1,195 @@
+// Esquema de datos de la App de Ganado.
+// Sigue docs/03-modelo-de-datos.md. Solo se guardan hechos con fecha; lo derivado (etapa
+// actual, estado reproductivo, pendientes) se calcula en src/lib. Monta != parto.
+// Los "enums" se guardan como String (valores válidos en src/lib/validar.ts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Base de datos: PostgreSQL en Supabase (ver docs/10-supabase.md).
+// DATABASE_URL -> pooler de sesión (puerto 5432) con tiempos límite, lo usa la app.
+// DIRECT_URL   -> pooler de sesión sin parámetros extra, lo usa `prisma db push`.
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// --- ANIMAL -----------------------------------------------------------------
+// Datos basicos/permanentes. La genealogia es DERIVADA de padre/madre.
+// Un progenitor puede ser un Animal registrado (padreId/madreId) O externo (texto).
+model Animal {
+  id             String   @id @default(cuid())
+  arete          String   @unique
+  nombre         String?
+  sexo           String   // "MACHO" | "HEMBRA"
+  raza           String?
+  fechaNacimiento DateTime?
+  fotoUrl        String?   // foto (JPEG base64, máx. 600 px), re-codificada en el servidor
+  fotoMiniatura  String?   // miniatura (JPEG base64, 160 px, ~10 KB) para listas y encabezados
+  descripcion    String?
+  estado         String   @default("ACTIVO") // "ACTIVO" | "VENDIDO" | "MUERTO"
+
+  // Módulo al que pertenece el animal. No se mueve entre módulos (regla de negocio).
+  // "ENGORDE"     -> crías de la finca, producción de carne (van todas aquí, sin importar sexo).
+  // "LECHERIA"    -> vacas de leche (se compran; no nacen en la finca).
+  // "REPRODUCTOR" -> el toro de la finca y los toros/semen externos usados para preñar.
+  modulo         String   @default("ENGORDE") // "ENGORDE" | "LECHERIA" | "REPRODUCTOR"
+
+  // Código del reproductor (toro/semen). Opcional; se usa sobre todo en el módulo REPRODUCTOR.
+  codigo         String?
+
+  // Solo en el módulo REPRODUCTOR: distingue una PAJILLA (semen) de un TORO físico.
+  // Una pajilla no tiene arete propio: en su alta solo se captura el código, y el backend
+  // guarda arete = codigo (el arete es obligatorio y único). Default false (es un toro).
+  esPajilla      Boolean  @default(false)
+
+  // Datos de baja (solo cuando estado = VENDIDO o MUERTO). Opcionales.
+  fechaBaja      DateTime?
+  motivoBaja     String?
+
+  // Genealogia: progenitor registrado (auto-relacion)
+  padreId        String?
+  padre          Animal?  @relation("PadreHijos", fields: [padreId], references: [id])
+  madreId        String?
+  madre          Animal?  @relation("MadreHijos", fields: [madreId], references: [id])
+
+  hijosComoPadre Animal[] @relation("PadreHijos")
+  hijosComoMadre Animal[] @relation("MadreHijos")
+
+  // Genealogia: progenitor externo (no registrado en el sistema)
+  padreExterno   String?
+  madreExterno   String?
+
+  // Eventos / historial
+  montasComoVaca Monta[]  @relation("MontaVaca")
+  montasComoToro Monta[]  @relation("MontaToro")
+  partosComoVaca Parto[]  @relation("PartoVaca")
+  partosComoToro Parto[]  @relation("PartoToro")
+  nacidoEnParto  Cria[]
+  registrosLeche RegistroLeche[]
+  registrosPeso  RegistroPeso[]
+  etapas         EtapaTernero[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Índices: Postgres no indexa solas las claves foráneas.
+  @@index([padreId])
+  @@index([madreId])
+  @@index([sexo, estado])
+  @@index([modulo, estado])
+}
+
+// --- MONTA ------------------------------------------------------------------
+// Evento. NO implica prenez ni parto.
+model Monta {
+  id       String   @id @default(cuid())
+  vacaId   String
+  vaca     Animal   @relation("MontaVaca", fields: [vacaId], references: [id])
+  toroId   String
+  toro     Animal   @relation("MontaToro", fields: [toroId], references: [id])
+  fecha    DateTime
+  notas    String?
+
+  // Confirmación de preñez por palpación (B1). Opcional.
+  prenezConfirmada    Boolean  @default(false)
+  fechaConfirmacion   DateTime?
+
+  // La monta fue por inseminación con pajilla (semen) en vez de monta natural del toro.
+  inseminacion        Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([vacaId, fecha])
+  @@index([toroId])
+}
+
+// --- PARTO ------------------------------------------------------------------
+// Evento. Puede producir varias crias. El toro/padre es opcional (B3).
+model Parto {
+  id          String   @id @default(cuid())
+  vacaId      String
+  vaca        Animal   @relation("PartoVaca", fields: [vacaId], references: [id])
+  toroId      String?
+  toro        Animal?  @relation("PartoToro", fields: [toroId], references: [id])
+  fecha       DateTime
+  descripcion String?
+
+  // Datos del nacimiento (B4). Opcionales. Para una cría; con gemelos aplican a la principal.
+  criaSana          Boolean?
+  necesitoAyuda     Boolean?
+  pesoNacimientoKg  Float?
+
+  crias       Cria[]
+  createdAt   DateTime @default(now())
+
+  @@index([vacaId, fecha])
+  @@index([toroId])
+}
+
+// Relaciona un parto con cada cria (Animal) que resulto de el.
+model Cria {
+  id       String  @id @default(cuid())
+  partoId  String
+  parto    Parto   @relation(fields: [partoId], references: [id], onDelete: Cascade)
+  criaId   String
+  cria     Animal  @relation(fields: [criaId], references: [id])
+
+  @@index([partoId])
+  @@index([criaId])
+}
+
+// --- PRODUCCION DE LECHE ----------------------------------------------------
+// Historico, no se sobrescribe. Cada registro es UN ORDEÑO (no el total del día).
+// Una vaca se ordeña ~2 veces al día: mañana y tarde. El total del día = suma de sus ordeños.
+model RegistroLeche {
+  id       String   @id @default(cuid())
+  vacaId   String
+  vaca     Animal   @relation(fields: [vacaId], references: [id])
+  fecha    DateTime
+  cantidad Float    // litros de ESE ordeño
+  turno    String?  // "MANANA" | "TARDE" (opcional; registros viejos sin turno = total del día)
+  notas    String?
+  createdAt DateTime @default(now())
+
+  @@index([vacaId, fecha])
+}
+
+// --- PESO -------------------------------------------------------------------
+model RegistroPeso {
+  id       String   @id @default(cuid())
+  animalId String
+  animal   Animal   @relation(fields: [animalId], references: [id])
+  fecha    DateTime
+  pesoKg   Float
+  notas    String?
+  createdAt DateTime @default(now())
+
+  @@index([animalId, fecha])
+}
+
+// --- ETAPAS DEL TERNERO -----------------------------------------------------
+// Solo se registran fechas reales (duraciones de referencia en B6, no se imponen).
+model EtapaTernero {
+  id         String   @id @default(cuid())
+  animalId   String
+  animal     Animal   @relation(fields: [animalId], references: [id])
+  etapa      String   // "LACTANCIA" | "DESARROLLO" | "ENGORDE" ("DESTETE" solo en datos antiguos)
+  fechaInicio DateTime
+  fechaFin   DateTime?
+  notas      String?
+  createdAt  DateTime @default(now())
+
+  @@index([animalId])
+}
+
+// --- SEGURIDAD --------------------------------------------------------------
+// Intentos fallidos de login por IP. Se guarda en la base (no en memoria) porque en
+// Vercel cada petición puede atenderla una instancia distinta.
+model IntentoLogin {
+  ip     String   @id
+  fallos Int      @default(0)
+  hasta  DateTime? // bloqueado hasta esta fecha
+}

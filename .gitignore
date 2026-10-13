@@ -1,0 +1,36 @@
+node_modules
+.next
+out
+build
+*.log
+.env
+.env*.local
+.DS_Store
+
+# Archivos temporales de pruebas (salidas de curl, etc.)
+/_*.txt
+/_*.html
+
+.env.bak
+*.tsbuildinfo
+/.next-produccion
+
+# Lo regenera Next en cada dev/build (cambia de ruta entre .next y .next-produccion)
+next-env.d.ts
+
+# Herramientas y editores locales
+.vercel
+.claude/
+.idea/
+.vscode/
+
+# Scripts auxiliares (pruebas, datos de prueba, utilidades de instalación): solo en local,
+# no hacen falta para que la app funcione. En el repo quedan produccion.mjs y cambiar-clave.mjs.
+scripts/conectar-supabase.ps1
+scripts/confirmar-borrado.mjs
+scripts/gen-favicon.mjs
+scripts/leche-luna.mjs
+scripts/limpiar.mjs
+scripts/probar-conexion.mjs
+scripts/sembrar-prueba.mjs
+scripts/sembrar-realista.mjs

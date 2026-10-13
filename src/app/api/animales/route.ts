@@ -1,0 +1,57 @@
+import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import {
+  ruta, leerJson, texto, opcion, datosAnimal, SEXOS, ESTADOS, MODULOS, LARGO, ErrorValidacion,
+  ANIMAL_SIN_FOTO,
+} from "@/lib/validar";
+
+// GET /api/animales?sexo=MACHO&estado=ACTIVO&modulo=ENGORDE&q=texto
+export const GET = ruta(async (req: NextRequest) => {
+  const { searchParams } = new URL(req.url);
+  const sexo = searchParams.get("sexo") ? opcion(searchParams.get("sexo"), SEXOS, "Sexo") : null;
+  const estado = searchParams.get("estado") ? opcion(searchParams.get("estado"), ESTADOS, "Estado") : null;
+  const modulo = searchParams.get("modulo") ? opcion(searchParams.get("modulo"), MODULOS, "Módulo") : null;
+  const q = texto(searchParams.get("q"), "Búsqueda", LARGO.corto);
+
+  const animales = await prisma.animal.findMany({
+    where: {
+      ...(sexo ? { sexo } : {}),
+      ...(estado ? { estado } : {}),
+      ...(modulo ? { modulo } : {}),
+      ...(q
+        ? {
+            OR: [
+              // En Postgres `contains` distingue mayúsculas; SQLite no lo hacía.
+              { arete: { contains: q, mode: "insensitive" } },
+              { nombre: { contains: q, mode: "insensitive" } },
+              { raza: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
+    orderBy: { arete: "asc" },
+    select: ANIMAL_SIN_FOTO,
+  });
+  return NextResponse.json(animales);
+});
+
+// POST /api/animales  -> crear animal
+export const POST = ruta(async (req: NextRequest) => {
+  const body = await leerJson(req);
+  if (!body.arete || !body.sexo) {
+    throw new ErrorValidacion("El arete y el sexo son obligatorios.");
+  }
+  const datos = datosAnimal(body);
+
+  // Una sola consulta: el arete es único en la base; si ya existe, falla con P2002.
+  try {
+    const animal = await prisma.animal.create({ data: datos, select: ANIMAL_SIN_FOTO });
+    return NextResponse.json(animal, { status: 201 });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      throw new ErrorValidacion(`Ya existe un animal con el arete ${datos.arete}.`, 409);
+    }
+    throw e;
+  }
+});

@@ -1,0 +1,14 @@
+{
+  "appId": "com.tierradesuenos.ganaderia",
+  "appName": "TDS Ganadería",
+  "webDir": "www",
+  "server": {
+    "url": "https://tdsganaderia.vercel.app",
+    "errorPath": "sin-conexion.html",
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
