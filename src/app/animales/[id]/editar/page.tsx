@@ -51,6 +51,7 @@ export default async function EditarAnimalPage({
             estado: animal.estado,
             modulo: animal.modulo,
             codigo: animal.codigo,
+            areteCenasa: animal.areteCenasa,
             esPajilla: animal.esPajilla,
             fechaBaja: animal.fechaBaja?.toISOString() ?? null,
             motivoBaja: animal.motivoBaja,

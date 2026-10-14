@@ -40,6 +40,11 @@ model Animal {
   // Código del reproductor (toro/semen). Opcional; se usa sobre todo en el módulo REPRODUCTOR.
   codigo         String?
 
+  // Arete oficial de CENASA (trazabilidad ganadera de Costa Rica). Opcional, para cualquier
+  // módulo (engorde, lechería o reproductor). No es único ni obligatorio: no todos los animales
+  // lo tienen y es independiente del `arete` interno de la finca.
+  areteCenasa    String?
+
   // Solo en el módulo REPRODUCTOR: distingue una PAJILLA (semen) de un TORO físico.
   // Una pajilla no tiene arete propio: en su alta solo se captura el código, y el backend
   // guarda arete = codigo (el arete es obligatorio y único). Default false (es un toro).

@@ -47,6 +47,7 @@ export const GET = ruta(async (req: NextRequest) => {
         estado: true,
         modulo: true,
         codigo: true,
+        areteCenasa: true,
         esPajilla: true,
         descripcion: true,
         padreId: true,
@@ -69,6 +70,7 @@ export const GET = ruta(async (req: NextRequest) => {
     "Modulo",
     "Tipo",
     "Codigo",
+    "Arete CENASA",
     "Padre",
     "Madre",
     "Descripcion",
@@ -96,6 +98,7 @@ export const GET = ruta(async (req: NextRequest) => {
       // Toro o pajilla: solo aplica a reproductores.
       a.modulo === "REPRODUCTOR" ? (a.esPajilla ? "Pajilla" : "Toro") : "",
       a.codigo ?? "",
+      a.areteCenasa ?? "",
       padre,
       madre,
       a.descripcion ?? "",

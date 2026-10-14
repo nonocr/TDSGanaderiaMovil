@@ -324,6 +324,7 @@ export default async function AnimalDetallePage({
                   <Dato k="Tipo" v={animal.esPajilla ? "Pajilla" : "Toro"} />
                 )}
                 {animal.codigo && <Dato k="Código" v={animal.codigo} />}
+                {animal.areteCenasa && <Dato k="Arete CENASA" v={animal.areteCenasa} />}
                 <Dato k="Sexo" v={SEXO_LABEL[animal.sexo]} />
                 <Dato k="Raza" v={animal.raza ?? "—"} />
                 <Dato k="Nacimiento" v={formatearFecha(animal.fechaNacimiento)} />

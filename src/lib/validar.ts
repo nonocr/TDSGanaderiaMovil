@@ -135,6 +135,8 @@ export function datosAnimal(body: Record<string, unknown>) {
   const padreId = id(body.padreId, "Padre");
   const madreId = id(body.madreId, "Madre");
   const codigo = texto(body.codigo, "Código", LARGO.corto);
+  // Arete oficial de CENASA (opcional, cualquier módulo). No es único ni obligatorio.
+  const areteCenasa = texto(body.areteCenasa, "Arete CENASA", LARGO.corto);
   const esPajilla = body.esPajilla === true;
 
   // PAJILLA (semen): no tiene arete propio ni más datos; solo se captura el código. Como el
@@ -153,6 +155,8 @@ export function datosAnimal(body: Record<string, unknown>) {
       estado,
       modulo: "REPRODUCTOR" as const,
       codigo: cod,
+      // Arete oficial de CENASA (opcional): si no se captura, queda null.
+      areteCenasa,
       esPajilla: true,
       fechaBaja: esBaja ? fecha(body.fechaBaja, "Fecha de baja") : null,
       motivoBaja: esBaja ? texto(body.motivoBaja, "Motivo de baja", LARGO.notas) : null,
@@ -174,6 +178,8 @@ export function datosAnimal(body: Record<string, unknown>) {
     modulo,
     // Código del reproductor (opcional). Solo tiene sentido en el módulo REPRODUCTOR.
     codigo,
+    // Arete oficial de CENASA (opcional, cualquier módulo).
+    areteCenasa,
     esPajilla: false,
     fechaBaja: esBaja ? fecha(body.fechaBaja, "Fecha de baja") : null,
     motivoBaja: esBaja ? texto(body.motivoBaja, "Motivo de baja", LARGO.notas) : null,
@@ -207,6 +213,7 @@ export const ANIMAL_SIN_FOTO = {
   estado: true,
   modulo: true,
   codigo: true,
+  areteCenasa: true,
   esPajilla: true,
   fechaBaja: true,
   motivoBaja: true,

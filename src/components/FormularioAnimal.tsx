@@ -18,6 +18,7 @@ export type ValoresAnimal = {
   estado?: string;
   modulo?: string;
   codigo?: string | null;
+  areteCenasa?: string | null;
   esPajilla?: boolean;
   fechaBaja?: string | null; // ISO o yyyy-mm-dd
   motivoBaja?: string | null;
@@ -89,6 +90,8 @@ export function FormularioAnimal({
         modulo: "REPRODUCTOR",
         esPajilla: true,
         codigo: fd.get("codigo"),
+        // Arete oficial de CENASA (opcional).
+        areteCenasa: fd.get("areteCenasa") || null,
         estado: fd.get("estado") ?? "ACTIVO",
         fechaBaja: fd.get("fechaBaja") || null,
         motivoBaja: fd.get("motivoBaja") || null,
@@ -110,6 +113,8 @@ export function FormularioAnimal({
         modulo,
         // Código solo en reproductores.
         codigo: esReproductor ? fd.get("codigo") || null : null,
+        // Arete oficial de CENASA (opcional, cualquier módulo).
+        areteCenasa: fd.get("areteCenasa") || null,
         esPajilla: false,
         fechaBaja: fd.get("fechaBaja") || null,
         motivoBaja: fd.get("motivoBaja") || null,
@@ -275,6 +280,21 @@ export function FormularioAnimal({
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
             Luego podrás añadir más datos del código.
           </p>
+          {/* Arete oficial de CENASA: opcional, también para pajillas. */}
+          <div className="mt-4">
+            <label htmlFor="fa-arete-cenasa-pajilla" className={etiqueta}>Arete de CENASA (opcional)</label>
+            <input
+              id="fa-arete-cenasa-pajilla"
+              name="areteCenasa"
+              maxLength={60}
+              className={campo}
+              placeholder="Ej. CR-000123456"
+              defaultValue={valores?.areteCenasa ?? ""}
+            />
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+              Arete oficial de trazabilidad. Déjalo en blanco si no aplica.
+            </p>
+          </div>
         </div>
       ) : (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -306,6 +326,22 @@ export function FormularioAnimal({
         <div>
           <label htmlFor="fa-raza" className={etiqueta}>Raza</label>
           <input id="fa-raza" name="raza" maxLength={60} className={campo} defaultValue={valores?.raza ?? ""} />
+        </div>
+
+        {/* Arete oficial de CENASA: opcional, para cualquier módulo. */}
+        <div>
+          <label htmlFor="fa-arete-cenasa" className={etiqueta}>Arete de CENASA (opcional)</label>
+          <input
+            id="fa-arete-cenasa"
+            name="areteCenasa"
+            maxLength={60}
+            className={campo}
+            placeholder="Ej. CR-000123456"
+            defaultValue={valores?.areteCenasa ?? ""}
+          />
+          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+            Arete oficial de trazabilidad. Déjalo en blanco si el animal no lo tiene.
+          </p>
         </div>
 
         {/* Fecha de nacimiento: en reproductor no hace falta. */}

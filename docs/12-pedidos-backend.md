@@ -23,6 +23,51 @@ _(ninguno todavía)_
 
 Lo que Claude Code detecta y le toca resolver al frontend. Kiro marca `[HECHO]` al corregirlo.
 
+### [REVISAR] Nuevo campo `areteCenasa` en Animal (Kiro, 2026-10-13)
+
+> El dueño me dio permiso para tocar backend (no tenía tokens de Claude). Pidió un campo para el
+> **arete de CENASA** en el alta de animales: debe poder ponerse en **todos** (engorde, lechería y
+> reproductores/toros), pero **no es obligatorio**. Lo implementé de punta a punta imitando el
+> patrón del campo `codigo`. Déjalo marcado `[REVISADO]` cuando lo revises.
+
+**Qué es:** el arete oficial de CENASA (trazabilidad ganadera de Costa Rica). Es independiente del
+`arete` interno de la finca. **No es único ni obligatorio** (no todos los animales lo tienen, y dos
+animales podrían, en teoría, llegar con el mismo valor; por eso NO lleva `@unique`).
+
+**[REVISAR] 1. Modelo — `prisma/schema.prisma` (Animal)**
+- Nuevo campo `areteCenasa String?` (justo tras `codigo`). Nullable, sin default, **sin `@unique`**.
+- Aplicado con `prisma db push` (la base quedó en sync, no borra datos) y `prisma generate` ya
+  corrido con la app detenida (el cliente incluye `areteCenasa`). Verificado con `tsc --noEmit` y
+  `npm run prod:build` (compila las 15 páginas sin error). En Vercel el `postinstall` lo regenera solo.
+
+**[REVISAR] 2. Validación — `src/lib/validar.ts` (`datosAnimal`)**
+- Nueva línea `const areteCenasa = texto(body.areteCenasa, "Arete CENASA", LARGO.corto)` (≤ 60, opcional).
+- Camino normal: devuelve `areteCenasa` (el valor validado).
+- Camino **pajilla**: también acepta `areteCenasa` (opcional; si no se captura, queda null). El dueño
+  pidió que las pajillas también puedan llevarlo por si aplica; si no, simplemente se deja en blanco.
+  El formulario de pajilla muestra el campo "Arete de CENASA (opcional)".
+- `ANIMAL_SIN_FOTO` incluye `areteCenasa: true` (lo necesitan la ficha y editar).
+- **Las rutas `POST`/`PUT /api/animales` no se tocaron**: pasan por `datosAnimal`, así que ya
+  guardan `areteCenasa` sin cambios en sus handlers.
+
+**[REVISAR] 3. Respaldo — `src/app/api/respaldo/route.ts`**
+- Al restaurar, el map de animales ahora incluye
+  `areteCenasa: texto(a.areteCenasa, "Arete CENASA", LARGO.corto)`. Respaldos viejos sin el campo = null.
+
+**[REVISAR] 4. Exportar CSV — `src/app/api/exportar/route.ts`**
+- `areteCenasa` añadido al `select` y nueva columna **"Arete CENASA"** (entre "Codigo" y "Padre").
+
+**Frontend (mi terreno, solo contexto)**
+- `FormularioAnimal.tsx`: campo "Arete de CENASA (opcional)" en el bloque normal (aparece en los tres
+  módulos, incluido el toro), con `label htmlFor/id`, `maxLength=60` y ayuda. **No** aparece en el
+  formulario de pajilla. Se manda en el payload del alta/edición normal (`areteCenasa: ... || null`).
+- `editar/page.tsx`: precarga `areteCenasa` en `valores`.
+- Ficha (`animales/[id]/page.tsx`): muestra "Arete CENASA" en Datos básicos **solo si tiene valor**.
+- `.kiro/steering/api.md`: actualizada la fila de `POST /api/animales` con `areteCenasa`.
+
+**Estado:** completo y verificado (base en sync, cliente regenerado, `prod:build` OK). Las pajillas
+también aceptan `areteCenasa` (opcional). Solo queda tu revisión del diseño si ves algo que ajustar.
+
 ### [REVISADO] Modo sin conexión — Claude Code tocó el frontend (2026-10-13, pedido del dueño)
 
 El dueño pidió app descargable (Android) **con modo sin conexión**. Detalle completo en
