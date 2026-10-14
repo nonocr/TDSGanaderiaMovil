@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { hoyLocalISO } from "@/lib/fechas";
 import { llamarApi } from "@/lib/api-cliente";
-import { etiquetaArete } from "@/lib/tipos";
+import { etiquetaArete, terminoBusqueda } from "@/lib/tipos";
 
 type Opcion = { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 
@@ -273,18 +273,51 @@ export function FormParto({
   vacaId,
   toros,
   posiblesCrias,
+  criasSugeridas = [],
 }: {
   vacaId: string;
   toros: Opcion[];
   posiblesCrias: Opcion[];
+  criasSugeridas?: string[]; // ids de los hijos de esta vaca aún sin parto: se muestran primero
 }) {
   const { error, cargando, enviar } = useEnviar();
   const hoy = useHoy();
   const [crias, setCrias] = useState<string[]>([]);
+  // "Otros animales": ocultos si hay sugeridas (se abren con un botón), con buscador.
+  const [verOtros, setVerOtros] = useState(false);
+  const [filtro, setFiltro] = useState("");
 
   function toggleCria(id: string) {
     setCrias((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
+
+  const porId = new Map(posiblesCrias.map((c) => [c.id, c]));
+  const sugeridas = criasSugeridas.map((cid) => porId.get(cid)).filter((c): c is Opcion => !!c);
+  const idsSugeridas = new Set(sugeridas.map((c) => c.id));
+  const otros = posiblesCrias.filter((c) => !idsSugeridas.has(c.id));
+  const otrosAbiertos = verOtros || sugeridas.length === 0;
+  const termino = terminoBusqueda(filtro).toLowerCase();
+  // Las ya marcadas siempre se ven, aunque el buscador o la lista cerrada las oculten.
+  const otrosVisibles = otros.filter((c) => {
+    if (crias.includes(c.id)) return true;
+    if (!otrosAbiertos) return false;
+    if (!termino) return true;
+    return [c.sinArete ? "" : c.arete, c.areteCenasa ?? "", c.nombre ?? ""].some((t) =>
+      t.toLowerCase().includes(termino)
+    );
+  });
+
+  const casilla = (c: Opcion) => (
+    <label key={c.id} className="flex min-h-11 items-center gap-2.5 rounded-md px-1 py-1.5 hover:bg-stone-50 dark:hover:bg-stone-800/50">
+      <input
+        type="checkbox"
+        checked={crias.includes(c.id)}
+        onChange={() => toggleCria(c.id)}
+        className="h-4 w-4 accent-marca-600"
+      />
+      {c.nombre ? `${c.nombre} (${etiquetaArete(c)})` : etiquetaArete(c)}
+    </label>
+  );
 
   return (
     <form
@@ -308,6 +341,8 @@ export function FormParto({
           () => {
             form.reset();
             setCrias([]);
+            setVerOtros(false);
+            setFiltro("");
           }
         );
       }}
@@ -358,25 +393,61 @@ export function FormParto({
       <div>
         <span className={etiqueta}>Cría(s) que nacieron</span>
         <p className="text-xs text-stone-500 dark:text-stone-400 mb-1">
-          Primero agrega la cría como un animal nuevo; luego aquí la marcas. Puedes marcar más de una si fueron gemelos.
+          Primero agrega la cría como un animal nuevo (con esta vaca como madre, así sale arriba); luego
+          aquí la marcas. Puedes marcar más de una si fueron gemelos.
         </p>
-        <div className="max-h-32 overflow-y-auto rounded border border-stone-200 p-2 text-sm">
-          {posiblesCrias.length === 0 ? (
-            <span className="text-stone-400">No hay animales para vincular todavía.</span>
-          ) : (
-            posiblesCrias.map((c) => (
-              <label key={c.id} className="flex items-center gap-2.5 rounded-md px-1 py-2 hover:bg-stone-50 dark:hover:bg-stone-800/50">
-                <input
-                  type="checkbox"
-                  checked={crias.includes(c.id)}
-                  onChange={() => toggleCria(c.id)}
-                  className="h-4 w-4 accent-marca-600"
-                />
-                {c.nombre ? `${c.nombre} (${etiquetaArete(c)})` : etiquetaArete(c)}
-              </label>
-            ))
-          )}
-        </div>
+        {posiblesCrias.length === 0 ? (
+          <div className="rounded border border-stone-200 p-2 text-sm text-stone-400 dark:border-stone-700">
+            No hay animales para vincular todavía.
+          </div>
+        ) : (
+          <div className="space-y-2 text-sm">
+            {/* Hijos registrados de esta vaca que aún no están en un parto: lo más probable. */}
+            {sugeridas.length > 0 && (
+              <div className="rounded border border-marca-200 bg-marca-50/50 p-2 dark:border-marca-900 dark:bg-marca-950/30">
+                <p className="px-1 pb-1 text-xs font-medium text-marca-700 dark:text-marca-300">
+                  Hijos de esta vaca sin parto registrado
+                </p>
+                {sugeridas.map(casilla)}
+              </div>
+            )}
+
+            {otros.length > 0 && (
+              <div className="rounded border border-stone-200 p-2 dark:border-stone-700">
+                {otrosAbiertos ? (
+                  <>
+                    <input
+                      type="search"
+                      value={filtro}
+                      onChange={(e) => setFiltro(e.target.value)}
+                      aria-label="Buscar otra cría por arete, CENASA o nombre"
+                      placeholder="Buscar arete, CENASA o nombre…"
+                      className={campo + " mt-0 mb-1"}
+                    />
+                    <div className="max-h-48 overflow-y-auto">
+                      {otrosVisibles.length === 0 ? (
+                        <p className="px-1 py-2 text-stone-400">Ningún animal coincide.</p>
+                      ) : (
+                        otrosVisibles.map(casilla)
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {otrosVisibles.map(casilla)}
+                    <button
+                      type="button"
+                      onClick={() => setVerOtros(true)}
+                      className="min-h-11 w-full rounded-md px-1 text-left text-sm font-medium text-marca-700 hover:bg-stone-50 dark:text-marca-400 dark:hover:bg-stone-800/50"
+                    >
+                      Elegir otro animal ({otros.length})
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <button className={boton} disabled={cargando}>Guardar parto</button>
     </form>

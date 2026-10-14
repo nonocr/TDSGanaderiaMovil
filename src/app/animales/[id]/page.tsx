@@ -130,6 +130,10 @@ export default async function AnimalDetallePage({
   const toros = todos.filter((a) => a.sexo === "MACHO").map(sinSexo);
   const vacas = todos.filter((a) => a.sexo === "HEMBRA").map(sinSexo);
   const posiblesCrias = todos.filter((a) => a.id !== id).map(sinSexo);
+  // Parto: se sugieren primero los hijos registrados de esta vaca (los que tienen a esta vaca
+  // como madre) que aún no están en ninguno de sus partos; los más recientes primero.
+  const yaEnParto = new Set(crias.map((c) => c.criaId));
+  const criasSugeridas = hijos.filter((h) => !yaEnParto.has(h.id)).reverse().map((h) => h.id);
 
   // --- Construir historial unificado ordenado por fecha desc ---
   const eventos: EventoFila[] = [];
@@ -483,6 +487,7 @@ export default async function AnimalDetallePage({
               toros={toros}
               vacas={vacas}
               posiblesCrias={posiblesCrias}
+              criasSugeridas={criasSugeridas}
             />
           </div>
         }

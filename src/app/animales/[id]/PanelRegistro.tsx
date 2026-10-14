@@ -23,6 +23,7 @@ export function PanelRegistro({
   toros,
   vacas,
   posiblesCrias,
+  criasSugeridas,
 }: {
   animalId: string;
   modulo: string;
@@ -30,6 +31,7 @@ export function PanelRegistro({
   toros: Opcion[];
   vacas: Opcion[];
   posiblesCrias: Opcion[];
+  criasSugeridas: string[]; // ids de los hijos de esta vaca aún sin parto (van primero)
 }) {
   const tabs =
     modulo === "ENGORDE"
@@ -83,7 +85,9 @@ export function PanelRegistro({
         )}
         {tab === "leche" && <FormLeche vacaId={animalId} />}
         {tab === "monta" && modulo === "LECHERIA" && <FormMonta vacaId={animalId} toros={toros} />}
-        {tab === "parto" && <FormParto vacaId={animalId} toros={toros} posiblesCrias={posiblesCrias} />}
+        {tab === "parto" && (
+          <FormParto vacaId={animalId} toros={toros} posiblesCrias={posiblesCrias} criasSugeridas={criasSugeridas} />
+        )}
         {tab === "monta" && modulo === "REPRODUCTOR" && (
           <FormMontaDesdeToro toroId={animalId} vacas={vacas} />
         )}

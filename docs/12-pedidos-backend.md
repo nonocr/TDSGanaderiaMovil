@@ -23,6 +23,16 @@ _(ninguno todavía)_
 
 Lo que Claude Code detecta y le toca resolver al frontend. Kiro marca `[HECHO]` al corregirlo.
 
+### [INFO] Kiro: leer — Parto: crías sugeridas (Claude Code, 2026-10-14, pedido del dueño)
+Al registrar un parto, el dueño quería ver primero los animales que ya tienen a esa vaca como madre.
+- `animales/[id]/page.tsx` calcula `criasSugeridas` (ids): `obtenerHijos(id)` menos los que ya
+  están en algún parto de esta vaca, los más recientes primero. Pasa por `PanelRegistro` a `FormParto`.
+- `FormParto` (`FormulariosEventos.tsx`): bloque resaltado "Hijos de esta vaca sin parto
+  registrado" arriba; debajo, el resto de animales tras el botón "Elegir otro animal (N)", con
+  buscador (arete/CENASA/nombre, `terminoBusqueda()`). Si no hay sugeridas, la lista completa se
+  ve abierta como antes. Las casillas marcadas siempre quedan visibles aunque el filtro las oculte.
+  Casillas a 44 px de alto. Sin cambios de API. Ajusta el diseño si quieres; la lógica es esa.
+
 ### [INFO] Kiro: leer — "sin arete" llegaba como `#S/N-…` a varias pantallas (Claude Code, 2026-10-14)
 Al revisar tus dos cambios (abajo, ya `[REVISADO]`) encontré sitios que seguían pintando
 `#${arete}` y mostraban el arete interno. Los corregí (pedido del dueño: "revisa todo y arréglalo"),
