@@ -4,8 +4,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { hoyLocalISO } from "@/lib/fechas";
 import { llamarApi } from "@/lib/api-cliente";
+import { etiquetaArete } from "@/lib/tipos";
 
-type Opcion = { id: string; arete: string; nombre: string | null };
+type Opcion = { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 
 const campo =
   "mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm outline-none focus:border-marca-500 focus:ring-2 focus:ring-marca-200 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500";
@@ -176,7 +177,7 @@ export function FormMonta({ vacaId, toros }: { vacaId: string; toros: Opcion[] }
           <option value="" disabled>— Elegir toro —</option>
           {toros.map((t) => (
             <option key={t.id} value={t.id}>
-              {t.nombre ? `${t.nombre} (#${t.arete})` : `#${t.arete}`}
+              {t.nombre ? `${t.nombre} (${etiquetaArete(t)})` : etiquetaArete(t)}
             </option>
           ))}
         </select>
@@ -247,7 +248,7 @@ export function FormMontaDesdeToro({ toroId, vacas }: { toroId: string; vacas: O
           <option value="" disabled>— Elegir vaca —</option>
           {vacas.map((v) => (
             <option key={v.id} value={v.id}>
-              {v.nombre ? `${v.nombre} (#${v.arete})` : `#${v.arete}`}
+              {v.nombre ? `${v.nombre} (${etiquetaArete(v)})` : etiquetaArete(v)}
             </option>
           ))}
         </select>
@@ -322,7 +323,7 @@ export function FormParto({
           <option value="">— No lo sé / sin especificar —</option>
           {toros.map((t) => (
             <option key={t.id} value={t.id}>
-              {t.nombre ? `${t.nombre} (#${t.arete})` : `#${t.arete}`}
+              {t.nombre ? `${t.nombre} (${etiquetaArete(t)})` : etiquetaArete(t)}
             </option>
           ))}
         </select>
@@ -371,7 +372,7 @@ export function FormParto({
                   onChange={() => toggleCria(c.id)}
                   className="h-4 w-4 accent-marca-600"
                 />
-                {c.nombre ? `${c.nombre} (#${c.arete})` : `#${c.arete}`}
+                {c.nombre ? `${c.nombre} (${etiquetaArete(c)})` : etiquetaArete(c)}
               </label>
             ))
           )}

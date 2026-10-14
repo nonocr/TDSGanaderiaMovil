@@ -125,7 +125,8 @@ export default async function AnimalDetallePage({
     etapas,
   };
 
-  const sinSexo = ({ id, arete, nombre }: (typeof todos)[number]) => ({ id, arete, nombre });
+  const sinSexo = ({ id, arete, nombre, sinArete, areteCenasa }: (typeof todos)[number]) =>
+    ({ id, arete, nombre, sinArete, areteCenasa });
   const toros = todos.filter((a) => a.sexo === "MACHO").map(sinSexo);
   const vacas = todos.filter((a) => a.sexo === "HEMBRA").map(sinSexo);
   const posiblesCrias = todos.filter((a) => a.id !== id).map(sinSexo);

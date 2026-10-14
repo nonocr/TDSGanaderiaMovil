@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { NodoArbol, Progenitor } from "@/lib/genealogia";
 import { VisorArbol } from "@/components/VisorArbol";
 import { IconoAnimal, IconoCerrar } from "@/components/iconos";
+import { etiquetaArete } from "@/lib/tipos";
 
 // Árbol de ascendencia de izquierda (este animal) a derecha (bisabuelos). Cada generación es
 // una columna de ancho fijo; las ramas padre/madre se unen con conectores en corchete.
@@ -45,15 +46,15 @@ function Nodo({ p, raiz }: { p: Progenitor; raiz: boolean }) {
         </span>
         <span className="min-w-0 leading-tight">
           <span className="block truncate font-semibold text-stone-800 dark:text-stone-100">
-            {animal.nombre ?? `#${animal.arete}`}
+            {animal.nombre ?? etiquetaArete(animal)}
           </span>
           <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
-            {animal.nombre ? `#${animal.arete}` : macho ? "Macho" : "Hembra"}
+            {animal.nombre ? etiquetaArete(animal) : macho ? "Macho" : "Hembra"}
           </span>
         </span>
       </>
     );
-    const titulo = animal.nombre ? `${animal.nombre} (#${animal.arete})` : `#${animal.arete}`;
+    const titulo = animal.nombre ? `${animal.nombre} (${etiquetaArete(animal)})` : etiquetaArete(animal);
 
     // El animal de la ficha no es enlace (ya estás en él): va resaltado.
     if (raiz) {

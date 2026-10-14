@@ -16,8 +16,9 @@ import {
   IconoBasura,
   type IconoProps,
 } from "@/components/iconos";
+import { etiquetaArete } from "@/lib/tipos";
 
-type Opcion = { id: string; arete: string; nombre: string | null };
+type Opcion = { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 
 const ENDPOINT: Record<string, string> = {
   Monta: "/api/montas",
@@ -276,7 +277,7 @@ export function FilaEvento({
                   <option value="">{datos.tipo === "Parto" ? "— Sin especificar —" : "— Elegir toro —"}</option>
                   {toros.map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.nombre ? `${t.nombre} (#${t.arete})` : `#${t.arete}`}
+                      {t.nombre ? `${t.nombre} (${etiquetaArete(t)})` : etiquetaArete(t)}
                     </option>
                   ))}
                 </select>

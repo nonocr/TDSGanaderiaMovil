@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { FilaEvento, type DatosFila } from "./FilaEvento";
 import { IconoHistorial, IconoCerrar } from "@/components/iconos";
 
-type Opcion = { id: string; arete: string; nombre: string | null };
+type Opcion = { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 
 // Cuántos registros se muestran antes de pedir "Ver todo".
 const LIMITE_VISIBLE = 5;

@@ -10,7 +10,7 @@ import {
 } from "./FormulariosEventos";
 import { CambiarEtapa } from "./CambiarEtapa";
 
-type Opcion = { id: string; arete: string; nombre: string | null };
+type Opcion = { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 
 // Panel con pestañas para registrar eventos. Lo que se puede registrar depende del módulo:
 //  - ENGORDE:     peso y etapa.

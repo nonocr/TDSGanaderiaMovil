@@ -66,10 +66,11 @@ pajilla `arete = codigo`):
   listas (`ListaAnimales`, con búsqueda que ahora también mira el arete de CENASA) y los selectores
   de padre/madre. `src/lib/genealogia.ts` (`NodoAnimal` + la lectura de parentesco) ahora trae
   `sinArete`/`areteCenasa` para propagar el identificador a selectores, árbol y nombres relacionados.
-- **Caso de borde conocido**: los `<option>` de toro/cría en los formularios de **evento**
-  (`FormulariosEventos.tsx`, `FilaEvento.tsx`) reciben solo `{id, arete, nombre}`, así que si usas un
-  animal **sin arete** como toro de una monta/parto se vería su valor interno `S/N-…`. Es raro (un
-  reproductor sin arete) y no rompe nada; si quieres, se amplía esa prop. Lo dejo anotado.
+- **Selectores de evento y árbol (cubierto)**: los `<option>` de toro/vaca/cría en
+  `FormulariosEventos.tsx` y `FilaEvento.tsx` (y `PanelRegistro`/`HistorialEventos` que los
+  alimentan) ahora llevan `sinArete`/`areteCenasa` en su tipo `Opcion` y usan `etiquetaArete()`. El
+  árbol genealógico (`ArbolGenealogico.tsx`) también. La ficha (`page.tsx`) amplió su `sinSexo` para
+  pasar esos campos. Así un animal sin arete se ve como `CENASA …` en todos lados, no `S/N-…`.
 
 **Estado:** completo y verificado (`db push`+`generate`, `tsc --noEmit` y `prod:build` OK, 15 páginas).
 
