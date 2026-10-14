@@ -7,7 +7,7 @@ import {
   situacionReproductivaVaca,
   etiquetaEstadoRepro,
 } from "@/lib/estado";
-import { ETAPA_LABEL } from "@/lib/tipos";
+import { ETAPA_LABEL, etiquetaArete } from "@/lib/tipos";
 import { FiltroAnimales } from "@/components/FiltroAnimales";
 import { BuscadorAnimales } from "@/components/BuscadorAnimales";
 import { IconoFlecha, IconoRespaldo, IconoAnimal, IconoBuscar, IconoMas } from "@/components/iconos";
@@ -78,6 +78,8 @@ export async function ListaAnimales({
       select: {
         id: true,
         arete: true,
+        sinArete: true,
+        areteCenasa: true,
         nombre: true,
         sexo: true,
         raza: true,
@@ -138,13 +140,15 @@ export async function ListaAnimales({
     return { a, etapa, repro: sit.estado, partoEstimado: sit.partoEstimado };
   });
 
-  // Busqueda por arete o nombre (texto libre, sin distinguir mayusculas).
+  // Busqueda por arete, arete de CENASA o nombre (texto libre, sin distinguir mayusculas).
+  // Si el animal no tiene arete físico, el `arete` es interno (no se busca por él); sí por CENASA.
   const termino = (q ?? "").trim().toLowerCase();
   const porBusqueda = termino
     ? filas.filter(({ a }) => {
-        const arete = a.arete.toLowerCase();
+        const arete = a.sinArete ? "" : a.arete.toLowerCase();
+        const cenasa = (a.areteCenasa ?? "").toLowerCase();
         const nombre = (a.nombre ?? "").toLowerCase();
-        return arete.includes(termino) || nombre.includes(termino);
+        return arete.includes(termino) || cenasa.includes(termino) || nombre.includes(termino);
       })
     : filas;
 
@@ -258,9 +262,9 @@ export async function ListaAnimales({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate font-semibold text-stone-800 dark:text-stone-100">
-                        {a.nombre ? a.nombre : `#${a.arete}`}
+                        {a.nombre ? a.nombre : etiquetaArete(a)}
                         {a.nombre && (
-                          <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">#{a.arete}</span>
+                          <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">{etiquetaArete(a)}</span>
                         )}
                       </span>
                       {/* Solo se marca el estado cuando NO está activo (lo normal no necesita etiqueta). */}

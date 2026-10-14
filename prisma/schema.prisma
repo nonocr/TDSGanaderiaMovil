@@ -45,6 +45,12 @@ model Animal {
   // lo tienen y es independiente del `arete` interno de la finca.
   areteCenasa    String?
 
+  // El animal NO tiene arete físico de la finca. Como `arete` es obligatorio y único (y lo usa
+  // toda la app como identificador), cuando sinArete=true el backend pone en `arete` un valor
+  // interno autogenerado único (p. ej. "S/N-xxxx") que el usuario nunca ve: en pantalla se
+  // muestra el `areteCenasa` (que en ese caso es obligatorio). Default false.
+  sinArete       Boolean  @default(false)
+
   // Solo en el módulo REPRODUCTOR: distingue una PAJILLA (semen) de un TORO físico.
   // Una pajilla no tiene arete propio: en su alta solo se captura el código, y el backend
   // guarda arete = codigo (el arete es obligatorio y único). Default false (es un toro).

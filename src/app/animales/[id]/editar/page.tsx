@@ -22,7 +22,8 @@ export default async function EditarAnimalPage({
 
   if (!animal) notFound();
 
-  const sinSexo = ({ id, arete, nombre }: (typeof todos)[number]) => ({ id, arete, nombre });
+  const sinSexo = ({ id, arete, nombre, sinArete, areteCenasa }: (typeof todos)[number]) =>
+    ({ id, arete, nombre, sinArete, areteCenasa });
   const machos = todos.filter((a) => a.sexo === "MACHO").map(sinSexo);
   const hembras = todos.filter((a) => a.sexo === "HEMBRA").map(sinSexo);
 
@@ -52,6 +53,7 @@ export default async function EditarAnimalPage({
             modulo: animal.modulo,
             codigo: animal.codigo,
             areteCenasa: animal.areteCenasa,
+            sinArete: animal.sinArete,
             esPajilla: animal.esPajilla,
             fechaBaja: animal.fechaBaja?.toISOString() ?? null,
             motivoBaja: animal.motivoBaja,

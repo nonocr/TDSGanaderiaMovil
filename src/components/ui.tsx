@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SEXO_LABEL, ESTADO_LABEL } from "@/lib/tipos";
+import { SEXO_LABEL, ESTADO_LABEL, etiquetaArete } from "@/lib/tipos";
 
 export function Card({
   children,
@@ -103,14 +103,15 @@ export function SexoBadge({ sexo }: { sexo: string }) {
 export function AnimalLink({
   animal,
 }: {
-  animal: { id: string; arete: string; nombre: string | null };
+  animal: { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 }) {
+  const ident = etiquetaArete(animal);
   return (
     <Link
       href={`/animales/${animal.id}`}
       className="font-medium text-marca-700 decoration-marca-300 underline-offset-2 hover:underline dark:text-marca-400"
     >
-      {animal.nombre ? `${animal.nombre} (#${animal.arete})` : `#${animal.arete}`}
+      {animal.nombre ? `${animal.nombre} (${ident})` : ident}
     </Link>
   );
 }

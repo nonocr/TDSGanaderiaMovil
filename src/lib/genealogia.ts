@@ -12,6 +12,10 @@ export type NodoAnimal = {
   arete: string;
   nombre: string | null;
   sexo: string;
+  // Para mostrar el identificador correcto cuando el animal no tiene arete físico (ver
+  // etiquetaArete en src/lib/tipos.ts): se identifica por el arete de CENASA.
+  sinArete: boolean;
+  areteCenasa: string | null;
 };
 
 export type Progenitor =
@@ -32,6 +36,8 @@ const cargarParentesco = cache(async (): Promise<Map<string, FilaParentesco>> =>
     select: {
       id: true,
       arete: true,
+      sinArete: true,
+      areteCenasa: true,
       nombre: true,
       sexo: true,
       padreId: true,
@@ -52,7 +58,10 @@ export async function listarAnimales(): Promise<NodoAnimal[]> {
 }
 
 function nodo(f: FilaParentesco): NodoAnimal {
-  return { id: f.id, arete: f.arete, nombre: f.nombre, sexo: f.sexo };
+  return {
+    id: f.id, arete: f.arete, nombre: f.nombre, sexo: f.sexo,
+    sinArete: f.sinArete, areteCenasa: f.areteCenasa,
+  };
 }
 
 function progenitorDe(

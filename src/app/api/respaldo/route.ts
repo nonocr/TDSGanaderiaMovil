@@ -89,6 +89,8 @@ export const POST = ruta(async (req: NextRequest) => {
       codigo: texto(a.codigo, "Código", LARGO.corto),
       // Arete oficial de CENASA (opcional). Respaldos viejos sin el campo = null.
       areteCenasa: texto(a.areteCenasa, "Arete CENASA", LARGO.corto),
+      // Animal sin arete físico (se identifica por el de CENASA). Respaldos viejos = false.
+      sinArete: a.sinArete === true,
       // Respaldos anteriores a las pajillas no lo traen: son toros/animales físicos.
       esPajilla: a.esPajilla === true,
       fechaBaja: fecha(a.fechaBaja, "Fecha de baja"),

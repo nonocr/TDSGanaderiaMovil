@@ -40,8 +40,12 @@ export const GET = ruta(async (req: NextRequest) => {
 export const POST = ruta(async (req: NextRequest) => {
   const body = await leerJson(req);
   // Una pajilla solo trae el código (datosAnimal lo usa como arete y fija el sexo).
-  if (body.esPajilla !== true && (!body.arete || !body.sexo)) {
-    throw new ErrorValidacion("El arete y el sexo son obligatorios.");
+  // Un animal "sin arete" no manda arete (datosAnimal genera uno interno), pero sí el sexo.
+  if (body.esPajilla !== true) {
+    if (body.sinArete !== true && !body.arete) {
+      throw new ErrorValidacion("El arete es obligatorio.");
+    }
+    if (!body.sexo) throw new ErrorValidacion("El sexo es obligatorio.");
   }
   const datos = datosAnimal(body);
 

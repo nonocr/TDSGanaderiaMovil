@@ -19,7 +19,7 @@ caracteres (notas/descripción ≤ 2000; arete/raza ≤ 60).
 | `POST /api/sesion` | `{ clave, recordar }` (`recordar: false` → sesión hasta cerrar el navegador; si no, 1 año) | 200 + cookie · 401 · 429 |
 | `DELETE /api/sesion` | — | 200 (cierra sesión) |
 | `GET /api/animales` | `?sexo=MACHO\|HEMBRA&estado=ACTIVO\|VENDIDO\|MUERTO&modulo=ENGORDE\|LECHERIA\|REPRODUCTOR&q=texto` | `Animal[]` |
-| `POST /api/animales` | `arete*`, `sexo*`, `modulo` (ENGORDE\|LECHERIA\|REPRODUCTOR; por defecto ENGORDE), `codigo` (≤ 60), `areteCenasa` (≤ 60, opcional, cualquier módulo; arete oficial de CENASA, **no único**), `nombre`, `raza`, `fechaNacimiento`, `descripcion`, `estado`, `fechaBaja`, `motivoBaja`, `padreId`\|`padreExterno`, `madreId`\|`madreExterno`. **Pajilla**: `{ esPajilla: true, codigo*, areteCenasa?, estado?, fechaBaja?, motivoBaja? }` (sin arete ni sexo: arete = codigo, sexo MACHO, módulo REPRODUCTOR) | 201 `Animal` · 409 si el arete (o el código de la pajilla) ya existe |
+| `POST /api/animales` | `arete*`, `sexo*`, `modulo` (ENGORDE\|LECHERIA\|REPRODUCTOR; por defecto ENGORDE), `codigo` (≤ 60), `areteCenasa` (≤ 60, opcional, cualquier módulo; arete oficial de CENASA, **no único**), `sinArete` (bool; si `true` el animal no tiene arete físico: el backend genera un `arete` interno único `S/N-…` y **exige `areteCenasa`**, que pasa a identificarlo), `nombre`, `raza`, `fechaNacimiento`, `descripcion`, `estado`, `fechaBaja`, `motivoBaja`, `padreId`\|`padreExterno`, `madreId`\|`madreExterno`. **Pajilla**: `{ esPajilla: true, codigo*, areteCenasa?, estado?, fechaBaja?, motivoBaja? }` (sin arete ni sexo: arete = codigo, sexo MACHO, módulo REPRODUCTOR) | 201 `Animal` · 409 si el arete (o el código de la pajilla) ya existe |
 | `GET /api/animales/[id]` | — | `Animal` |
 | `PUT /api/animales/[id]` | igual que POST; si no se manda `modulo`, se conserva el actual | `Animal` |
 | `PATCH /api/animales/[id]` | `{ fotoUrl }`: data URL JPEG/PNG/WebP base64 ≤ 3 MB, o `null`. El servidor la re-codifica (sin EXIF/GPS) y genera `fotoMiniatura` (160 px, ~10 KB) | `{ id, fotoMiniatura }` · 400 si no es una imagen real |
@@ -43,6 +43,13 @@ caracteres (notas/descripción ≤ 2000; arete/raza ≤ 60).
 
 `PUT`/`DELETE` de un registro que no existe → **404** `{ error: "Registro no encontrado." }`.
 Alta o edición con un arete ya usado → **409** `{ error: "Ya existe un animal con el arete …" }`.
+
+**Animales sin arete** (`sinArete: true`): `arete` es obligatorio y único en la base, así que el
+backend le pone un valor interno autogenerado único con prefijo `S/N-` (`esAreteInterno()` en
+`src/lib/validar.ts`). Ese valor **no se muestra**: en la UI se usa el helper `etiquetaArete()` de
+`src/lib/tipos.ts`, que devuelve `CENASA <areteCenasa>` (o "Sin arete"). Al editar un animal sin
+arete, el cliente **reenvía el `arete` interno** para que se conserve. En el CSV la columna "Arete"
+sale como "(sin arete)".
 
 **Fotos**: `Animal.fotoUrl` (600 px) y `Animal.fotoMiniatura` (160 px). En listas, avatares y
 encabezados usar **siempre `fotoMiniatura`**; `fotoUrl` solo para ver la foto en grande.

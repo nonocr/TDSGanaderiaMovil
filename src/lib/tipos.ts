@@ -30,3 +30,17 @@ export const ETAPA_LABEL: Record<string, string> = {
 // "DESTETE" se mantiene en el mapa de etiquetas por compatibilidad con datos antiguos,
 // pero ya no es una etapa que se ofrezca al registrar.
 export const ETAPAS_ORDEN = ["LACTANCIA", "DESARROLLO", "ENGORDE"] as const;
+
+// Identificador visible de un animal. Normalmente es "#<arete>". Pero si el animal no tiene arete
+// físico (sinArete), su `arete` es un valor interno que NO debe mostrarse: se usa el arete de
+// CENASA, indicando que lo es. Pensado para listas, encabezados y selectores.
+export function etiquetaArete(a: {
+  arete: string;
+  sinArete?: boolean | null;
+  areteCenasa?: string | null;
+}): string {
+  if (a.sinArete) {
+    return a.areteCenasa ? `CENASA ${a.areteCenasa}` : "Sin arete";
+  }
+  return `#${a.arete}`;
+}

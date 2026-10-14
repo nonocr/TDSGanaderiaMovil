@@ -124,6 +124,21 @@ export function triestado(v: unknown): boolean | null {
   return null;
 }
 
+// Prefijo del arete INTERNO que se genera cuando un animal no tiene arete físico (sinArete).
+// Ese valor nunca se le muestra al usuario (en pantalla se usa el arete de CENASA); solo existe
+// porque la columna `arete` es obligatoria y única.
+export const PREFIJO_SIN_ARETE = "S/N-";
+
+// ¿Es un arete interno autogenerado (de un animal sin arete)?
+export function esAreteInterno(arete: string | null | undefined): boolean {
+  return typeof arete === "string" && arete.startsWith(PREFIJO_SIN_ARETE);
+}
+
+// Genera un arete interno único para un animal sin arete físico.
+function nuevoAreteInterno(): string {
+  return PREFIJO_SIN_ARETE + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
 // Campos de alta y edición de un animal, ya validados.
 export function datosAnimal(body: Record<string, unknown>) {
   const estado = body.estado ? opcion(body.estado, ESTADOS, "Estado") : "ACTIVO";
@@ -138,6 +153,8 @@ export function datosAnimal(body: Record<string, unknown>) {
   // Arete oficial de CENASA (opcional, cualquier módulo). No es único ni obligatorio.
   const areteCenasa = texto(body.areteCenasa, "Arete CENASA", LARGO.corto);
   const esPajilla = body.esPajilla === true;
+  // El animal no tiene arete físico: se identifica por el arete de CENASA.
+  const sinArete = body.sinArete === true;
 
   // PAJILLA (semen): no tiene arete propio ni más datos; solo se captura el código. Como el
   // arete es obligatorio y único, se usa el código como arete. Se fuerza sexo=MACHO y se
@@ -157,6 +174,7 @@ export function datosAnimal(body: Record<string, unknown>) {
       codigo: cod,
       // Arete oficial de CENASA (opcional): si no se captura, queda null.
       areteCenasa,
+      sinArete: false,
       esPajilla: true,
       fechaBaja: esBaja ? fecha(body.fechaBaja, "Fecha de baja") : null,
       motivoBaja: esBaja ? texto(body.motivoBaja, "Motivo de baja", LARGO.notas) : null,
@@ -167,8 +185,21 @@ export function datosAnimal(body: Record<string, unknown>) {
     };
   }
 
+  // Arete: normalmente obligatorio y único. Si el animal NO tiene arete físico (sinArete), se
+  // identifica por el de CENASA (que pasa a ser obligatorio) y se guarda un arete interno único.
+  // Al editar un animal que ya era sin arete, se conserva su arete interno (el body lo reenvía).
+  let arete: string;
+  if (sinArete) {
+    if (!areteCenasa) {
+      throw new ErrorValidacion("Si el animal no tiene arete, el arete de CENASA es obligatorio.");
+    }
+    arete = esAreteInterno(body.arete as string) ? (body.arete as string) : nuevoAreteInterno();
+  } else {
+    arete = textoObligatorio(body.arete, "El arete", LARGO.corto);
+  }
+
   return {
-    arete: textoObligatorio(body.arete, "El arete", LARGO.corto),
+    arete,
     nombre: texto(body.nombre, "Nombre"),
     sexo: opcion(body.sexo, SEXOS, "Sexo"),
     raza: texto(body.raza, "Raza", LARGO.corto),
@@ -180,6 +211,7 @@ export function datosAnimal(body: Record<string, unknown>) {
     codigo,
     // Arete oficial de CENASA (opcional, cualquier módulo).
     areteCenasa,
+    sinArete,
     esPajilla: false,
     fechaBaja: esBaja ? fecha(body.fechaBaja, "Fecha de baja") : null,
     motivoBaja: esBaja ? texto(body.motivoBaja, "Motivo de baja", LARGO.notas) : null,
@@ -214,6 +246,7 @@ export const ANIMAL_SIN_FOTO = {
   modulo: true,
   codigo: true,
   areteCenasa: true,
+  sinArete: true,
   esPajilla: true,
   fechaBaja: true,
   motivoBaja: true,

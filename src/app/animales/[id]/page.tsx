@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { ANIMAL_SIN_FOTO } from "@/lib/validar";
 import { Card, SectionTitle, EstadoBadge, SexoBadge, AnimalLink, Badge } from "@/components/ui";
 import { formatearFecha, calcularEdad } from "@/lib/fechas";
-import { SEXO_LABEL, ETAPA_LABEL, MODULO_LABEL } from "@/lib/tipos";
+import { SEXO_LABEL, ETAPA_LABEL, MODULO_LABEL, etiquetaArete } from "@/lib/tipos";
 import {
   etapaActualTernero,
   situacionReproductivaVaca,
@@ -231,9 +231,10 @@ export default async function AnimalDetallePage({
       ? { tipo: "externo", texto: animal.madreExterno }
       : { tipo: "desconocido" };
 
+  const identAnimal = etiquetaArete(animal);
   const etiquetaAnimal = animal.nombre
-    ? `${animal.nombre} (#${animal.arete})`
-    : `#${animal.arete}`;
+    ? `${animal.nombre} (${identAnimal})`
+    : identAnimal;
 
   // Etapas en orden cronologico ascendente para leerlas como linea de vida.
   const etapasOrdenadas = [...animal.etapas].sort(
@@ -287,7 +288,7 @@ export default async function AnimalDetallePage({
             <div className="min-w-0">
               <h1 className="text-2xl font-bold leading-tight tracking-tight text-stone-800 dark:text-stone-100">
                 {animal.nombre ? `${animal.nombre} ` : ""}
-                <span className="text-stone-400 dark:text-stone-500">#{animal.arete}</span>
+                <span className="text-stone-400 dark:text-stone-500">{identAnimal}</span>
               </h1>
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                 <SexoBadge sexo={animal.sexo} />
@@ -317,7 +318,7 @@ export default async function AnimalDetallePage({
             <Card>
               <SectionTitle>Datos básicos</SectionTitle>
               <dl className="space-y-1 text-sm">
-                <Dato k="Arete" v={animal.arete} />
+                <Dato k="Arete" v={animal.sinArete ? "Sin arete (identificado por CENASA)" : animal.arete} />
                 <Dato k="Nombre" v={animal.nombre ?? "—"} />
                 <Dato k="Módulo" v={MODULO_LABEL[animal.modulo] ?? animal.modulo} />
                 {animal.modulo === "REPRODUCTOR" && (

@@ -40,6 +40,7 @@ export const GET = ruta(async (req: NextRequest) => {
       orderBy: { arete: "asc" },
       select: {
         arete: true,
+        sinArete: true,
         nombre: true,
         sexo: true,
         raza: true,
@@ -88,7 +89,9 @@ export const GET = ruta(async (req: NextRequest) => {
     const madre = progenitor(a.madreId, a.madreExterno);
 
     return [
-      a.arete,
+      // Si no tiene arete físico, el `arete` es un valor interno: no se exporta (se identifica
+      // por el arete de CENASA, que va en su propia columna).
+      a.sinArete ? "(sin arete)" : a.arete,
       a.nombre ?? "",
       SEXO_LABEL[a.sexo] ?? a.sexo,
       a.raza ?? "",

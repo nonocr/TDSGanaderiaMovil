@@ -2,10 +2,21 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { MODULO_LABEL } from "@/lib/tipos";
+import { MODULO_LABEL, etiquetaArete } from "@/lib/tipos";
 import { hoyLocalISO } from "@/lib/fechas";
 
-type Opcion = { id: string; arete: string; nombre: string | null };
+// Prefijo del arete interno que genera el backend para los animales sin arete físico. No se le
+// muestra al usuario (ver src/lib/validar.ts, PREFIJO_SIN_ARETE).
+const PREFIJO_SIN_ARETE = "S/N-";
+const esAreteInterno = (a?: string | null) => typeof a === "string" && a.startsWith(PREFIJO_SIN_ARETE);
+
+type Opcion = {
+  id: string;
+  arete: string;
+  nombre: string | null;
+  sinArete?: boolean | null;
+  areteCenasa?: string | null;
+};
 
 export type ValoresAnimal = {
   id?: string;
@@ -19,6 +30,7 @@ export type ValoresAnimal = {
   modulo?: string;
   codigo?: string | null;
   areteCenasa?: string | null;
+  sinArete?: boolean;
   esPajilla?: boolean;
   fechaBaja?: string | null; // ISO o yyyy-mm-dd
   motivoBaja?: string | null;
@@ -58,6 +70,10 @@ export function FormularioAnimal({
   );
   const [estado, setEstado] = useState<string>(valores?.estado ?? "ACTIVO");
   const esBaja = estado === "VENDIDO" || estado === "MUERTO";
+
+  // El animal no tiene arete físico: se identifica por el arete de CENASA (que pasa a ser
+  // obligatorio). El arete interno lo genera/conserva el backend.
+  const [sinArete, setSinArete] = useState<boolean>(valores?.sinArete ?? false);
 
   // El módulo determina qué campos se muestran. Controlado para poder reaccionar al cambio.
   const [modulo, setModulo] = useState<string>(valores?.modulo ?? moduloInicial ?? "ENGORDE");
@@ -102,7 +118,10 @@ export function FormularioAnimal({
         ? soloFecha(valores?.fechaNacimiento) || null
         : (fd.get("fechaNacimiento") as string) || null;
       payload = {
-        arete: fd.get("arete"),
+        // Si no tiene arete, se reenvía el arete interno existente (al editar) para que el
+        // backend lo conserve; en el alta va vacío y el backend genera uno.
+        arete: sinArete ? (valores?.arete ?? "") : fd.get("arete"),
+        sinArete,
         nombre: fd.get("nombre"),
         // Sexo: el fijo por módulo, o el elegido en engorde.
         sexo: sexoFijo ?? fd.get("sexo"),
@@ -298,13 +317,32 @@ export function FormularioAnimal({
         </div>
       ) : (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor="fa-arete" className={etiqueta}>Número de arete *</label>
-          <input id="fa-arete" name="arete" maxLength={60} required className={campo} placeholder="Ej. 025" defaultValue={valores?.arete ?? ""} />
-          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-            El número de la chapa/caravana. No se puede repetir entre animales.
-          </p>
+        <div className="sm:col-span-2">
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-stone-600 dark:text-stone-300">
+            <input
+              type="checkbox"
+              className="h-5 w-5 shrink-0 accent-marca-600"
+              checked={sinArete}
+              onChange={(e) => setSinArete(e.target.checked)}
+            />
+            Este animal no tiene arete (se identifica por el arete de CENASA)
+          </label>
         </div>
+
+        {!sinArete ? (
+          <div>
+            <label htmlFor="fa-arete" className={etiqueta}>Número de arete *</label>
+            <input id="fa-arete" name="arete" maxLength={60} required className={campo} placeholder="Ej. 025" defaultValue={esAreteInterno(valores?.arete) ? "" : valores?.arete ?? ""} />
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+              El número de la chapa/caravana. No se puede repetir entre animales.
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-500 dark:border-stone-700 dark:bg-stone-800/50 dark:text-stone-400">
+            Sin arete de la finca. Completa abajo el <strong>arete de CENASA</strong>: será lo que
+            identifique a este animal.
+          </div>
+        )}
         <div>
           <label htmlFor="fa-nombre" className={etiqueta}>Nombre (opcional)</label>
           <input id="fa-nombre" name="nombre" maxLength={120} className={campo} placeholder="Ej. Estrella" defaultValue={valores?.nombre ?? ""} />
@@ -328,19 +366,25 @@ export function FormularioAnimal({
           <input id="fa-raza" name="raza" maxLength={60} className={campo} defaultValue={valores?.raza ?? ""} />
         </div>
 
-        {/* Arete oficial de CENASA: opcional, para cualquier módulo. */}
+        {/* Arete oficial de CENASA: opcional, salvo cuando el animal no tiene arete de la finca
+            (entonces es su identificador y pasa a ser obligatorio). */}
         <div>
-          <label htmlFor="fa-arete-cenasa" className={etiqueta}>Arete de CENASA (opcional)</label>
+          <label htmlFor="fa-arete-cenasa" className={etiqueta}>
+            Arete de CENASA {sinArete ? "*" : "(opcional)"}
+          </label>
           <input
             id="fa-arete-cenasa"
             name="areteCenasa"
             maxLength={60}
+            required={sinArete}
             className={campo}
             placeholder="Ej. CR-000123456"
             defaultValue={valores?.areteCenasa ?? ""}
           />
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-            Arete oficial de trazabilidad. Déjalo en blanco si el animal no lo tiene.
+            {sinArete
+              ? "Obligatorio: identifica al animal al no tener arete de la finca."
+              : "Arete oficial de trazabilidad. Déjalo en blanco si el animal no lo tiene."}
           </p>
         </div>
 
@@ -483,7 +527,7 @@ export function FormularioAnimal({
             <option value="">— Sin especificar —</option>
             {machosFiltrados.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.nombre ? `${m.nombre} (#${m.arete})` : `#${m.arete}`}
+                {m.nombre ? `${m.nombre} (${etiquetaArete(m)})` : etiquetaArete(m)}
               </option>
             ))}
           </select>
@@ -514,7 +558,7 @@ export function FormularioAnimal({
             <option value="">— Sin especificar —</option>
             {hembrasFiltradas.map((h) => (
               <option key={h.id} value={h.id}>
-                {h.nombre ? `${h.nombre} (#${h.arete})` : `#${h.arete}`}
+                {h.nombre ? `${h.nombre} (${etiquetaArete(h)})` : etiquetaArete(h)}
               </option>
             ))}
           </select>

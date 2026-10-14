@@ -23,6 +23,56 @@ _(ninguno todavía)_
 
 Lo que Claude Code detecta y le toca resolver al frontend. Kiro marca `[HECHO]` al corregirlo.
 
+### [REVISAR] Opción "sin arete": `sinArete` + arete interno (Kiro, 2026-10-13)
+
+> El dueño me dio permiso para tocar backend. Pidió una **opción para cuando el animal no tiene
+> número de arete**. Decisiones que me confirmó: (1) si no tiene arete, se identifica por el **arete
+> de CENASA** (que entonces es obligatorio); (2) **puede haber varios** animales sin arete a la vez;
+> (3) en pantalla se muestra el de CENASA **indicando** que es ese. Déjalo `[REVISADO]` cuando lo veas.
+
+**El problema:** `arete` es `@unique` y obligatorio, y lo usa toda la app como identificador. No puedo
+dejarlo vacío ni usar un valor fijo (habría varios "sin arete"). Solución (patrón parecido al de la
+pajilla `arete = codigo`):
+
+**[REVISAR] 1. Modelo — `prisma/schema.prisma` (Animal)**
+- Nuevo campo `sinArete Boolean @default(false)`. Aplicado con `db push` + `generate` (app detenida).
+
+**[REVISAR] 2. Validación — `src/lib/validar.ts`**
+- `PREFIJO_SIN_ARETE = "S/N-"`, `esAreteInterno()` (exportada, la usa el frontend por su cuenta con
+  una copia de la constante, no importa validar.ts en el cliente) y `nuevoAreteInterno()` (prefijo +
+  timestamp base36 + aleatorio → único sin consultar la base).
+- `datosAnimal`, camino normal: si `sinArete`, **exige `areteCenasa`** (400 si falta) y pone en `arete`
+  un valor interno. **Al editar**, si el `body.arete` que llega ya es interno (empieza con `S/N-`), se
+  **conserva**; si no, se genera uno nuevo. Devuelve `sinArete`. ANIMAL_SIN_FOTO incluye `sinArete`.
+- **Punto a revisar por ti**: el arete interno se genera en app, no con un `cuid()` de Prisma. Es
+  único en la práctica (timestamp+random); si prefieres `cuid()` o una secuencia, cámbialo. También:
+  si alguien pone `sinArete` **y** un arete a mano, gana `sinArete` (se ignora el arete escrito).
+
+**[REVISAR] 3. Rutas `POST`/`PUT /api/animales`**
+- El chequeo previo "arete y sexo obligatorios" ahora: si `sinArete` **no** exige `arete` (sí el sexo).
+  (Igual que ya se saltaba para pajilla.) El resto lo valida `datosAnimal`.
+
+**[REVISAR] 4. Respaldo y Exportar**
+- Respaldo: restaura `sinArete` (respaldos viejos = false).
+- CSV: la columna "Arete" sale como "(sin arete)" cuando aplica (el valor interno no se exporta); el
+  arete de CENASA va en su propia columna.
+
+**Frontend (mi terreno, solo contexto)**
+- `FormularioAnimal.tsx`: casilla "Este animal no tiene arete". Al marcarla, se oculta el campo de
+  arete (y deja de ser obligatorio) y el **arete de CENASA pasa a obligatorio**. Vale para engorde,
+  lechería y toro (la pajilla tiene su propio flujo). Al editar, reenvía el arete interno.
+- **Identificador en toda la UI**: helper `etiquetaArete()` en `src/lib/tipos.ts` → `#<arete>` normal,
+  o `CENASA <areteCenasa>` / "Sin arete" si `sinArete`. Usado en `AnimalLink` (ui.tsx), la ficha, las
+  listas (`ListaAnimales`, con búsqueda que ahora también mira el arete de CENASA) y los selectores
+  de padre/madre. `src/lib/genealogia.ts` (`NodoAnimal` + la lectura de parentesco) ahora trae
+  `sinArete`/`areteCenasa` para propagar el identificador a selectores, árbol y nombres relacionados.
+- **Caso de borde conocido**: los `<option>` de toro/cría en los formularios de **evento**
+  (`FormulariosEventos.tsx`, `FilaEvento.tsx`) reciben solo `{id, arete, nombre}`, así que si usas un
+  animal **sin arete** como toro de una monta/parto se vería su valor interno `S/N-…`. Es raro (un
+  reproductor sin arete) y no rompe nada; si quieres, se amplía esa prop. Lo dejo anotado.
+
+**Estado:** completo y verificado (`db push`+`generate`, `tsc --noEmit` y `prod:build` OK, 15 páginas).
+
 ### [REVISAR] Nuevo campo `areteCenasa` en Animal (Kiro, 2026-10-13)
 
 > El dueño me dio permiso para tocar backend (no tenía tokens de Claude). Pidió un campo para el
