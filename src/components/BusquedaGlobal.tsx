@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconoBuscar, IconoCerrar, IconoAnimal } from "@/components/iconos";
-import { MODULO_LABEL } from "@/lib/tipos";
+import { MODULO_LABEL, etiquetaArete } from "@/lib/tipos";
 
 // Un resultado de búsqueda (lo que devuelve GET /api/animales, campos que mostramos).
 type Resultado = {
   id: string;
   arete: string;
+  sinArete: boolean;
+  areteCenasa: string | null;
   nombre: string | null;
   sexo: string;
   modulo: string;
@@ -90,8 +92,8 @@ export function BusquedaGlobal({
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           onFocus={() => resultados.length > 0 && setAbierto(true)}
-          placeholder="Buscar arete o nombre…"
-          aria-label="Buscar animal por arete o nombre"
+          placeholder="Buscar arete, CENASA o nombre…"
+          aria-label="Buscar animal por arete, arete de CENASA o nombre"
           className="h-11 w-full rounded-xl border border-stone-300 bg-white pl-10 pr-10 text-sm outline-none focus:border-marca-500 focus:ring-2 focus:ring-marca-200 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500 [&::-webkit-search-cancel-button]:hidden"
         />
         {texto && (
@@ -138,8 +140,8 @@ export function BusquedaGlobal({
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium text-stone-800 dark:text-stone-100">
-                    {a.nombre ? a.nombre : `#${a.arete}`}
-                    {a.nombre && <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">#{a.arete}</span>}
+                    {a.nombre ? a.nombre : etiquetaArete(a)}
+                    {a.nombre && <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">{etiquetaArete(a)}</span>}
                   </span>
                   <span className="block truncate text-xs text-stone-400 dark:text-stone-500">
                     {MODULO_LABEL[a.modulo] ?? a.modulo}

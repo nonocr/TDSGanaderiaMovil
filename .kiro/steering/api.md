@@ -18,7 +18,7 @@ caracteres (notas/descripción ≤ 2000; arete/raza ≤ 60).
 | --- | --- | --- |
 | `POST /api/sesion` | `{ clave, recordar }` (`recordar: false` → sesión hasta cerrar el navegador; si no, 1 año) | 200 + cookie · 401 · 429 |
 | `DELETE /api/sesion` | — | 200 (cierra sesión) |
-| `GET /api/animales` | `?sexo=MACHO\|HEMBRA&estado=ACTIVO\|VENDIDO\|MUERTO&modulo=ENGORDE\|LECHERIA\|REPRODUCTOR&q=texto` | `Animal[]` |
+| `GET /api/animales` | `?sexo=MACHO\|HEMBRA&estado=ACTIVO\|VENDIDO\|MUERTO&modulo=ENGORDE\|LECHERIA\|REPRODUCTOR&q=texto` (`q` busca en arete, **arete de CENASA**, nombre y raza) | `Animal[]` |
 | `POST /api/animales` | `arete*`, `sexo*`, `modulo` (ENGORDE\|LECHERIA\|REPRODUCTOR; por defecto ENGORDE), `codigo` (≤ 60), `areteCenasa` (≤ 60, opcional, cualquier módulo; arete oficial de CENASA, **no único**), `sinArete` (bool; si `true` el animal no tiene arete físico: el backend genera un `arete` interno único `S/N-…` y **exige `areteCenasa`**, que pasa a identificarlo), `nombre`, `raza`, `fechaNacimiento`, `descripcion`, `estado`, `fechaBaja`, `motivoBaja`, `padreId`\|`padreExterno`, `madreId`\|`madreExterno`. **Pajilla**: `{ esPajilla: true, codigo*, areteCenasa?, estado?, fechaBaja?, motivoBaja? }` (sin arete ni sexo: arete = codigo, sexo MACHO, módulo REPRODUCTOR) | 201 `Animal` · 409 si el arete (o el código de la pajilla) ya existe |
 | `GET /api/animales/[id]` | — | `Animal` |
 | `PUT /api/animales/[id]` | igual que POST; si no se manda `modulo`, se conserva el actual | `Animal` |

@@ -24,6 +24,7 @@ export const GET = ruta(async (req: NextRequest) => {
             OR: [
               // En Postgres `contains` distingue mayúsculas; SQLite no lo hacía.
               { arete: { contains: q, mode: "insensitive" } },
+              { areteCenasa: { contains: q, mode: "insensitive" } },
               { nombre: { contains: q, mode: "insensitive" } },
               { raza: { contains: q, mode: "insensitive" } },
             ],
