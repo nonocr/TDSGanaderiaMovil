@@ -8,8 +8,11 @@ etapas de crecimiento). Pensada para el día a día, sobre todo desde el celular
 
 - **En internet**: publicada en **Vercel**. Cada `git push` a `master` despliega una versión
   nueva sola (ver `docs/13-despliegue-vercel.md`).
+- **En el celular**: se puede instalar como app. En Android, con un APK (Capacitor); en iPhone,
+  desde Safari con "Agregar a pantalla de inicio". Abre la misma web, así que cada `push` también
+  la actualiza (ver `docs/14-app-movil.md`).
 - **En la red local de la finca**: `npm run prod` sirve la misma app en el puerto 3000.
-- Las dos usan la **misma base de datos** (PostgreSQL en Supabase) y la misma contraseña.
+- Todas usan la **misma base de datos** (PostgreSQL en Supabase) y la misma contraseña.
 
 ## ¿Qué permite hacer?
 
@@ -42,8 +45,12 @@ entre ellos:
   (promedio de 30 días y último registro). Cada registro es un ordeño (mañana o tarde); el
   total del día es la suma de los ordeños.
 - **Calendario** con lo que viene en los próximos meses.
-- **Exportar a CSV** (todo o por módulo) e **imprimir / guardar en PDF** la ficha de un animal.
+- **Exportar a CSV** (todo o por módulo). La ficha de un animal también se puede imprimir o
+  guardar en PDF desde el diálogo de impresión del navegador o del celular.
 - **Respaldo**: descargar todos los datos en un JSON y restaurarlos.
+- **Modo sin conexión**: en el campo sin señal se ve la última copia de las páginas visitadas y
+  se pueden registrar ordeños, pesos, montas, partos y cambios de etapa; se envían solos al volver
+  la señal (ver `docs/14-app-movil.md`).
 - **Modo claro / oscuro**, diseño mobile-first e iconos SVG.
 
 ## Tecnología
@@ -116,6 +123,10 @@ src/
 prisma/
   schema.prisma     Modelo de datos
   supabase-rls.sql  Activa RLS en Supabase (se ejecuta una vez por base nueva)
+public/
+  sw.js             Service worker: ver sin señal las páginas ya visitadas
+movil/              App Android con Capacitor (contenedor que abre la web). No se despliega en
+                    Vercel (.vercelignore). Ver docs/14-app-movil.md
 docs/               Documentación del negocio, del modelo y decisiones del proyecto
 scripts/            produccion.mjs (app "en uso" local) y cambiar-clave.mjs (contraseña)
 .kiro/steering/     Contexto para Kiro (frontend), incluido el contrato de la API (api.md)
@@ -131,6 +142,7 @@ scripts/            produccion.mjs (app "en uso" local) y cambiar-clave.mjs (con
 | `11-seguridad.md` | Acceso, sesión y medidas de seguridad |
 | `12-pedidos-backend.md` | Canal entre frontend (Kiro) y backend (Claude Code) |
 | `13-despliegue-vercel.md` | Publicación en Vercel y sus límites |
+| `14-app-movil.md` | App móvil (Android con Capacitor, iPhone) y modo sin conexión |
 
 ## Notas
 
