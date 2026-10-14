@@ -387,3 +387,25 @@ export function IconoPin(p: Props) {
 export function IconoAnimal({ sexo, ...p }: Props & { sexo: string }) {
   return sexo === "MACHO" ? <IconoToro {...p} /> : <IconoVaca {...p} />;
 }
+
+// Ojo abierto: "mostrar la contraseña".
+export function IconoOjo(p: Props) {
+  return (
+    <svg {...base} {...p}>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+// Ojo tachado: "ocultar la contraseña".
+export function IconoOjoTachado(p: Props) {
+  return (
+    <svg {...base} {...p}>
+      <path d="M10.6 6.1A9.8 9.8 0 0 1 12 6c6.5 0 10 7 10 7a16.9 16.9 0 0 1-3 3.8" />
+      <path d="M6.5 7.9A16.6 16.6 0 0 0 2 13s3.5 7 10 7a9.8 9.8 0 0 0 4.2-.9" />
+      <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+      <path d="m3 3 18 18" />
+    </svg>
+  );
+}

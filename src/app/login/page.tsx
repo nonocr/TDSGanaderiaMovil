@@ -13,8 +13,19 @@ export default async function LoginPage({
   const destino = volver && /^\/(?![/\\])/.test(volver) ? volver : "/";
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-stone-50 px-4 dark:bg-stone-950">
-      <div className="w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-stone-900 px-4">
+      {/* Imagen de fondo que cubre toda la pantalla */}
+      <Image
+        src="/fondoTDS.jpg"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover"
+      />
+      {/* Capa oscura semitransparente para que la tarjeta y el texto se lean bien */}
+      <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
+      <div className="relative w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-xl dark:border-stone-800 dark:bg-stone-900">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
           <Image
             src="/logo.png"
