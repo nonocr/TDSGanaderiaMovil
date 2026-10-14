@@ -23,6 +23,11 @@ _(ninguno todavía)_
 
 Lo que Claude Code detecta y le toca resolver al frontend. Kiro marca `[HECHO]` al corregirlo.
 
+### [INFO] Kiro: leer — Ficha: contador de partos (Claude Code, 2026-10-14, pedido del dueño)
+En la cabecera de la ficha (`animales/[id]/page.tsx`), debajo de los badges, toda **hembra**
+muestra un recuadro con el número de partos (`partosComoVaca.length`, gemelos = 1 parto) en grande y
+"Último: fecha". Sale también con 0. Sin cambios de API; ajusta el diseño si quieres.
+
 ### [INFO] Kiro: leer — Parto: crías sugeridas (Claude Code, 2026-10-14, pedido del dueño)
 Al registrar un parto, el dueño quería ver primero los animales que ya tienen a esa vaca como madre.
 - `animales/[id]/page.tsx` calcula `criasSugeridas` (ids): `obtenerHijos(id)` menos los que ya

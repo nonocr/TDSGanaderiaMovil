@@ -311,6 +311,22 @@ export default async function AnimalDetallePage({
                 )}
                 {animal.raza && <Badge tono="neutral">{animal.raza}</Badge>}
               </div>
+              {/* Cantidad de partos de la vaca (gemelos = un parto), bien visible. */}
+              {animal.sexo === "HEMBRA" && (
+                <div className="mt-3 inline-flex items-center gap-2.5 rounded-lg bg-marca-50 px-3 py-1.5 ring-1 ring-inset ring-marca-200 dark:bg-marca-950/40 dark:ring-marca-900">
+                  <span className="text-2xl font-bold leading-none text-marca-700 dark:text-marca-300">
+                    {animal.partosComoVaca.length}
+                  </span>
+                  <span className="text-sm leading-tight text-stone-700 dark:text-stone-200">
+                    {animal.partosComoVaca.length === 1 ? "parto" : "partos"}
+                    {animal.partosComoVaca[0] && (
+                      <span className="block text-xs text-stone-500 dark:text-stone-400">
+                        Último: {formatearFecha(animal.partosComoVaca[0].fecha)}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           <AccionesAnimal animalId={animal.id} etiqueta={etiquetaAnimal} />
