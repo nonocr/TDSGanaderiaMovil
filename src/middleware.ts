@@ -55,7 +55,8 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Todo excepto archivos estáticos de Next, las imágenes públicas, el manifest de la app
-  // instalable (el sistema lo pide sin cookie de sesión) y el service worker (public/sw.js).
-  matcher: ["/((?!_next/static|_next/image|favicon.png|favicon.ico|logo.png|iconos/|manifest.webmanifest|sw.js).*)"],
+  // Todo excepto archivos estáticos de Next, las imágenes públicas (logo y fondo del login,
+  // que se ven sin sesión), el manifest de la app instalable (el sistema lo pide sin cookie
+  // de sesión) y el service worker (public/sw.js).
+  matcher: ["/((?!_next/static|_next/image|favicon.png|favicon.ico|logo.png|fondoTDS.jpg|iconos/|manifest.webmanifest|sw.js).*)"],
 };

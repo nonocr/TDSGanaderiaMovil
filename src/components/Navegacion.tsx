@@ -108,16 +108,16 @@ function Sidebar() {
       </nav>
 
       <div className="mx-5 border-t border-stone-100 dark:border-stone-800" />
-      <div className="flex items-center gap-2 px-4 py-4">
+      <div className="m-4 flex items-center gap-2">
+        <button
+          onClick={cerrarSesion}
+          className="flex flex-1 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-stone-500 transition-colors hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
+        >
+          <IconoSalir className="h-4 w-4 shrink-0" />
+          Cerrar sesión
+        </button>
         <ToggleTema />
       </div>
-      <button
-        onClick={cerrarSesion}
-        className="mx-4 mb-4 flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-stone-500 transition-colors hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
-      >
-        <IconoSalir className="h-4 w-4" />
-        Cerrar sesión
-      </button>
     </div>
   );
 }
