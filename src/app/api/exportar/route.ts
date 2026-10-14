@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { SEXO_LABEL, ESTADO_LABEL, MODULO_LABEL } from "@/lib/tipos";
+import { SEXO_LABEL, ESTADO_LABEL, MODULO_LABEL, etiquetaArete } from "@/lib/tipos";
 import { ruta, opcion, SEXOS, MODULOS } from "@/lib/validar";
 import { listarAnimales } from "@/lib/genealogia";
 
@@ -77,10 +77,11 @@ export const GET = ruta(async (req: NextRequest) => {
     "Descripcion",
   ];
 
-  // Progenitor registrado "Nombre (#arete)", externo "Texto (externo)" o vacío.
+  // Progenitor registrado "Nombre (#arete)" (o "CENASA …" si no tiene arete), externo
+  // "Texto (externo)" o vacío.
   const progenitor = (idRegistrado: string | null, externo: string | null) => {
     const p = idRegistrado ? porId.get(idRegistrado) : undefined;
-    if (p) return p.nombre ? `${p.nombre} (#${p.arete})` : `#${p.arete}`;
+    if (p) return p.nombre ? `${p.nombre} (${etiquetaArete(p)})` : etiquetaArete(p);
     return externo ? `${externo} (externo)` : "";
   };
 

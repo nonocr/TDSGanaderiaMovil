@@ -102,6 +102,8 @@ function etiquetas(inicio: Date, vista: Vista): { etiqueta: string; titulo: stri
 export type FilaVaca = {
   id: string;
   arete: string;
+  sinArete: boolean;
+  areteCenasa: string | null;
   nombre: string | null;
   resumen: ResumenVaca;
 };
@@ -125,7 +127,7 @@ export async function produccionHato(vista: Vista, hoy = new Date()) {
     }),
     prisma.animal.findMany({
       where: { modulo: "LECHERIA", estado: "ACTIVO" },
-      select: { id: true, arete: true, nombre: true },
+      select: { id: true, arete: true, sinArete: true, areteCenasa: true, nombre: true },
       orderBy: { arete: "asc" },
     }),
     // Fecha del último registro de cada vaca activa, aunque sea anterior al rango de la gráfica.
@@ -186,10 +188,14 @@ export async function produccionHato(vista: Vista, hoy = new Date()) {
       })
     : [];
 
-  const filas: FilaVaca[] = vacas.map((v) => {
-    const propios = [...registros, ...extra].filter((r) => r.vacaId === v.id);
-    return { ...v, resumen: resumenVaca(propios, hoy) };
-  });
+  // Registros agrupados por vaca en una sola pasada (antes se filtraba la lista entera por vaca).
+  const porVaca = new Map<string, typeof registros>();
+  for (const r of [...registros, ...extra]) {
+    const lista = porVaca.get(r.vacaId);
+    if (lista) lista.push(r);
+    else porVaca.set(r.vacaId, [r]);
+  }
+  const filas: FilaVaca[] = vacas.map((v) => ({ ...v, resumen: resumenVaca(porVaca.get(v.id) ?? [], hoy) }));
   // Primero las que más producen (últimos 30 días); al final las que no tienen registros.
   filas.sort((a, b) => (b.resumen.promedio30 ?? -1) - (a.resumen.promedio30 ?? -1));
 

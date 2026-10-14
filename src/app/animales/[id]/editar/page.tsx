@@ -5,6 +5,7 @@ import { listarAnimales } from "@/lib/genealogia";
 import { ANIMAL_SIN_FOTO } from "@/lib/validar";
 import { Card } from "@/components/ui";
 import { FormularioAnimal } from "@/components/FormularioAnimal";
+import { etiquetaArete } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ export default async function EditarAnimalPage({
     <div className="mx-auto max-w-2xl space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-stone-800 dark:text-stone-100">
-          Editar {animal.nombre ? `${animal.nombre} ` : ""}#{animal.arete}
+          Editar {animal.nombre ? `${animal.nombre} ` : ""}{etiquetaArete(animal)}
         </h1>
         <Link href={`/animales/${animal.id}`} className="text-sm text-marca-700 hover:underline dark:text-marca-400">
           ← Volver a la ficha

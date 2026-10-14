@@ -22,6 +22,8 @@ export type Pendiente = {
   tipo: TipoPendiente;
   animalId: string;
   arete: string;
+  sinArete: boolean;
+  areteCenasa: string | null;
   nombre: string | null;
   fecha: string; // ISO, fecha objetivo del aviso
   diasRestantes: number; // negativo si ya pasó
@@ -35,6 +37,8 @@ const VENTANA_DIAS = 20;
 export type VacaConCiclo = {
   id: string;
   arete: string;
+  sinArete: boolean;
+  areteCenasa: string | null;
   nombre: string | null;
   montasComoVaca: { fecha: Date }[];
   partosComoVaca: { fecha: Date }[];
@@ -48,7 +52,7 @@ export type VacaConCiclo = {
 export const cargarVacasConCiclo = cache(async (modulo?: string): Promise<VacaConCiclo[]> => {
   const where = { sexo: "HEMBRA", estado: "ACTIVO", ...(modulo ? { modulo } : {}) };
   const [vacas, montas, partos] = await Promise.all([
-    prisma.animal.findMany({ where, select: { id: true, arete: true, nombre: true } }),
+    prisma.animal.findMany({ where, select: { id: true, arete: true, sinArete: true, areteCenasa: true, nombre: true } }),
     prisma.monta.findMany({ where: { vaca: where }, select: { vacaId: true, fecha: true } }),
     prisma.parto.findMany({ where: { vaca: where }, select: { vacaId: true, fecha: true } }),
   ]);
@@ -79,6 +83,8 @@ export async function calcularPendientes(hoy: Date = new Date()): Promise<Pendie
           tipo: "LISTA_MONTAR",
           animalId: v.id,
           arete: v.arete,
+          sinArete: v.sinArete,
+          areteCenasa: v.areteCenasa,
           nombre: v.nombre,
           fecha: objetivo.toISOString(),
           diasRestantes: dias,
@@ -105,6 +111,8 @@ export async function calcularPendientes(hoy: Date = new Date()): Promise<Pendie
         tipo: "POR_PARIR",
         animalId: v.id,
         arete: v.arete,
+        sinArete: v.sinArete,
+        areteCenasa: v.areteCenasa,
         nombre: v.nombre,
         fecha: partoEstimado.toISOString(),
         diasRestantes: diasParto,
@@ -119,6 +127,8 @@ export async function calcularPendientes(hoy: Date = new Date()): Promise<Pendie
         tipo: "SECADO_PROXIMO",
         animalId: v.id,
         arete: v.arete,
+        sinArete: v.sinArete,
+        areteCenasa: v.areteCenasa,
         nombre: v.nombre,
         fecha: inicioSecado.toISOString(),
         diasRestantes: diasSecado,
@@ -133,6 +143,8 @@ export async function calcularPendientes(hoy: Date = new Date()): Promise<Pendie
         tipo: "ORDENIO",
         animalId: v.id,
         arete: v.arete,
+        sinArete: v.sinArete,
+        areteCenasa: v.areteCenasa,
         nombre: v.nombre,
         fecha: ultimaMonta.fecha.toISOString(),
         diasRestantes: -diasDesdeMonta, // 0 hoy, negativo si ya pasaron días
@@ -166,6 +178,8 @@ export type EventoCalendario = {
   tipo: TipoEventoCalendario;
   animalId: string;
   arete: string;
+  sinArete: boolean;
+  areteCenasa: string | null;
   nombre: string | null;
   fecha: string; // ISO, fecha del hito
 };
@@ -187,7 +201,7 @@ export async function calcularEventosCalendario(
 
   const agregar = (
     tipo: TipoEventoCalendario,
-    v: { id: string; arete: string; nombre: string | null },
+    v: VacaConCiclo,
     fecha: Date
   ) => {
     if (fecha.getTime() < inicioMes.getTime()) return; // ya pasó: no lo mostramos
@@ -195,6 +209,8 @@ export async function calcularEventosCalendario(
       tipo,
       animalId: v.id,
       arete: v.arete,
+      sinArete: v.sinArete,
+      areteCenasa: v.areteCenasa,
       nombre: v.nombre,
       fecha: fecha.toISOString(),
     });

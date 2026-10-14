@@ -134,6 +134,16 @@ export function esAreteInterno(arete: string | null | undefined): boolean {
   return typeof arete === "string" && arete.startsWith(PREFIJO_SIN_ARETE);
 }
 
+// Un arete escrito a mano (o el código de una pajilla, que se guarda como arete) no puede usar el
+// prefijo reservado: el animal pasaría por "sin arete" en la UI y en el CSV, y al editarlo se
+// conservaría como interno.
+function sinPrefijoReservado(valor: string, campo: string): string {
+  if (valor.toUpperCase().startsWith(PREFIJO_SIN_ARETE)) {
+    throw new ErrorValidacion(`${campo} no puede empezar con "${PREFIJO_SIN_ARETE}" (uso interno).`);
+  }
+  return valor;
+}
+
 // Genera un arete interno único para un animal sin arete físico.
 function nuevoAreteInterno(): string {
   return PREFIJO_SIN_ARETE + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -160,8 +170,8 @@ export function datosAnimal(body: Record<string, unknown>) {
   // arete es obligatorio y único, se usa el código como arete. Se fuerza sexo=MACHO y se
   // ignoran nombre/raza/fecha/padres/foto (una pajilla no es un animal físico).
   if (esPajilla) {
-    const cod = codigo;
-    if (!cod) throw new ErrorValidacion("El código de la pajilla es obligatorio.");
+    if (!codigo) throw new ErrorValidacion("El código de la pajilla es obligatorio.");
+    const cod = sinPrefijoReservado(codigo, "El código");
     return {
       arete: cod,
       nombre: null,
@@ -195,7 +205,7 @@ export function datosAnimal(body: Record<string, unknown>) {
     }
     arete = esAreteInterno(body.arete as string) ? (body.arete as string) : nuevoAreteInterno();
   } else {
-    arete = textoObligatorio(body.arete, "El arete", LARGO.corto);
+    arete = sinPrefijoReservado(textoObligatorio(body.arete, "El arete", LARGO.corto), "El arete");
   }
 
   return {

@@ -49,7 +49,8 @@ backend le pone un valor interno autogenerado único con prefijo `S/N-` (`esAret
 `src/lib/validar.ts`). Ese valor **no se muestra**: en la UI se usa el helper `etiquetaArete()` de
 `src/lib/tipos.ts`, que devuelve `CENASA <areteCenasa>` (o "Sin arete"). Al editar un animal sin
 arete, el cliente **reenvía el `arete` interno** para que se conserve. En el CSV la columna "Arete"
-sale como "(sin arete)".
+sale como "(sin arete)". El prefijo `S/N-` está reservado: un arete escrito a mano o el código de
+una pajilla que empiece así → **400**. Nunca pintar `#${arete}`: usar siempre `etiquetaArete()`.
 
 **Fotos**: `Animal.fotoUrl` (600 px) y `Animal.fotoMiniatura` (160 px). En listas, avatares y
 encabezados usar **siempre `fotoMiniatura`**; `fotoUrl` solo para ver la foto en grande.

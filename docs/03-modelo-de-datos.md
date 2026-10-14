@@ -32,7 +32,9 @@ Eventos especializados:
 ### Datos básicos / permanentes
 | Atributo | Notas |
 |---|---|
-| arete | Identificador principal, **único**. |
+| arete | Identificador principal, **único**. Si el animal no tiene arete (`sin_arete`), guarda un valor interno `S/N-…` que no se muestra. |
+| arete_cenasa | Arete oficial de CENASA (trazabilidad). Opcional, no único. Obligatorio si `sin_arete`. |
+| sin_arete | Sí/no: el animal no tiene arete de la finca; se identifica por el de CENASA. |
 | foto | Imagen del animal. |
 | sexo | Macho / hembra. Usado para filtros y clasificación. |
 | raza | — |
@@ -41,6 +43,7 @@ Eventos especializados:
 | estado | Ver sección 3. |
 | modulo | Engorde / lechería / reproductor. Un animal no cambia de módulo. |
 | codigo | Código del reproductor (toro o pajilla). Opcional. |
+| es_pajilla | Sí/no (solo reproductores): pajilla en vez de toro físico. Su arete = su código. |
 | fecha_baja / motivo_baja | Solo si está vendido o muerto. Opcionales. |
 | padre | Referencia a Animal **o** progenitor externo (ver sección 4). |
 | madre | Referencia a Animal **o** progenitor externo (ver sección 4). |

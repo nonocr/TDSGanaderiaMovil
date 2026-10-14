@@ -44,3 +44,9 @@ export function etiquetaArete(a: {
   }
   return `#${a.arete}`;
 }
+
+// Texto de búsqueda normalizado: quita espacios y los prefijos que se ven en pantalla, para que
+// copiar "CENASA 12345" o "#025" encuentre el animal igual que escribir "12345" o "025".
+export function terminoBusqueda(q: string | null | undefined): string {
+  return (q ?? "").trim().replace(/^cenasa[\s:#-]*/i, "").replace(/^#\s*/, "").trim();
+}

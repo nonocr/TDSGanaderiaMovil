@@ -141,7 +141,7 @@ export default async function AnimalDetallePage({
       fecha: m.fecha,
       tipo: "Monta",
       detalle:
-        `${m.inseminacion ? "inseminada" : "montada"} por ${m.toro.nombre ?? "#" + m.toro.arete}` +
+        `${m.inseminacion ? "inseminada" : "montada"} por ${m.toro.nombre ?? etiquetaArete(m.toro)}` +
         (m.inseminacion ? " (pajilla)" : "") +
         (m.prenezConfirmada
           ? ` · preñez confirmada${m.fechaConfirmacion ? ` (${formatearFecha(m.fechaConfirmacion)})` : ""}`
@@ -157,7 +157,7 @@ export default async function AnimalDetallePage({
       fecha: m.fecha,
       tipo: "Monta",
       detalle:
-        `${m.inseminacion ? "inseminó a" : "montó a"} ${m.vaca.nombre ?? "#" + m.vaca.arete}` +
+        `${m.inseminacion ? "inseminó a" : "montó a"} ${m.vaca.nombre ?? etiquetaArete(m.vaca)}` +
         (m.inseminacion ? " (pajilla)" : "") +
         (m.prenezConfirmada ? " · preñez confirmada" : ""),
       // Desde el toro no se edita el toro mismo; solo fecha, notas y preñez.
@@ -190,7 +190,7 @@ export default async function AnimalDetallePage({
       id: p.id,
       fecha: p.fecha,
       tipo: "Parto",
-      detalle: `padre · parto de ${p.vaca.nombre ?? "#" + p.vaca.arete}`,
+      detalle: `padre · parto de ${p.vaca.nombre ?? etiquetaArete(p.vaca)}`,
       // Vista desde el toro: no editable aqui (se edita desde la vaca).
     });
   for (const r of animal.registrosLeche)
@@ -492,7 +492,11 @@ export default async function AnimalDetallePage({
 }
 
 // Hijos o hermanos como filas táctiles (área cómoda para el dedo).
-function ListaParientes({ animales }: { animales: { id: string; arete: string; nombre: string | null }[] }) {
+function ListaParientes({
+  animales,
+}: {
+  animales: { id: string; arete: string; nombre: string | null; sinArete?: boolean; areteCenasa?: string | null }[];
+}) {
   if (animales.length === 0) return <p className="py-1 text-stone-400 dark:text-stone-500">—</p>;
   return (
     <ul className="-mx-2 mt-1">
@@ -503,8 +507,8 @@ function ListaParientes({ animales }: { animales: { id: string; arete: string; n
             className="flex items-center justify-between gap-2 rounded-lg px-2 py-2 font-medium text-marca-700 hover:bg-stone-50 active:bg-stone-100 dark:text-marca-400 dark:hover:bg-stone-800/50 dark:active:bg-stone-800"
           >
             <span>
-              {h.nombre ?? `#${h.arete}`}
-              {h.nombre && <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">#{h.arete}</span>}
+              {h.nombre ?? etiquetaArete(h)}
+              {h.nombre && <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">{etiquetaArete(h)}</span>}
             </span>
             <IconoFlecha className="no-print h-4 w-4 text-stone-300 dark:text-stone-600" />
           </Link>

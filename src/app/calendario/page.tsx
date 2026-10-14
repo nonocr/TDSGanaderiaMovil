@@ -8,6 +8,7 @@ import {
 import { Card, SectionTitle, Badge, PageHeader, Vacio } from "@/components/ui";
 import { IconoCalendario } from "@/components/iconos";
 import { formatearFecha } from "@/lib/fechas";
+import { etiquetaArete } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
@@ -74,7 +75,7 @@ export default async function CalendarioPage() {
                           {EVENTO_CAL_LABEL[e.tipo]}
                         </Badge>
                         <span className="min-w-0 font-medium text-stone-800 dark:text-stone-100">
-                          {e.nombre ? `${e.nombre} (#${e.arete})` : `#${e.arete}`}
+                          {e.nombre ? `${e.nombre} (${etiquetaArete(e)})` : etiquetaArete(e)}
                         </span>
                       </div>
                       <span className="shrink-0 whitespace-nowrap text-xs text-stone-400 dark:text-stone-500">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { terminoBusqueda } from "@/lib/tipos";
 import {
   ruta, leerJson, texto, opcion, datosAnimal, SEXOS, ESTADOS, MODULOS, LARGO, ErrorValidacion,
   ANIMAL_SIN_FOTO, mensajeAreteRepetido,
@@ -12,7 +13,10 @@ export const GET = ruta(async (req: NextRequest) => {
   const sexo = searchParams.get("sexo") ? opcion(searchParams.get("sexo"), SEXOS, "Sexo") : null;
   const estado = searchParams.get("estado") ? opcion(searchParams.get("estado"), ESTADOS, "Estado") : null;
   const modulo = searchParams.get("modulo") ? opcion(searchParams.get("modulo"), MODULOS, "Módulo") : null;
-  const q = texto(searchParams.get("q"), "Búsqueda", LARGO.corto);
+  const qCrudo = texto(searchParams.get("q"), "Búsqueda", LARGO.corto);
+  const q = terminoBusqueda(qCrudo);
+  // Solo se escribió un prefijo ("CENASA", "#"): nada que buscar todavía.
+  if (qCrudo && !q) return NextResponse.json([]);
 
   const animales = await prisma.animal.findMany({
     where: {
@@ -23,7 +27,8 @@ export const GET = ruta(async (req: NextRequest) => {
         ? {
             OR: [
               // En Postgres `contains` distingue mayúsculas; SQLite no lo hacía.
-              { arete: { contains: q, mode: "insensitive" } },
+              // El arete interno de un animal sin arete (S/N-…) no se busca: se busca por CENASA.
+              { arete: { contains: q, mode: "insensitive" }, sinArete: false },
               { areteCenasa: { contains: q, mode: "insensitive" } },
               { nombre: { contains: q, mode: "insensitive" } },
               { raza: { contains: q, mode: "insensitive" } },

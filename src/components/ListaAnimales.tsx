@@ -7,7 +7,7 @@ import {
   situacionReproductivaVaca,
   etiquetaEstadoRepro,
 } from "@/lib/estado";
-import { ETAPA_LABEL, etiquetaArete } from "@/lib/tipos";
+import { ETAPA_LABEL, etiquetaArete, terminoBusqueda } from "@/lib/tipos";
 import { FiltroAnimales } from "@/components/FiltroAnimales";
 import { BuscadorAnimales } from "@/components/BuscadorAnimales";
 import { IconoFlecha, IconoRespaldo, IconoAnimal, IconoBuscar, IconoMas } from "@/components/iconos";
@@ -142,7 +142,7 @@ export async function ListaAnimales({
 
   // Busqueda por arete, arete de CENASA o nombre (texto libre, sin distinguir mayusculas).
   // Si el animal no tiene arete físico, el `arete` es interno (no se busca por él); sí por CENASA.
-  const termino = (q ?? "").trim().toLowerCase();
+  const termino = terminoBusqueda(q).toLowerCase();
   const porBusqueda = termino
     ? filas.filter(({ a }) => {
         const arete = a.sinArete ? "" : a.arete.toLowerCase();

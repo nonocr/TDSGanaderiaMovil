@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { listarAnimales } from "@/lib/genealogia";
 import { Card } from "@/components/ui";
 import { FormularioAnimal } from "@/components/FormularioAnimal";
 import { MODULO_LABEL } from "@/lib/tipos";
@@ -16,18 +16,13 @@ export default async function NuevoAnimalPage({
   // Módulo preseleccionado si se llega desde una página de módulo (p. ej. /lecheria).
   const moduloInicial = modulo && (MODULOS as readonly string[]).includes(modulo) ? modulo : undefined;
 
-  const [machos, hembras] = await Promise.all([
-    prisma.animal.findMany({
-      where: { sexo: "MACHO" },
-      select: { id: true, arete: true, nombre: true },
-      orderBy: { arete: "asc" },
-    }),
-    prisma.animal.findMany({
-      where: { sexo: "HEMBRA" },
-      select: { id: true, arete: true, nombre: true },
-      orderBy: { arete: "asc" },
-    }),
-  ]);
+  // Padres posibles: una sola consulta (la misma que usa editar), con sinArete/areteCenasa para
+  // que los animales sin arete se vean como "CENASA …" en los selectores.
+  const todos = await listarAnimales();
+  const sinSexo = ({ id, arete, nombre, sinArete, areteCenasa }: (typeof todos)[number]) =>
+    ({ id, arete, nombre, sinArete, areteCenasa });
+  const machos = todos.filter((a) => a.sexo === "MACHO").map(sinSexo);
+  const hembras = todos.filter((a) => a.sexo === "HEMBRA").map(sinSexo);
 
   return (
     <div className="mx-auto max-w-2xl">

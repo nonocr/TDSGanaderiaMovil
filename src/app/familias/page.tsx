@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { IconoFlecha, IconoFamilia, IconoAnimal } from "@/components/iconos";
 import { Card, AnimalLink, PageHeader, Badge, Vacio } from "@/components/ui";
+import { etiquetaArete } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,10 @@ export default async function FamiliasPage() {
   // con `select` anidado encadenaría consultas, una tras otra.
   const animales = await prisma.animal.findMany({
     orderBy: { arete: "asc" },
-    select: { id: true, arete: true, nombre: true, sexo: true, padreId: true, madreId: true },
+    select: {
+      id: true, arete: true, sinArete: true, areteCenasa: true, nombre: true, sexo: true,
+      padreId: true, madreId: true,
+    },
   });
 
   const hijosDe = new Map<string, typeof animales>();
@@ -68,9 +72,9 @@ export default async function FamiliasPage() {
                       >
                         <span className="text-stone-300 dark:text-stone-600">↳</span>
                         <span className="flex-1">
-                          {h.nombre ?? `#${h.arete}`}
+                          {h.nombre ?? etiquetaArete(h)}
                           {h.nombre && (
-                            <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">#{h.arete}</span>
+                            <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">{etiquetaArete(h)}</span>
                           )}
                         </span>
                         <IconoFlecha className="h-4 w-4 text-stone-300 dark:text-stone-600" />

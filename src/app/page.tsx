@@ -12,6 +12,7 @@ import {
   type IconoProps,
 } from "@/components/iconos";
 import { formatearFecha } from "@/lib/fechas";
+import { etiquetaArete } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
@@ -172,9 +173,9 @@ export default async function HomePage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-2">
                         <span className="truncate font-semibold text-stone-800 dark:text-stone-100">
-                          {p.nombre ?? `#${p.arete}`}
+                          {p.nombre ?? etiquetaArete(p)}
                           {p.nombre && (
-                            <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">#{p.arete}</span>
+                            <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">{etiquetaArete(p)}</span>
                           )}
                         </span>
                         <span className="shrink-0 whitespace-nowrap text-xs text-stone-400 dark:text-stone-500">

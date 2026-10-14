@@ -98,6 +98,15 @@ export function FormularioAnimal({
 
     const fd = new FormData(e.currentTarget);
 
+    // El prefijo "S/N-" está reservado para el arete interno de los animales sin arete: no se
+    // puede escribir a mano (el backend lo rechaza con 400; avisamos antes para mejor UX).
+    const areteEscrito = String(fd.get(esPajilla ? "codigo" : "arete") ?? "");
+    if (!sinArete && esAreteInterno(areteEscrito.trim())) {
+      setError(`El ${esPajilla ? "código" : "arete"} no puede empezar con "${PREFIJO_SIN_ARETE}" (es un valor reservado).`);
+      setGuardando(false);
+      return;
+    }
+
     let payload: Record<string, unknown>;
     if (esPajilla) {
       // Pajilla: solo el código. El backend lo usa como arete y rellena el resto (MACHO,

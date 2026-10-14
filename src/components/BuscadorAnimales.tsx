@@ -46,8 +46,8 @@ export function BuscadorAnimales({
         enterKeyHint="search"
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
-        placeholder="Buscar arete o nombre…"
-        aria-label="Buscar arete o nombre"
+        placeholder="Buscar arete, CENASA o nombre…"
+        aria-label="Buscar por arete, arete de CENASA o nombre"
         className="h-11 w-full rounded-xl border border-stone-300 bg-white pl-10 pr-10 text-sm outline-none focus:border-marca-500 focus:ring-2 focus:ring-marca-200 sm:h-10 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500 [&::-webkit-search-cancel-button]:hidden"
       />
       {texto && (
