@@ -14,19 +14,18 @@ export default async function LoginPage({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-stone-900 px-4">
-      {/* Imagen de fondo que cubre toda la pantalla. Un desenfoque leve a propósito disimula que
-          la foto es de baja resolución; el scale evita que el blur deje bordes transparentes. */}
+      {/* Imagen de fondo que cubre toda la pantalla. */}
       <Image
-        src="/fondoTDS.jpg"
+        src="/FondoTDS2.jpeg"
         alt=""
         fill
         priority
         sizes="100vw"
-        className="scale-105 object-cover blur-sm"
+        className="object-cover"
       />
-      {/* Capa oscura con degradado: oscurece abajo para que la tarjeta y el texto se lean bien. */}
+      {/* Capa oscura suave: lo justo para que la tarjeta y el texto se lean sin tapar la foto. */}
       <div
-        className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/55 to-black/70"
+        className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/45"
         aria-hidden="true"
       />
       <div className="relative w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-xl dark:border-stone-800 dark:bg-stone-900">

@@ -58,5 +58,5 @@ export const config = {
   // Todo excepto archivos estáticos de Next, las imágenes públicas (logo y fondo del login,
   // que se ven sin sesión), el manifest de la app instalable (el sistema lo pide sin cookie
   // de sesión) y el service worker (public/sw.js).
-  matcher: ["/((?!_next/static|_next/image|favicon.png|favicon.ico|logo.png|fondoTDS.jpg|iconos/|manifest.webmanifest|sw.js).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.png|favicon.ico|logo.png|fondoTDS.jpg|FondoTDS2.jpeg|iconos/|manifest.webmanifest|sw.js).*)"],
 };
