@@ -277,18 +277,32 @@ export function FormParto({
 }: {
   vacaId: string;
   toros: Opcion[];
-  posiblesCrias: Opcion[];
+  // fechaNacimiento ("YYYY-MM-DD"): al marcar la cría se propone como fecha del parto.
+  posiblesCrias: (Opcion & { fechaNacimiento?: string | null })[];
   criasSugeridas?: string[]; // ids de los hijos de esta vaca aún sin parto: se muestran primero
 }) {
   const { error, cargando, enviar } = useEnviar();
   const hoy = useHoy();
   const [crias, setCrias] = useState<string[]>([]);
+  // Fecha controlada: empieza en hoy (cuando el navegador la calcula) y se reemplaza por la fecha
+  // de nacimiento de la cría que se marque. Se puede cambiar a mano igual.
+  const [fecha, setFecha] = useState("");
+  const [fechaDeCria, setFechaDeCria] = useState<string | null>(null); // etiqueta de la cría usada
+  useEffect(() => {
+    if (hoy) setFecha((f) => f || hoy);
+  }, [hoy]);
   // "Otros animales": ocultos si hay sugeridas (se abren con un botón), con buscador.
   const [verOtros, setVerOtros] = useState(false);
   const [filtro, setFiltro] = useState("");
 
   function toggleCria(id: string) {
+    const marcando = !crias.includes(id);
     setCrias((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    const c = porId.get(id);
+    if (marcando && c?.fechaNacimiento) {
+      setFecha(c.fechaNacimiento);
+      setFechaDeCria(c.nombre ?? etiquetaArete(c));
+    }
   }
 
   const porId = new Map(posiblesCrias.map((c) => [c.id, c]));
@@ -341,6 +355,8 @@ export function FormParto({
           () => {
             form.reset();
             setCrias([]);
+            setFecha(hoy);
+            setFechaDeCria(null);
             setVerOtros(false);
             setFiltro("");
           }
@@ -350,7 +366,23 @@ export function FormParto({
       <Aviso error={error} />
       <div>
         <label htmlFor="parto-fecha" className={etiqueta}>Fecha del parto</label>
-        <input id="parto-fecha" type="date" name="fecha" required key={hoy} defaultValue={hoy} className={campo} />
+        <input
+          id="parto-fecha"
+          type="date"
+          name="fecha"
+          required
+          value={fecha}
+          onChange={(e) => {
+            setFecha(e.target.value);
+            setFechaDeCria(null);
+          }}
+          className={campo}
+        />
+        {fechaDeCria && (
+          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+            Tomada del nacimiento de {fechaDeCria}. Puedes cambiarla.
+          </p>
+        )}
       </div>
       <div>
         <label htmlFor="parto-toro" className={etiqueta}>Toro / padre (opcional)</label>

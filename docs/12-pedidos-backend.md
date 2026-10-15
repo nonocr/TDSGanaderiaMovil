@@ -38,6 +38,11 @@ Al registrar un parto, el dueño quería ver primero los animales que ya tienen 
   buscador (arete/CENASA/nombre, `terminoBusqueda()`). Si no hay sugeridas, la lista completa se
   ve abierta como antes. Las casillas marcadas siempre quedan visibles aunque el filtro las oculte.
   Casillas a 44 px de alto. Sin cambios de API. Ajusta el diseño si quieres; la lógica es esa.
+- **(2026-10-15) Fecha del parto automática**: `posiblesCrias` trae `fechaNacimiento`
+  ("YYYY-MM-DD", de `fechasNacimiento()` en `genealogia.ts`, misma lectura cacheada). En
+  `FormParto` la fecha pasó a ser **controlada** (`fecha` en estado, arranca en `hoy`): al
+  **marcar** una cría con fecha de nacimiento se pone esa fecha y sale "Tomada del nacimiento de X.
+  Puedes cambiarla."; editarla a mano quita ese texto; desmarcar no la cambia; al guardar vuelve a hoy.
 
 ### [INFO] Kiro: leer — "sin arete" llegaba como `#S/N-…` a varias pantallas (Claude Code, 2026-10-14)
 Al revisar tus dos cambios (abajo, ya `[REVISADO]`) encontré sitios que seguían pintando
