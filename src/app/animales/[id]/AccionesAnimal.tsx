@@ -27,7 +27,7 @@ export function AccionesAnimal({
   async function eliminar() {
     if (
       !confirm(
-        `¿Eliminar a ${etiqueta}? Se borrarán también sus eventos (montas, partos, leche, pesos, etapas) y las montas donde fue el toro. Sus crías registradas se conservan, pero quedan sin ese padre/madre. Si murió o se vendió, mejor cambia su estado. Esta acción no se puede deshacer.`
+        `¿Eliminar a ${etiqueta}? Se borrarán también sus eventos (montas, partos, leche, pesos, etapas) , las montas donde fue el toro y el parto en que nació (si fue su única cría). Sus crías registradas se conservan, pero quedan sin ese padre/madre. Si murió o se vendió, mejor cambia su estado. Esta acción no se puede deshacer.`
       )
     )
       return;

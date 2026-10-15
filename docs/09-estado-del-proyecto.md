@@ -96,8 +96,9 @@ se controlan en `src/lib/validar.ts`.
   suma. Normalmente se mide una vez por semana.
 - Genealogía **derivada** de padre/madre; nunca duplicada. Progenitores pueden ser externos (texto).
 - **Eliminar** un animal es para corregir un registro equivocado (si murió o se vendió se cambia
-  el estado). Borra todo lo vinculado: sus eventos, las montas donde fue el toro y su vínculo como
-  cría (el parto de la vaca se conserva); sus hijos registrados quedan sin ese padre/madre.
+  el estado). Borra todo lo vinculado: sus eventos, las montas donde fue el toro y el parto en que
+  nació (si era su única cría; con gemelos solo se quita su vínculo); sus hijos registrados quedan
+  sin ese padre/madre.
 
 ### Preguntas al dueño (doc 07): **B1–B11 respondidas el 2026-10-07**. Entre otras: tiempos del
 ciclo fijos para toda la finca (B11), peso mensual (B8), del progenitor externo solo el nombre

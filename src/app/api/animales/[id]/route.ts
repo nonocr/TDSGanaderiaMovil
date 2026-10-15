@@ -122,12 +122,14 @@ export const DELETE = ruta(async (_req: NextRequest, { params }: ConId) => {
   // Sus propios eventos (montas, partos, leche, peso, etapas) se borran en cascada manual
   // (las filas Cria de sus partos caen por onDelete: Cascade). Además:
   // - Sus hijos registrados se conservan, pero quedan sin ese padre/madre.
-  // - Si era cría de un parto, se quita solo el vínculo: el parto de la vaca se conserva.
+  // - Si era la única cría de un parto, se borra el parto; si el parto tiene más crías
+  //   (gemelos), se conserva y solo se quita su vínculo.
   // - Las montas donde era el toro se borran (el toro es obligatorio en la monta).
   // - En los partos de otras vacas donde era el toro solo se quita el toro (es opcional).
   await prisma.$transaction([
     prisma.animal.updateMany({ where: { padreId: id }, data: { padreId: null } }),
     prisma.animal.updateMany({ where: { madreId: id }, data: { madreId: null } }),
+    prisma.parto.deleteMany({ where: { crias: { some: { criaId: id }, every: { criaId: id } } } }),
     prisma.cria.deleteMany({ where: { criaId: id } }),
     prisma.monta.deleteMany({ where: { toroId: id } }),
     prisma.parto.updateMany({ where: { toroId: id }, data: { toroId: null } }),
