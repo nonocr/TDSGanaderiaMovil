@@ -12,9 +12,11 @@ const LIMITE_VISIBLE = 5;
 export function HistorialEventos({
   eventos,
   toros,
+  posiblesCrias,
 }: {
   eventos: DatosFila[];
   toros: Opcion[];
+  posiblesCrias: Opcion[]; // animales que se pueden agregar como cría al editar un parto
 }) {
   const [ampliado, setAmpliado] = useState(false);
   const botonAbrir = useRef<HTMLButtonElement>(null);
@@ -53,7 +55,7 @@ export function HistorialEventos({
   const lista = (items: DatosFila[]) => (
     <ul className="divide-y divide-stone-100 text-sm dark:divide-stone-800">
       {items.map((e, i) => (
-        <FilaEvento key={e.id ?? `n-${i}`} toros={toros} datos={e} />
+        <FilaEvento key={e.id ?? `n-${i}`} toros={toros} posiblesCrias={posiblesCrias} datos={e} />
       ))}
     </ul>
   );
@@ -62,7 +64,7 @@ export function HistorialEventos({
   const listaAmpliada = (items: DatosFila[]) => (
     <ul className="space-y-2">
       {items.map((e, i) => (
-        <FilaEvento key={e.id ?? `n-${i}`} toros={toros} datos={e} variante="ampliada" />
+        <FilaEvento key={e.id ?? `n-${i}`} toros={toros} posiblesCrias={posiblesCrias} datos={e} variante="ampliada" />
       ))}
     </ul>
   );

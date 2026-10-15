@@ -48,6 +48,8 @@ type EventoFila = {
   notas?: string | null;
   // Solo montas: preñez confirmada por palpación (se puede marcar al editar).
   prenez?: { confirmada: boolean; fechaISO: string | null };
+  // Solo partos de la vaca: crías actuales (se pueden cambiar al editar).
+  crias?: { id: string; arete: string; nombre: string | null; sinArete: boolean; areteCenasa: string | null }[];
 };
 
 function TextoProgenitor({ p }: { p: Progenitor }) {
@@ -205,6 +207,10 @@ export default async function AnimalDetallePage({
       editable: true,
       toroId: p.toroId,
       descripcion: p.descripcion,
+      crias: p.crias.flatMap((c) => {
+        const a = porId.get(c.criaId);
+        return a ? [sinSexo(a)] : [];
+      }),
     });
   }
   for (const p of animal.partosComoToro)
@@ -450,6 +456,7 @@ export default async function AnimalDetallePage({
               <SectionTitle>Historial</SectionTitle>
               <HistorialEventos
                 toros={toros}
+                posiblesCrias={posiblesCrias}
                 eventos={eventos.map((e) => ({
                   id: e.id,
                   tipo: e.tipo,
@@ -463,6 +470,7 @@ export default async function AnimalDetallePage({
                   toroId: e.toroId,
                   notas: e.notas,
                   prenez: e.prenez,
+                  crias: e.crias,
                   puedeEditarToro: e.toroId !== undefined,
                 }))}
               />

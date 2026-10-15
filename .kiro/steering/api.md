@@ -31,7 +31,7 @@ caracteres (notas/descripción ≤ 2000; arete/raza ≤ 60).
 | `POST /api/montas` | `vacaId*`, `toroId*`, `fecha*`, `notas`, `prenezConfirmada`, `fechaConfirmacion`, `inseminacion` (booleano `true` = con pajilla) | 201 |
 | `PUT/DELETE /api/montas/[id]` | `fecha`, `toroId`, `vacaId`, `notas`, `inseminacion`, `prenezConfirmada` (bool; `false` borra la fecha), `fechaConfirmacion` | 200 |
 | `POST /api/partos` | `vacaId*`, `fecha*`, `toroId`, `descripcion`, `criaSana`/`necesitoAyuda` (`"si"`\|`"no"`), `pesoNacimientoKg` (0–200), `crias: [{ criaId }]` (≤ 10). Una cría no puede estar ya en otro parto ni tener otra madre (registrada o externa); si no tenía madre, se le pone `vacaId` | 201 · 409 (mensaje con la cría y la otra madre) |
-| `PUT/DELETE /api/partos/[id]` | `fecha`, `toroId`, `descripcion` | 200 |
+| `PUT/DELETE /api/partos/[id]` | `fecha`, `toroId`, `descripcion`, `crias` (opcional: reemplaza la lista; la cría quitada queda sin madre, la agregada toma a la vaca como madre) | 200 · 409 si una cría ya es de otro parto u otra madre |
 | `POST /api/etapas` | `animalId*`, `etapa*` (LACTANCIA\|DESTETE\|DESARROLLO\|ENGORDE), `fechaInicio*`, `fechaFin`, `notas` | 201 |
 | `PUT/DELETE /api/etapas/[id]` | `etapa`, `fechaInicio`, `fechaFin` (si no se manda se conserva; `null` reabre la etapa), `notas` | 200 |
 | `POST /api/etapas/cambiar` | `animalId*`, `etapa*`, `fecha` (día **local** `"YYYY-MM-DD"`; mandarlo siempre), `notas`. Cierra la etapa abierta con esa fecha y abre la nueva | 201 etapa nueva · 200 si ya estaba en esa etapa · 404 |

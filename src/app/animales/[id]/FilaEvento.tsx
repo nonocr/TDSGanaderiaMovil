@@ -16,7 +16,7 @@ import {
   IconoBasura,
   type IconoProps,
 } from "@/components/iconos";
-import { etiquetaArete } from "@/lib/tipos";
+import { etiquetaArete, terminoBusqueda } from "@/lib/tipos";
 
 type Opcion = { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 
@@ -42,6 +42,8 @@ export type DatosFila = {
   puedeEditarToro?: boolean;
   // Solo montas: preñez confirmada por palpación (normalmente semanas después de la monta).
   prenez?: { confirmada: boolean; fechaISO: string | null };
+  // Solo partos de la vaca: crías actuales (se pueden cambiar al editar).
+  crias?: Opcion[];
 };
 
 const campo =
@@ -61,10 +63,12 @@ const ESTILO_TIPO: Record<string, { Icono: (p: IconoProps) => React.JSX.Element;
 export function FilaEvento({
   datos,
   toros,
+  posiblesCrias = [],
   variante = "compacta",
 }: {
   datos: DatosFila;
   toros: Opcion[];
+  posiblesCrias?: Opcion[]; // animales que se pueden agregar como cría al editar un parto
   variante?: "compacta" | "ampliada";
 }) {
   const router = useRouter();
@@ -73,10 +77,14 @@ export function FilaEvento({
   const [borrando, setBorrando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [prenez, setPrenez] = useState(datos.prenez?.confirmada ?? false);
+  const [crias, setCrias] = useState<string[]>([]);
+  const [filtroCria, setFiltroCria] = useState("");
 
   // Al abrir la edición se parte siempre de lo guardado (por si antes se canceló a medias).
   function abrirEdicion() {
     setPrenez(datos.prenez?.confirmada ?? false);
+    setCrias(datos.crias?.map((c) => c.id) ?? []);
+    setFiltroCria("");
     setError(null);
     setEditando(true);
   }
@@ -98,6 +106,7 @@ export function FilaEvento({
     }
     if (datos.tipo === "Peso") payload.pesoKg = fd.get("pesoKg");
     if (datos.tipo === "Parto") payload.descripcion = fd.get("descripcion");
+    if (datos.tipo === "Parto" && datos.crias) payload.crias = crias.map((criaId) => ({ criaId }));
     if ((datos.tipo === "Monta" || datos.tipo === "Parto") && datos.puedeEditarToro)
       payload.toroId = fd.get("toroId") || null;
     if (datos.tipo === "Monta" || datos.tipo === "Leche" || datos.tipo === "Peso")
@@ -290,6 +299,7 @@ export function FilaEvento({
               <input id={`ev-desc-${datos.id}`} name="descripcion" maxLength={2000} defaultValue={datos.descripcion ?? ""} className={campo} />
             </div>
           )}
+          {datos.tipo === "Parto" && datos.crias && selectorCrias(datos.crias)}
           {datos.tipo === "Monta" && datos.prenez && (
             <div className="space-y-2">
               <label className="flex min-h-11 items-center gap-2.5 text-sm text-stone-700 dark:text-stone-200">
@@ -338,6 +348,60 @@ export function FilaEvento({
             </button>
           </div>
         </form>
+    );
+  }
+
+  // Crías del parto: las actuales arriba (marcadas) y, con el buscador, otros animales que se
+  // pueden agregar. Se llama como función por la misma razón que formEdicion.
+  function selectorCrias(actuales: Opcion[]) {
+    const idsActuales = new Set(actuales.map((c) => c.id));
+    const otros = posiblesCrias.filter((c) => !idsActuales.has(c.id));
+    const termino = terminoBusqueda(filtroCria).toLowerCase();
+    // Las ya marcadas siempre se ven; el resto solo al buscar.
+    const otrosVisibles = otros.filter((c) => {
+      if (crias.includes(c.id)) return true;
+      if (!termino) return false;
+      return [c.sinArete ? "" : c.arete, c.areteCenasa ?? "", c.nombre ?? ""].some((t) =>
+        t.toLowerCase().includes(termino)
+      );
+    });
+    const casilla = (c: Opcion) => (
+      <label key={c.id} className="flex min-h-11 items-center gap-2.5 rounded-md px-1 py-1 text-sm text-stone-700 dark:text-stone-200">
+        <input
+          type="checkbox"
+          checked={crias.includes(c.id)}
+          onChange={() => setCrias((prev) => (prev.includes(c.id) ? prev.filter((x) => x !== c.id) : [...prev, c.id]))}
+          className="h-5 w-5 accent-marca-600"
+        />
+        {c.nombre ? `${c.nombre} (${etiquetaArete(c)})` : etiquetaArete(c)}
+      </label>
+    );
+    return (
+      <div>
+        <span className={etiqueta}>Cría(s) que nacieron</span>
+        {actuales.map(casilla)}
+        {otros.length > 0 && (
+          <>
+            <input
+              type="search"
+              value={filtroCria}
+              onChange={(e) => setFiltroCria(e.target.value)}
+              aria-label="Buscar otra cría por arete, CENASA o nombre"
+              placeholder="Agregar otra cría: buscar arete, CENASA o nombre…"
+              className={campo + " mt-1"}
+            />
+            <div className="max-h-48 overflow-y-auto">
+              {otrosVisibles.map(casilla)}
+              {termino && otrosVisibles.length === 0 && (
+                <p className="px-1 py-2 text-sm text-stone-400">Ningún animal coincide.</p>
+              )}
+            </div>
+          </>
+        )}
+        <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+          Desmarca la cría equivocada y marca la correcta. Si la cría no aparece, primero agrégala como animal nuevo.
+        </p>
+      </div>
     );
   }
 }

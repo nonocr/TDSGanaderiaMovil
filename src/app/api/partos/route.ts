@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { etiquetaArete } from "@/lib/tipos";
+import { validarCrias, leerCriaIds } from "@/lib/crias";
 import {
-  ruta, leerJson, idObligatorio, id, fechaObligatoria, numero, texto, triestado,
-  LARGO, ErrorValidacion,
+  ruta, leerJson, idObligatorio, id, fechaObligatoria, numero, texto, triestado, LARGO,
 } from "@/lib/validar";
 
 // POST /api/partos -> registrar parto. Puede traer varias crias.
@@ -20,18 +19,7 @@ export const POST = ruta(async (req: NextRequest) => {
 
   // crias: array de { criaId } (animales ya registrados). La creacion de nuevas
   // crias se hace primero desde el alta de animales y luego se vinculan aqui.
-  if (body.crias !== undefined && !Array.isArray(body.crias)) {
-    throw new ErrorValidacion("Crías: formato inválido.");
-  }
-  const crias = (body.crias as unknown[] | undefined) ?? [];
-  if (crias.length > 10) throw new ErrorValidacion("Demasiadas crías en un parto.");
-  const criaIds = [
-    ...new Set(
-      crias
-        .map((c) => id((c as { criaId?: unknown } | null)?.criaId, "Cría"))
-        .filter((c): c is string => c !== null)
-    ),
-  ];
+  const criaIds = body.crias === undefined ? [] : leerCriaIds(body.crias, (v) => id(v, "Cría"));
   const vacaId = idObligatorio(body.vacaId, "La vaca");
   await validarCrias(vacaId, criaIds);
 
@@ -61,49 +49,3 @@ export const POST = ruta(async (req: NextRequest) => {
 
   return NextResponse.json(parto, { status: 201 });
 });
-
-// Una cría tiene UNA sola madre: no puede estar en otro parto (de esta u otra vaca) ni ser hija
-// registrada de otra vaca. -> 409 con el nombre de la cría y de la otra madre.
-async function validarCrias(vacaId: string, criaIds: string[]) {
-  if (criaIds.length === 0) return;
-  if (criaIds.includes(vacaId)) throw new ErrorValidacion("Una vaca no puede ser su propia cría.");
-
-  const [animales, enParto] = await Promise.all([
-    prisma.animal.findMany({
-      where: { id: { in: criaIds } },
-      select: {
-        id: true, arete: true, sinArete: true, areteCenasa: true, nombre: true, madreExterno: true,
-        madre: { select: { id: true, arete: true, sinArete: true, areteCenasa: true, nombre: true } },
-      },
-    }),
-    prisma.cria.findMany({
-      where: { criaId: { in: criaIds } },
-      select: {
-        criaId: true,
-        parto: { select: { vaca: { select: { arete: true, sinArete: true, areteCenasa: true, nombre: true } } } },
-      },
-    }),
-  ]);
-  if (animales.length !== criaIds.length) throw new ErrorValidacion("Alguna cría no existe.", 404);
-
-  const nombre = (a: { arete: string; sinArete: boolean; areteCenasa: string | null; nombre: string | null }) =>
-    a.nombre ? `${a.nombre} (${etiquetaArete(a)})` : etiquetaArete(a);
-  const porId = new Map(animales.map((a) => [a.id, a]));
-
-  const yaVinculada = enParto[0];
-  if (yaVinculada) {
-    throw new ErrorValidacion(
-      `${nombre(porId.get(yaVinculada.criaId)!)} ya está registrada como cría de un parto de ` +
-        `${nombre(yaVinculada.parto.vaca)}.`,
-      409
-    );
-  }
-  for (const a of animales) {
-    if (a.madre && a.madre.id !== vacaId) {
-      throw new ErrorValidacion(`${nombre(a)} ya es hija de ${nombre(a.madre)}.`, 409);
-    }
-    if (!a.madre && a.madreExterno) {
-      throw new ErrorValidacion(`${nombre(a)} tiene como madre a "${a.madreExterno}" (externa).`, 409);
-    }
-  }
-}
