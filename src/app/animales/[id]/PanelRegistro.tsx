@@ -30,7 +30,7 @@ export function PanelRegistro({
   etapaActual: string | null;
   toros: Opcion[];
   vacas: Opcion[];
-  posiblesCrias: (Opcion & { fechaNacimiento?: string | null })[];
+  posiblesCrias: (Opcion & { fechaNacimiento?: string | null; padreId?: string | null })[];
   criasSugeridas: string[]; // ids de los hijos de esta vaca aún sin parto (van primero)
 }) {
   const tabs =

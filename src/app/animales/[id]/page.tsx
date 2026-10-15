@@ -16,7 +16,7 @@ import {
   obtenerHermanos,
   obtenerArbol,
   listarAnimales,
-  fechasNacimiento,
+  datosCrias,
   type Progenitor,
 } from "@/lib/genealogia";
 import { ArbolGenealogico } from "@/components/ArbolGenealogico";
@@ -83,7 +83,7 @@ export default async function AnimalDetallePage({
     hermanos,
     arbol,
     todos,
-    nacimientos,
+    datosDeCrias,
   ] = await Promise.all([
     prisma.animal.findUnique({ where: { id }, select: ANIMAL_SIN_FOTO }),
     prisma.monta.findMany({ where: { OR: [{ vacaId: id }, { toroId: id }] }, orderBy: { fecha: "desc" } }),
@@ -97,7 +97,7 @@ export default async function AnimalDetallePage({
     obtenerHermanos(id),
     obtenerArbol(id),
     listarAnimales(), // nombres de relacionados + selectores de toro, vaca y crías
-    fechasNacimiento(), // misma lectura (cache): fecha propuesta del parto al marcar una cría
+    datosCrias(), // misma lectura (cache): fecha y toro propuestos del parto al marcar una cría
   ]);
 
   if (!base) notFound();
@@ -134,7 +134,11 @@ export default async function AnimalDetallePage({
   const vacas = todos.filter((a) => a.sexo === "HEMBRA").map(sinSexo);
   const posiblesCrias = todos
     .filter((a) => a.id !== id)
-    .map((a) => ({ ...sinSexo(a), fechaNacimiento: nacimientos.get(a.id) ?? null }));
+    .map((a) => ({
+      ...sinSexo(a),
+      fechaNacimiento: datosDeCrias.get(a.id)?.fechaNacimiento ?? null,
+      padreId: datosDeCrias.get(a.id)?.padreId ?? null,
+    }));
   // Parto: se sugieren primero los hijos registrados de esta vaca (los que tienen a esta vaca
   // como madre) que aún no están en ninguno de sus partos; los más recientes primero.
   const yaEnParto = new Set(crias.map((c) => c.criaId));

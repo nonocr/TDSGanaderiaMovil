@@ -43,6 +43,10 @@ Al registrar un parto, el dueño quería ver primero los animales que ya tienen 
   `FormParto` la fecha pasó a ser **controlada** (`fecha` en estado, arranca en `hoy`): al
   **marcar** una cría con fecha de nacimiento se pone esa fecha y sale "Tomada del nacimiento de X.
   Puedes cambiarla."; editarla a mano quita ese texto; desmarcar no la cambia; al guardar vuelve a hoy.
+- **(2026-10-15) Toro automático**: igual con el padre. `fechasNacimiento()` pasó a
+  `datosCrias()` (`{ fechaNacimiento, padreId }` por id) y `posiblesCrias` trae también `padreId`.
+  El `<select>` de toro de `FormParto` es controlado: al marcar una cría cuyo padre registrado está
+  en `toros`, se elige solo y sale "Tomado del padre de X. Puedes cambiarlo."
 
 ### [INFO] Kiro: leer — "sin arete" llegaba como `#S/N-…` a varias pantallas (Claude Code, 2026-10-14)
 Al revisar tus dos cambios (abajo, ya `[REVISADO]`) encontré sitios que seguían pintando

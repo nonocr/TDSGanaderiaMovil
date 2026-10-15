@@ -277,8 +277,8 @@ export function FormParto({
 }: {
   vacaId: string;
   toros: Opcion[];
-  // fechaNacimiento ("YYYY-MM-DD"): al marcar la cría se propone como fecha del parto.
-  posiblesCrias: (Opcion & { fechaNacimiento?: string | null })[];
+  // fechaNacimiento ("YYYY-MM-DD") y padreId: al marcar la cría se proponen como fecha y toro.
+  posiblesCrias: (Opcion & { fechaNacimiento?: string | null; padreId?: string | null })[];
   criasSugeridas?: string[]; // ids de los hijos de esta vaca aún sin parto: se muestran primero
 }) {
   const { error, cargando, enviar } = useEnviar();
@@ -291,6 +291,9 @@ export function FormParto({
   useEffect(() => {
     if (hoy) setFecha((f) => f || hoy);
   }, [hoy]);
+  // Toro controlado: se propone el padre registrado de la cría marcada (si es uno de los toros).
+  const [toroId, setToroId] = useState("");
+  const [toroDeCria, setToroDeCria] = useState<string | null>(null);
   // "Otros animales": ocultos si hay sugeridas (se abren con un botón), con buscador.
   const [verOtros, setVerOtros] = useState(false);
   const [filtro, setFiltro] = useState("");
@@ -299,9 +302,15 @@ export function FormParto({
     const marcando = !crias.includes(id);
     setCrias((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
     const c = porId.get(id);
-    if (marcando && c?.fechaNacimiento) {
+    if (!marcando || !c) return;
+    const nombreCria = c.nombre ?? etiquetaArete(c);
+    if (c.fechaNacimiento) {
       setFecha(c.fechaNacimiento);
-      setFechaDeCria(c.nombre ?? etiquetaArete(c));
+      setFechaDeCria(nombreCria);
+    }
+    if (c.padreId && toros.some((t) => t.id === c.padreId)) {
+      setToroId(c.padreId);
+      setToroDeCria(nombreCria);
     }
   }
 
@@ -357,6 +366,8 @@ export function FormParto({
             setCrias([]);
             setFecha(hoy);
             setFechaDeCria(null);
+            setToroId("");
+            setToroDeCria(null);
             setVerOtros(false);
             setFiltro("");
           }
@@ -386,7 +397,16 @@ export function FormParto({
       </div>
       <div>
         <label htmlFor="parto-toro" className={etiqueta}>Toro / padre (opcional)</label>
-        <select id="parto-toro" name="toroId" className={campo} defaultValue="">
+        <select
+          id="parto-toro"
+          name="toroId"
+          className={campo}
+          value={toroId}
+          onChange={(e) => {
+            setToroId(e.target.value);
+            setToroDeCria(null);
+          }}
+        >
           <option value="">— No lo sé / sin especificar —</option>
           {toros.map((t) => (
             <option key={t.id} value={t.id}>
@@ -394,6 +414,11 @@ export function FormParto({
             </option>
           ))}
         </select>
+        {toroDeCria && (
+          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+            Tomado del padre de {toroDeCria}. Puedes cambiarlo.
+          </p>
+        )}
       </div>
       {/* Datos del nacimiento (B4). Todos opcionales. */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">

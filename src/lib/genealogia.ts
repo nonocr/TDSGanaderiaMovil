@@ -57,14 +57,18 @@ export async function listarAnimales(): Promise<NodoAnimal[]> {
   return [...(await cargarParentesco()).values()].map(nodo);
 }
 
-// Fecha de nacimiento por id ("YYYY-MM-DD", día UTC como se guardan), de la misma lectura.
-// Sirve, p. ej., para proponer la fecha del parto al marcar una cría.
-export async function fechasNacimiento(): Promise<Map<string, string>> {
-  const fechas = new Map<string, string>();
+// Fecha de nacimiento ("YYYY-MM-DD", día UTC como se guardan) y padre registrado por id, de la
+// misma lectura. Sirve para proponer la fecha y el toro del parto al marcar una cría.
+export type DatosCria = { fechaNacimiento: string | null; padreId: string | null };
+export async function datosCrias(): Promise<Map<string, DatosCria>> {
+  const datos = new Map<string, DatosCria>();
   for (const f of (await cargarParentesco()).values()) {
-    if (f.fechaNacimiento) fechas.set(f.id, f.fechaNacimiento.toISOString().slice(0, 10));
+    datos.set(f.id, {
+      fechaNacimiento: f.fechaNacimiento ? f.fechaNacimiento.toISOString().slice(0, 10) : null,
+      padreId: f.padreId,
+    });
   }
-  return fechas;
+  return datos;
 }
 
 function nodo(f: FilaParentesco): NodoAnimal {
