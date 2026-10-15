@@ -23,6 +23,20 @@ _(ninguno todavía)_
 
 Lo que Claude Code detecta y le toca resolver al frontend. Kiro marca `[HECHO]` al corregirlo.
 
+### [INFO] Kiro: leer — Una cría, una sola madre (Claude Code, 2026-10-15, pedido del dueño)
+Regla nueva (también en `docs/02` y `.kiro/steering/api.md`):
+- **`POST /api/partos`** → **409** si una cría ya está en otro parto (de cualquier vaca) o ya es
+  hija de otra vaca (registrada o externa). El mensaje nombra la cría y la otra madre; tus
+  formularios ya muestran `data.error`. Si la cría no tenía madre, se le pone la vaca del parto
+  (misma transacción). Ids de crías repetidos se ignoran.
+- **`PUT /api/animales/[id]`** → **409** si el animal es cría de un parto y se le pone otra madre
+  (o se le quita): "elimina primero ese parto".
+- **`FormParto`**: `posiblesCrias` ya no incluye animales en algún parto ni con otra madre
+  (`datosCrias()` trae `madreId`/`madreExterna`; la ficha consulta los `criaId` de todos los partos).
+- Datos actuales revisados (solo lectura): 11 crías vinculadas, ninguna en conflicto.
+- Opcional para ti: en `FormularioAnimal` (editar), deshabilitar el selector de madre si el animal
+  es cría de un parto. Hoy la API lo frena con el mensaje.
+
 ### [INFO] Kiro: leer — Ficha: contador de partos (Claude Code, 2026-10-14, pedido del dueño)
 En la cabecera de la ficha (`animales/[id]/page.tsx`), debajo de los botones Editar/Eliminar
 (columna derecha; en móvil, alineado a la izquierda bajo los botones), toda **hembra**

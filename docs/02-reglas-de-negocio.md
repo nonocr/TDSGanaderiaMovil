@@ -52,6 +52,10 @@
 - El parto es un evento histórico: vaca + fecha + descripción + cría(s).
 - Un parto puede producir **más de una cría** (p. ej. gemelos).
 - Las crías quedan relacionadas con la madre y, cuando se conozca, con el padre.
+- **Una cría tiene una sola madre** (dueño, 2026-10-15): un animal solo puede estar en **un**
+  parto, y no puede ser cría del parto de una vaca si ya es hijo de otra (registrada o externa).
+  Si es cría de un parto, su madre es esa vaca: no se le puede cambiar sin eliminar el parto.
+  Al registrar el parto, si la cría no tenía madre se le pone la vaca del parto.
 
 ### A9. Ciclo reproductivo de la vaca
 Secuencia proporcionada por el papá:

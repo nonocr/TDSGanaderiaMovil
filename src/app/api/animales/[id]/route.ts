@@ -6,6 +6,7 @@ import {
   mensajeAreteRepetido,
 } from "@/lib/validar";
 import { procesarFoto } from "@/lib/fotos";
+import { etiquetaArete } from "@/lib/tipos";
 
 // Fotos: solo JPEG/PNG/WebP en base64 (sin SVG, que puede llevar código).
 const FOTO_VALIDA = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/;
@@ -39,6 +40,28 @@ export const PUT = ruta(async (req: NextRequest, { params }: ConId) => {
   // Un animal no puede ser su propio progenitor.
   if (datos.padreId === id || datos.madreId === id) {
     throw new ErrorValidacion("Un animal no puede ser su propio padre o madre.");
+  }
+
+  // Si es cría de un parto registrado, su madre es la vaca de ese parto: no se puede cambiar
+  // por otra (ni quitar) sin antes eliminar ese parto.
+  const comoCria = await prisma.cria.findFirst({
+    where: { criaId: id },
+    select: {
+      parto: {
+        select: { vaca: { select: { id: true, arete: true, sinArete: true, areteCenasa: true, nombre: true } } },
+      },
+    },
+  });
+  const madreParto = comoCria?.parto.vaca;
+  if (madreParto && datos.madreId !== madreParto.id) {
+    const ident = madreParto.nombre
+      ? `${madreParto.nombre} (${etiquetaArete(madreParto)})`
+      : etiquetaArete(madreParto);
+    throw new ErrorValidacion(
+      `Este animal está registrado como cría de un parto de ${ident}: esa es su madre. ` +
+        "Para cambiarla, elimina primero ese parto.",
+      409
+    );
   }
 
   // Una sola consulta: si no existe -> 404 (P2025); si el arete choca con otro -> 409.

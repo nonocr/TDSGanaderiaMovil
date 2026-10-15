@@ -21,7 +21,7 @@ caracteres (notas/descripción ≤ 2000; arete/raza ≤ 60).
 | `GET /api/animales` | `?sexo=MACHO\|HEMBRA&estado=ACTIVO\|VENDIDO\|MUERTO&modulo=ENGORDE\|LECHERIA\|REPRODUCTOR&q=texto` (`q` busca en arete, **arete de CENASA**, nombre y raza) | `Animal[]` |
 | `POST /api/animales` | `arete*`, `sexo*`, `modulo` (ENGORDE\|LECHERIA\|REPRODUCTOR; por defecto ENGORDE), `codigo` (≤ 60), `areteCenasa` (≤ 60, opcional, cualquier módulo; arete oficial de CENASA, **no único**), `sinArete` (bool; si `true` el animal no tiene arete físico: el backend genera un `arete` interno único `S/N-…` y **exige `areteCenasa`**, que pasa a identificarlo), `nombre`, `raza`, `fechaNacimiento`, `descripcion`, `estado`, `fechaBaja`, `motivoBaja`, `padreId`\|`padreExterno`, `madreId`\|`madreExterno`. **Pajilla**: `{ esPajilla: true, codigo*, areteCenasa?, estado?, fechaBaja?, motivoBaja? }` (sin arete ni sexo: arete = codigo, sexo MACHO, módulo REPRODUCTOR) | 201 `Animal` · 409 si el arete (o el código de la pajilla) ya existe |
 | `GET /api/animales/[id]` | — | `Animal` |
-| `PUT /api/animales/[id]` | igual que POST; si no se manda `modulo`, se conserva el actual | `Animal` |
+| `PUT /api/animales/[id]` | igual que POST; si no se manda `modulo`, se conserva el actual | `Animal` · 409 si es cría de un parto y `madreId` no es la vaca de ese parto |
 | `PATCH /api/animales/[id]` | `{ fotoUrl }`: data URL JPEG/PNG/WebP base64 ≤ 3 MB, o `null`. El servidor la re-codifica (sin EXIF/GPS) y genera `fotoMiniatura` (160 px, ~10 KB) | `{ id, fotoMiniatura }` · 400 si no es una imagen real |
 | `DELETE /api/animales/[id]` | — | 200 · 409 si tiene hijos, es cría de un parto o es el toro de alguna monta. En partos de otras vacas donde era el toro, el toro queda vacío (el parto se conserva) |
 | `POST /api/leche` | **un ordeño**: `vacaId*`, `fecha*`, `cantidad*` (0–1000, litros de ese ordeño), `turno` (MANANA\|TARDE, opcional), `notas` | 201 · 409 si ya hay un ordeño de ese turno ese día para la vaca |
@@ -30,7 +30,7 @@ caracteres (notas/descripción ≤ 2000; arete/raza ≤ 60).
 | `PUT/DELETE /api/pesos/[id]` | `fecha`, `pesoKg`, `notas` | 200 |
 | `POST /api/montas` | `vacaId*`, `toroId*`, `fecha*`, `notas`, `prenezConfirmada`, `fechaConfirmacion`, `inseminacion` (booleano `true` = con pajilla) | 201 |
 | `PUT/DELETE /api/montas/[id]` | `fecha`, `toroId`, `vacaId`, `notas`, `inseminacion`, `prenezConfirmada` (bool; `false` borra la fecha), `fechaConfirmacion` | 200 |
-| `POST /api/partos` | `vacaId*`, `fecha*`, `toroId`, `descripcion`, `criaSana`/`necesitoAyuda` (`"si"`\|`"no"`), `pesoNacimientoKg` (0–200), `crias: [{ criaId }]` (≤ 10) | 201 |
+| `POST /api/partos` | `vacaId*`, `fecha*`, `toroId`, `descripcion`, `criaSana`/`necesitoAyuda` (`"si"`\|`"no"`), `pesoNacimientoKg` (0–200), `crias: [{ criaId }]` (≤ 10). Una cría no puede estar ya en otro parto ni tener otra madre (registrada o externa); si no tenía madre, se le pone `vacaId` | 201 · 409 (mensaje con la cría y la otra madre) |
 | `PUT/DELETE /api/partos/[id]` | `fecha`, `toroId`, `descripcion` | 200 |
 | `POST /api/etapas` | `animalId*`, `etapa*` (LACTANCIA\|DESTETE\|DESARROLLO\|ENGORDE), `fechaInicio*`, `fechaFin`, `notas` | 201 |
 | `PUT/DELETE /api/etapas/[id]` | `etapa`, `fechaInicio`, `fechaFin` (si no se manda se conserva; `null` reabre la etapa), `notas` | 200 |

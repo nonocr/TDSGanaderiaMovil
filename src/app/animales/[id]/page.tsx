@@ -84,6 +84,7 @@ export default async function AnimalDetallePage({
     arbol,
     todos,
     datosDeCrias,
+    criasEnPartos,
   ] = await Promise.all([
     prisma.animal.findUnique({ where: { id }, select: ANIMAL_SIN_FOTO }),
     prisma.monta.findMany({ where: { OR: [{ vacaId: id }, { toroId: id }] }, orderBy: { fecha: "desc" } }),
@@ -98,6 +99,7 @@ export default async function AnimalDetallePage({
     obtenerArbol(id),
     listarAnimales(), // nombres de relacionados + selectores de toro, vaca y crías
     datosCrias(), // misma lectura (cache): fecha y toro propuestos del parto al marcar una cría
+    prisma.cria.findMany({ select: { criaId: true } }), // crías ya vinculadas a cualquier parto
   ]);
 
   if (!base) notFound();
@@ -132,8 +134,15 @@ export default async function AnimalDetallePage({
     ({ id, arete, nombre, sinArete, areteCenasa });
   const toros = todos.filter((a) => a.sexo === "MACHO").map(sinSexo);
   const vacas = todos.filter((a) => a.sexo === "HEMBRA").map(sinSexo);
+  // Una cría tiene una sola madre: no se ofrecen los animales que ya están en algún parto ni los
+  // que tienen otra madre (registrada o externa). La API lo valida igual (409).
+  const enAlgunParto = new Set(criasEnPartos.map((c) => c.criaId));
   const posiblesCrias = todos
-    .filter((a) => a.id !== id)
+    .filter((a) => {
+      if (a.id === id || enAlgunParto.has(a.id)) return false;
+      const d = datosDeCrias.get(a.id);
+      return !d || (d.madreId ? d.madreId === id : !d.madreExterna);
+    })
     .map((a) => ({
       ...sinSexo(a),
       fechaNacimiento: datosDeCrias.get(a.id)?.fechaNacimiento ?? null,
