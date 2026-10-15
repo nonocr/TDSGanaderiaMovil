@@ -110,50 +110,26 @@ export const PATCH = ruta(async (req: NextRequest, { params }: ConId) => {
 });
 
 // DELETE /api/animales/[id] -> eliminar animal.
-// Regla de integridad (docs/05): no se elimina si rompe la genealogia.
+// Eliminar es para corregir un registro equivocado (si murió o se fue, se cambia el estado),
+// así que se borra junto con todo lo vinculado a él, sin bloquear.
 export const DELETE = ruta(async (_req: NextRequest, { params }: ConId) => {
   const id = idObligatorio((await params).id, "Animal");
-  // Cuatro consultas en paralelo (un `include` las encadenaría).
-  const [existe, numHijos, comoCria, montasComoToro] = await Promise.all([
-    prisma.animal.count({ where: { id } }),
-    prisma.animal.count({ where: { OR: [{ padreId: id }, { madreId: id }] } }),
-    prisma.cria.count({ where: { criaId: id } }),
-    prisma.monta.count({ where: { toroId: id } }),
-  ]);
+  const existe = await prisma.animal.count({ where: { id } });
   if (!existe) {
     return NextResponse.json({ error: "Animal no encontrado." }, { status: 404 });
   }
 
-  if (numHijos > 0) {
-    throw new ErrorValidacion(
-      `No se puede eliminar: este animal es padre/madre de ${numHijos} animal(es) registrado(s). ` +
-        "Su genealogía se perdería. Si ya no está en el hato, cámbialo a 'Vendido' o 'Muerto'.",
-      409
-    );
-  }
-
-  if (comoCria > 0) {
-    throw new ErrorValidacion(
-      "No se puede eliminar: este animal está vinculado como cría en un parto registrado. " +
-        "Elimina primero ese vínculo o el parto.",
-      409
-    );
-  }
-
-  // Las montas son historial de las vacas (el toro es obligatorio): borrarlas lo perdería.
-  if (montasComoToro > 0) {
-    throw new ErrorValidacion(
-      `No se puede eliminar: es el toro de ${montasComoToro} monta(s) registrada(s) y se perdería ` +
-        "el historial de esas vacas. Si ya no está en el hato, cámbialo a 'Vendido' o 'Muerto'.",
-      409
-    );
-  }
-
-  // Sin descendencia ni vinculo como cria: se puede borrar.
   // Sus propios eventos (montas, partos, leche, peso, etapas) se borran en cascada manual
-  // (las filas Cria de sus partos caen por onDelete: Cascade). En los partos de OTRAS vacas
-  // donde figura como toro solo se quita el toro (es opcional): el parto se conserva.
+  // (las filas Cria de sus partos caen por onDelete: Cascade). Además:
+  // - Sus hijos registrados se conservan, pero quedan sin ese padre/madre.
+  // - Si era cría de un parto, se quita solo el vínculo: el parto de la vaca se conserva.
+  // - Las montas donde era el toro se borran (el toro es obligatorio en la monta).
+  // - En los partos de otras vacas donde era el toro solo se quita el toro (es opcional).
   await prisma.$transaction([
+    prisma.animal.updateMany({ where: { padreId: id }, data: { padreId: null } }),
+    prisma.animal.updateMany({ where: { madreId: id }, data: { madreId: null } }),
+    prisma.cria.deleteMany({ where: { criaId: id } }),
+    prisma.monta.deleteMany({ where: { toroId: id } }),
     prisma.parto.updateMany({ where: { toroId: id }, data: { toroId: null } }),
     prisma.monta.deleteMany({ where: { vacaId: id } }),
     prisma.parto.deleteMany({ where: { vacaId: id } }),

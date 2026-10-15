@@ -23,7 +23,7 @@ caracteres (notas/descripción ≤ 2000; arete/raza ≤ 60).
 | `GET /api/animales/[id]` | — | `Animal` |
 | `PUT /api/animales/[id]` | igual que POST; si no se manda `modulo`, se conserva el actual | `Animal` · 409 si es cría de un parto y `madreId` no es la vaca de ese parto |
 | `PATCH /api/animales/[id]` | `{ fotoUrl }`: data URL JPEG/PNG/WebP base64 ≤ 3 MB, o `null`. El servidor la re-codifica (sin EXIF/GPS) y genera `fotoMiniatura` (160 px, ~10 KB) | `{ id, fotoMiniatura }` · 400 si no es una imagen real |
-| `DELETE /api/animales/[id]` | — | 200 · 409 si tiene hijos, es cría de un parto o es el toro de alguna monta. En partos de otras vacas donde era el toro, el toro queda vacío (el parto se conserva) |
+| `DELETE /api/animales/[id]` | — | 200 · nunca bloquea: borra sus eventos, las montas donde fue el toro y su vínculo como cría (el parto se conserva); sus hijos quedan sin ese padre/madre; en partos de otras vacas donde era el toro, el toro queda vacío |
 | `POST /api/leche` | **un ordeño**: `vacaId*`, `fecha*`, `cantidad*` (0–1000, litros de ese ordeño), `turno` (MANANA\|TARDE, opcional), `notas` | 201 · 409 si ya hay un ordeño de ese turno ese día para la vaca |
 | `PUT/DELETE /api/leche/[id]` | `fecha`, `cantidad` (0–1000), `turno` (`null` lo quita), `notas` | 200 |
 | `POST /api/pesos` | `animalId*`, `fecha*`, `pesoKg*` (0–3000), `notas` | 201 |
