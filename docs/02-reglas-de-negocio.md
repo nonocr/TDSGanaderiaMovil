@@ -121,7 +121,26 @@ Sin montas registradas → **sin estado reproductivo**.
 - Se registra por: animal + fecha + peso.
 - Se conserva el historial para ver la evolución del crecimiento.
 
-### A15. Etapas del ternero
+### A15-bis. Etapas de engorde por EDAD (dueño, 2026-10-16) — reemplaza A15 y A17
+- Todo animal de **Engorde** tiene su etapa calculada sola por la fecha de nacimiento:
+  **Destete** (0 a < 4 meses) → **Desarrollo** (4 a < 16 meses) → **Engorde** (≥ 16 meses).
+- Meses de calendario cumplidos; no se guarda (se recalcula siempre). Sin fecha de nacimiento
+  → sin etapa. Las etapas manuales registradas antes se conservan como historial.
+
+### A19. Novilla / Vaca (dueño, 2026-10-16)
+- Las hembras de **lechería** se registran como **novilla** o **vaca**. Al registrar su primer
+  parto, la novilla pasa sola a vaca. Una hembra con partos no puede ser novilla.
+
+### A20. Estado reproductivo manual (dueño, 2026-10-16)
+- En vacas de lechería se puede fijar el estado a mano (con descripción opcional). Se guarda el
+  estado anterior, el nuevo y la fecha. Manda hasta que se registre una monta o un parto después
+  del cambio; entonces vuelve el cálculo de A18, que no cambia.
+
+### A21. Toro / padre = reproductor (dueño, 2026-10-16)
+- Como toro de monta, toro de parto o padre registrado solo se elige un animal del módulo
+  **Reproductor** (toro o pajilla).
+
+### A15. Etapas del ternero (HISTÓRICO, ver A15-bis)
 - **Tres etapas**, en este orden: **lactancia → desarrollo → engorde**.
   (Confirmado por el dueño el 2026-10-07; antes se contemplaba "destete" como etapa, se eliminó.)
 - **Duraciones de referencia** (no se calculan solas, son orientativas):
@@ -148,7 +167,8 @@ Sin montas registradas → **sin estado reproductivo**.
 > El dueño respondió las B1–B11. Detalle completo en `07-preguntas-pendientes.md`.
 > Resumen:
 
-- **B1 (preñez):** se confirma por **palpación** (con fecha). Se registra en la monta.
+- **B1 (preñez):** se confirma por **palpación** (con fecha). Desde 2026-10-16 la palpación es un
+  registro propio (fecha + notas), ya no se anota en la monta.
 - **B2 (montas sin resultado):** **no** se registran intentos fallidos.
 - **B3 (toro del parto):** solo hay **un toro/semen** por monta; el padre es claro.
 - **B4 (datos del parto):** cría sana (sí/no), necesitó ayuda (sí/no), peso al nacer.

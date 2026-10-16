@@ -40,8 +40,9 @@ export type VacaConCiclo = {
   sinArete: boolean;
   areteCenasa: string | null;
   nombre: string | null;
-  montasComoVaca: { fecha: Date }[];
-  partosComoVaca: { fecha: Date }[];
+  // createdAt: lo usa el estado manual (ver estadoManualVigente); los avisos solo usan la fecha.
+  montasComoVaca: { fecha: Date; createdAt: Date }[];
+  partosComoVaca: { fecha: Date; createdAt: Date }[];
 };
 
 // Hembras activas (de un módulo, o de todos) con las fechas de sus montas y partos.
@@ -53,14 +54,14 @@ export const cargarVacasConCiclo = cache(async (modulo?: string): Promise<VacaCo
   const where = { sexo: "HEMBRA", estado: "ACTIVO", ...(modulo ? { modulo } : {}) };
   const [vacas, montas, partos] = await Promise.all([
     prisma.animal.findMany({ where, select: { id: true, arete: true, sinArete: true, areteCenasa: true, nombre: true } }),
-    prisma.monta.findMany({ where: { vaca: where }, select: { vacaId: true, fecha: true } }),
-    prisma.parto.findMany({ where: { vaca: where }, select: { vacaId: true, fecha: true } }),
+    prisma.monta.findMany({ where: { vaca: where }, select: { vacaId: true, fecha: true, createdAt: true } }),
+    prisma.parto.findMany({ where: { vaca: where }, select: { vacaId: true, fecha: true, createdAt: true } }),
   ]);
   const porVaca = new Map<string, VacaConCiclo>(
     vacas.map((v) => [v.id, { ...v, montasComoVaca: [], partosComoVaca: [] }])
   );
-  for (const m of montas) porVaca.get(m.vacaId)?.montasComoVaca.push({ fecha: m.fecha });
-  for (const p of partos) porVaca.get(p.vacaId)?.partosComoVaca.push({ fecha: p.fecha });
+  for (const m of montas) porVaca.get(m.vacaId)?.montasComoVaca.push({ fecha: m.fecha, createdAt: m.createdAt });
+  for (const p of partos) porVaca.get(p.vacaId)?.partosComoVaca.push({ fecha: p.fecha, createdAt: p.createdAt });
   return [...porVaca.values()];
 });
 

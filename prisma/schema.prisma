@@ -40,9 +40,10 @@ model Animal {
   // Código del reproductor (toro/semen). Opcional; se usa sobre todo en el módulo REPRODUCTOR.
   codigo         String?
 
-  // Arete oficial de CENASA (trazabilidad ganadera de Costa Rica). Opcional, para cualquier
+  // Arete oficial de SENASA (trazabilidad ganadera de Costa Rica). Opcional, para cualquier
   // módulo (engorde, lechería o reproductor). No es único ni obligatorio: no todos los animales
   // lo tienen y es independiente del `arete` interno de la finca.
+  // (La columna conserva el nombre histórico `areteCenasa`; en pantalla se muestra "SENASA".)
   areteCenasa    String?
 
   // El animal NO tiene arete físico de la finca. Como `arete` es obligatorio y único (y lo usa
@@ -50,6 +51,10 @@ model Animal {
   // interno autogenerado único (p. ej. "S/N-xxxx") que el usuario nunca ve: en pantalla se
   // muestra el `areteCenasa` (que en ese caso es obligatorio). Default false.
   sinArete       Boolean  @default(false)
+
+  // Solo hembras de LECHERÍA: "NOVILLA" (aún no ha parido) | "VACA". Null = sin indicar
+  // (registros anteriores). Al registrar su primer parto, una novilla pasa sola a VACA.
+  categoria      String?
 
   // Solo en el módulo REPRODUCTOR: distingue una PAJILLA (semen) de un TORO físico.
   // Una pajilla no tiene arete propio: en su alta solo se captura el código, y el backend
@@ -82,6 +87,8 @@ model Animal {
   registrosLeche RegistroLeche[]
   registrosPeso  RegistroPeso[]
   etapas         EtapaTernero[]
+  palpaciones    Palpacion[]
+  cambiosEstadoRepro CambioEstadoReproductivo[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -104,7 +111,8 @@ model Monta {
   fecha    DateTime
   notas    String?
 
-  // Confirmación de preñez por palpación (B1). Opcional.
+  // Confirmación de preñez por palpación (B1). Opcional. HISTÓRICO: desde 2026-10-16 la
+  // palpación se registra aparte (modelo Palpacion); estos campos se conservan y se muestran.
   prenezConfirmada    Boolean  @default(false)
   fechaConfirmacion   DateTime?
 
@@ -181,8 +189,38 @@ model RegistroPeso {
   @@index([animalId, fecha])
 }
 
+// --- PALPACIÓN --------------------------------------------------------------
+// Revisión de la vaca por palpación (fecha + notas). Evento propio, independiente de la monta.
+model Palpacion {
+  id       String   @id @default(cuid())
+  vacaId   String
+  vaca     Animal   @relation(fields: [vacaId], references: [id])
+  fecha    DateTime
+  notas    String?
+  createdAt DateTime @default(now())
+
+  @@index([vacaId, fecha])
+}
+
+// --- CAMBIO MANUAL DEL ESTADO REPRODUCTIVO -----------------------------------
+// El estado reproductivo se DERIVA de montas y partos (src/lib/estado.ts). Cada fila es un cambio
+// hecho a mano en una vaca de lechería; el último manda hasta que se registre una monta o un
+// parto después de él. estadoNuevo = null -> vuelve al cálculo automático.
+model CambioEstadoReproductivo {
+  id             String   @id @default(cuid())
+  vacaId         String
+  vaca           Animal   @relation(fields: [vacaId], references: [id])
+  fecha          DateTime @default(now()) // momento del cambio (automático)
+  estadoAnterior String?  // estado que tenía al cambiarlo (null = sin estado)
+  estadoNuevo    String?  // null = volver al cálculo automático
+  descripcion    String?
+
+  @@index([vacaId, fecha])
+}
+
 // --- ETAPAS DEL TERNERO -----------------------------------------------------
-// Solo se registran fechas reales (duraciones de referencia en B6, no se imponen).
+// HISTÓRICO: desde 2026-10-16 la etapa de engorde se calcula sola por la edad
+// (src/lib/estado.ts, etapaPorEdad). Estas filas manuales se conservan como historial.
 model EtapaTernero {
   id         String   @id @default(cuid())
   animalId   String

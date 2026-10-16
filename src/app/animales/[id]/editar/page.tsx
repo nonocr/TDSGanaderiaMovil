@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { listarAnimales } from "@/lib/genealogia";
+import { listarAnimales, opcionesToro } from "@/lib/genealogia";
 import { ANIMAL_SIN_FOTO } from "@/lib/validar";
 import { Card } from "@/components/ui";
 import { FormularioAnimal } from "@/components/FormularioAnimal";
@@ -25,7 +25,8 @@ export default async function EditarAnimalPage({
 
   const sinSexo = ({ id, arete, nombre, sinArete, areteCenasa }: (typeof todos)[number]) =>
     ({ id, arete, nombre, sinArete, areteCenasa });
-  const machos = todos.filter((a) => a.sexo === "MACHO").map(sinSexo);
+  // Padre: solo reproductores; el que ya tenga se conserva en la lista aunque no lo sea.
+  const machos = opcionesToro(todos, [animal.padreId]);
   const hembras = todos.filter((a) => a.sexo === "HEMBRA").map(sinSexo);
 
   return (
@@ -56,6 +57,7 @@ export default async function EditarAnimalPage({
             areteCenasa: animal.areteCenasa,
             sinArete: animal.sinArete,
             esPajilla: animal.esPajilla,
+            categoria: animal.categoria,
             fechaBaja: animal.fechaBaja?.toISOString() ?? null,
             motivoBaja: animal.motivoBaja,
             padreId: animal.padreId,

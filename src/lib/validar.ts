@@ -11,6 +11,8 @@ export const ETAPAS = ["LACTANCIA", "DESTETE", "DESARROLLO", "ENGORDE"] as const
 export const MODULOS = ["ENGORDE", "LECHERIA", "REPRODUCTOR"] as const;
 // Turnos de ordeño (cada registro de leche es un ordeño).
 export const TURNOS = ["MANANA", "TARDE"] as const;
+// Categoría de una hembra de lechería.
+export const CATEGORIAS = ["NOVILLA", "VACA"] as const;
 
 // Límites de tamaño del cuerpo de la petición.
 export const KB = 1024;
@@ -125,7 +127,7 @@ export function triestado(v: unknown): boolean | null {
 }
 
 // Prefijo del arete INTERNO que se genera cuando un animal no tiene arete físico (sinArete).
-// Ese valor nunca se le muestra al usuario (en pantalla se usa el arete de CENASA); solo existe
+// Ese valor nunca se le muestra al usuario (en pantalla se usa el arete de SENASA); solo existe
 // porque la columna `arete` es obligatoria y única.
 export const PREFIJO_SIN_ARETE = "S/N-";
 
@@ -160,11 +162,14 @@ export function datosAnimal(body: Record<string, unknown>) {
   const padreId = id(body.padreId, "Padre");
   const madreId = id(body.madreId, "Madre");
   const codigo = texto(body.codigo, "Código", LARGO.corto);
-  // Arete oficial de CENASA (opcional, cualquier módulo). No es único ni obligatorio.
-  const areteCenasa = texto(body.areteCenasa, "Arete CENASA", LARGO.corto);
+  // Arete oficial de SENASA (opcional, cualquier módulo). No es único ni obligatorio.
+  const areteCenasa = texto(body.areteCenasa, "Arete SENASA", LARGO.corto);
   const esPajilla = body.esPajilla === true;
-  // El animal no tiene arete físico: se identifica por el arete de CENASA.
+  // El animal no tiene arete físico: se identifica por el arete de SENASA.
   const sinArete = body.sinArete === true;
+  // Novilla / Vaca (solo hembras de lechería; lo revisa la ruta). Si no viene, no se toca.
+  const categoria =
+    body.categoria === undefined ? undefined : body.categoria ? opcion(body.categoria, CATEGORIAS, "Categoría") : null;
 
   // PAJILLA (semen): no tiene arete propio ni más datos; solo se captura el código. Como el
   // arete es obligatorio y único, se usa el código como arete. Se fuerza sexo=MACHO y se
@@ -182,10 +187,11 @@ export function datosAnimal(body: Record<string, unknown>) {
       estado,
       modulo: "REPRODUCTOR" as const,
       codigo: cod,
-      // Arete oficial de CENASA (opcional): si no se captura, queda null.
+      // Arete oficial de SENASA (opcional): si no se captura, queda null.
       areteCenasa,
       sinArete: false,
       esPajilla: true,
+      categoria: null,
       fechaBaja: esBaja ? fecha(body.fechaBaja, "Fecha de baja") : null,
       motivoBaja: esBaja ? texto(body.motivoBaja, "Motivo de baja", LARGO.notas) : null,
       padreId: null,
@@ -196,12 +202,12 @@ export function datosAnimal(body: Record<string, unknown>) {
   }
 
   // Arete: normalmente obligatorio y único. Si el animal NO tiene arete físico (sinArete), se
-  // identifica por el de CENASA (que pasa a ser obligatorio) y se guarda un arete interno único.
+  // identifica por el de SENASA (que pasa a ser obligatorio) y se guarda un arete interno único.
   // Al editar un animal que ya era sin arete, se conserva su arete interno (el body lo reenvía).
   let arete: string;
   if (sinArete) {
     if (!areteCenasa) {
-      throw new ErrorValidacion("Si el animal no tiene arete, el arete de CENASA es obligatorio.");
+      throw new ErrorValidacion("Si el animal no tiene arete, el arete de SENASA es obligatorio.");
     }
     arete = esAreteInterno(body.arete as string) ? (body.arete as string) : nuevoAreteInterno();
   } else {
@@ -219,10 +225,11 @@ export function datosAnimal(body: Record<string, unknown>) {
     modulo,
     // Código del reproductor (opcional). Solo tiene sentido en el módulo REPRODUCTOR.
     codigo,
-    // Arete oficial de CENASA (opcional, cualquier módulo).
+    // Arete oficial de SENASA (opcional, cualquier módulo).
     areteCenasa,
     sinArete,
     esPajilla: false,
+    categoria,
     fechaBaja: esBaja ? fecha(body.fechaBaja, "Fecha de baja") : null,
     motivoBaja: esBaja ? texto(body.motivoBaja, "Motivo de baja", LARGO.notas) : null,
     // Progenitores: registrado (id) o externo (texto). Nunca ambos para el mismo lado.
@@ -258,6 +265,7 @@ export const ANIMAL_SIN_FOTO = {
   areteCenasa: true,
   sinArete: true,
   esPajilla: true,
+  categoria: true,
   fechaBaja: true,
   motivoBaja: true,
   padreId: true,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { terminoBusqueda } from "@/lib/tipos";
+import { validarReproductor } from "@/lib/crias";
 import {
   ruta, leerJson, texto, opcion, datosAnimal, SEXOS, ESTADOS, MODULOS, LARGO, ErrorValidacion,
   ANIMAL_SIN_FOTO, mensajeAreteRepetido,
@@ -15,7 +16,7 @@ export const GET = ruta(async (req: NextRequest) => {
   const modulo = searchParams.get("modulo") ? opcion(searchParams.get("modulo"), MODULOS, "Módulo") : null;
   const qCrudo = texto(searchParams.get("q"), "Búsqueda", LARGO.corto);
   const q = terminoBusqueda(qCrudo);
-  // Solo se escribió un prefijo ("CENASA", "#"): nada que buscar todavía.
+  // Solo se escribió un prefijo ("SENASA", "#"): nada que buscar todavía.
   if (qCrudo && !q) return NextResponse.json([]);
 
   const animales = await prisma.animal.findMany({
@@ -27,7 +28,7 @@ export const GET = ruta(async (req: NextRequest) => {
         ? {
             OR: [
               // En Postgres `contains` distingue mayúsculas; SQLite no lo hacía.
-              // El arete interno de un animal sin arete (S/N-…) no se busca: se busca por CENASA.
+              // El arete interno de un animal sin arete (S/N-…) no se busca: se busca por SENASA.
               { arete: { contains: q, mode: "insensitive" }, sinArete: false },
               { areteCenasa: { contains: q, mode: "insensitive" } },
               { nombre: { contains: q, mode: "insensitive" } },
@@ -54,8 +55,14 @@ export const POST = ruta(async (req: NextRequest) => {
     if (!body.sexo) throw new ErrorValidacion("El sexo es obligatorio.");
   }
   const datos = datosAnimal(body);
+  // Novilla / Vaca solo aplica a hembras de lechería.
+  if (datos.categoria && !(datos.modulo === "LECHERIA" && datos.sexo === "HEMBRA")) {
+    throw new ErrorValidacion("La categoría Novilla / Vaca solo aplica a hembras de lechería.");
+  }
+  // El padre registrado debe ser un reproductor.
+  await validarReproductor(datos.padreId, "El padre");
 
-  // Una sola consulta: el arete es único en la base; si ya existe, falla con P2002.
+  // El arete es único en la base; si ya existe, falla con P2002.
   try {
     const animal = await prisma.animal.create({ data: datos, select: ANIMAL_SIN_FOTO });
     return NextResponse.json(animal, { status: 201 });

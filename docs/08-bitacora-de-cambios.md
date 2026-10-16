@@ -222,3 +222,28 @@ sobrescribe.
 **Fase 2 hecha:** `public/sw.js` (ver sin señal), `src/lib/cola-offline.ts` + `api-cliente.ts`
 (registrar sin señal), `src/components/EstadoConexion.tsx` (avisos), `id` opcional generado en el
 teléfono en POST de leche/pesos/montas/partos (evita duplicados por reintento).
+
+
+---
+
+## 2026-10-16 · Fuente: dueño (paquete de 9 cambios)
+
+**Qué llegó y decisiones del dueño:**
+1. **Cría desde el parto:** al registrar o editar un parto se puede dar de alta la cría ahí mismo
+   (Engorde, madre = la vaca, padre = el toro del parto, nacimiento = fecha del parto).
+2. **Toro / padre:** los selectores solo ofrecen reproductores (`modulo = REPRODUCTOR`). La API lo
+   valida; un toro ya asignado en registros viejos se conserva al editar.
+3. **SENASA** (no "CENASA") en todos los textos visibles. La columna sigue llamándose `areteCenasa`.
+   El buscador acepta los dos prefijos.
+4. **Palpación** como registro propio (fecha + notas), modelo `Palpacion`. Se quitó de la monta;
+   las palpaciones viejas anotadas en montas se conservan y se muestran.
+5-6. **Historial de partos** en la ficha (foto o marcador y sexo de cada cría, cuántos machos y
+   hembras) y página de detalle `/partos/[id]`.
+7. **Novilla / Vaca** (`Animal.categoria`), solo hembras de lechería. Al primer parto pasa sola a
+   vaca. Se marcaron como VACA las hembras de lechería que ya tenían partos.
+8. **Estado reproductivo manual** (`CambioEstadoReproductivo`): manda hasta que se registre una monta
+   o un parto después del cambio (decisión del dueño); luego vuelve el cálculo automático, que no
+   cambió. Los avisos y el calendario siguen usando solo las fechas.
+9. **Etapas de engorde por edad, para TODO Engorde** (decisión del dueño): Destete < 4 meses,
+   Desarrollo < 16 meses, Engorde desde los 16. Se calcula sin guardarse. Sin fecha de nacimiento
+   no se asigna etapa. Las etapas manuales viejas quedan como historial. Reemplaza A15/A17.

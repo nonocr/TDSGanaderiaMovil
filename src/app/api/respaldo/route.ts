@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   ruta, leerJson, idObligatorio, id, texto, textoObligatorio, fecha, fechaObligatoria,
-  numero, numeroObligatorio, opcion, SEXOS, ESTADOS, ETAPAS, MODULOS, TURNOS, LARGO, MB, ErrorValidacion,
+  numero, numeroObligatorio, opcion, SEXOS, ESTADOS, ETAPAS, MODULOS, TURNOS, CATEGORIAS, LARGO, MB,
+  ErrorValidacion,
 } from "@/lib/validar";
+import { ESTADOS_REPRO } from "@/lib/estado";
 import { procesarFoto } from "@/lib/fotos";
 
 // Versión del formato de respaldo. Si en el futuro cambia la estructura, se puede
@@ -15,7 +17,7 @@ const RESPALDO_MAX = 80 * MB;
 
 // --- GET /api/respaldo -> descarga TODOS los datos en un archivo JSON ---
 export const GET = ruta(async () => {
-  const [animales, montas, partos, crias, registrosLeche, registrosPeso, etapas] =
+  const [animales, montas, partos, crias, registrosLeche, registrosPeso, etapas, palpaciones, cambiosEstado] =
     await Promise.all([
       prisma.animal.findMany(),
       prisma.monta.findMany(),
@@ -24,12 +26,14 @@ export const GET = ruta(async () => {
       prisma.registroLeche.findMany(),
       prisma.registroPeso.findMany(),
       prisma.etapaTernero.findMany(),
+      prisma.palpacion.findMany(),
+      prisma.cambioEstadoReproductivo.findMany(),
     ]);
 
   const respaldo = {
     version: VERSION_RESPALDO,
     generadoEl: new Date().toISOString(),
-    datos: { animales, montas, partos, crias, registrosLeche, registrosPeso, etapas },
+    datos: { animales, montas, partos, crias, registrosLeche, registrosPeso, etapas, palpaciones, cambiosEstado },
   };
 
   const fechaHoy = new Date().toISOString().slice(0, 10);
@@ -87,10 +91,12 @@ export const POST = ruta(async (req: NextRequest) => {
       // Respaldos anteriores a los módulos no traen `modulo`: van a ENGORDE (el default).
       modulo: a.modulo ? opcion(a.modulo, MODULOS, "Módulo") : "ENGORDE",
       codigo: texto(a.codigo, "Código", LARGO.corto),
-      // Arete oficial de CENASA (opcional). Respaldos viejos sin el campo = null.
-      areteCenasa: texto(a.areteCenasa, "Arete CENASA", LARGO.corto),
-      // Animal sin arete físico (se identifica por el de CENASA). Respaldos viejos = false.
+      // Arete oficial de SENASA (opcional). Respaldos viejos sin el campo = null.
+      areteCenasa: texto(a.areteCenasa, "Arete SENASA", LARGO.corto),
+      // Animal sin arete físico (se identifica por el de SENASA). Respaldos viejos = false.
       sinArete: a.sinArete === true,
+      // Novilla / Vaca. Respaldos viejos sin el campo = null.
+      categoria: a.categoria ? opcion(a.categoria, CATEGORIAS, "Categoría") : null,
       // Respaldos anteriores a las pajillas no lo traen: son toros/animales físicos.
       esPajilla: a.esPajilla === true,
       fechaBaja: fecha(a.fechaBaja, "Fecha de baja"),
@@ -170,6 +176,22 @@ export const POST = ruta(async (req: NextRequest) => {
     notas: texto(e.notas, "Notas", LARGO.notas),
     createdAt: creado(e.createdAt),
   }));
+  // Respaldos anteriores a estas secciones no las traen: quedan vacías.
+  const palpaciones = lista(d.palpaciones, "palpaciones").map((p) => ({
+    id: idObligatorio(p.id, "id"),
+    vacaId: idObligatorio(p.vacaId, "Vaca"),
+    fecha: fechaObligatoria(p.fecha, "Fecha"),
+    notas: texto(p.notas, "Notas", LARGO.notas),
+    createdAt: creado(p.createdAt),
+  }));
+  const cambiosEstado = lista(d.cambiosEstado, "cambiosEstado").map((c) => ({
+    id: idObligatorio(c.id, "id"),
+    vacaId: idObligatorio(c.vacaId, "Vaca"),
+    fecha: fechaObligatoria(c.fecha, "Fecha"),
+    estadoAnterior: c.estadoAnterior ? opcion(c.estadoAnterior, ESTADOS_REPRO, "Estado anterior") : null,
+    estadoNuevo: c.estadoNuevo ? opcion(c.estadoNuevo, ESTADOS_REPRO, "Estado nuevo") : null,
+    descripcion: texto(c.descripcion, "Descripción", LARGO.notas),
+  }));
 
   try {
     await prisma.$transaction(
@@ -181,6 +203,8 @@ export const POST = ruta(async (req: NextRequest) => {
         await tx.registroLeche.deleteMany();
         await tx.registroPeso.deleteMany();
         await tx.etapaTernero.deleteMany();
+        await tx.palpacion.deleteMany();
+        await tx.cambioEstadoReproductivo.deleteMany();
         await tx.animal.deleteMany();
 
         // 3) Insertar animales SIN sus vínculos de padre/madre (para no romper FK).
@@ -203,6 +227,8 @@ export const POST = ruta(async (req: NextRequest) => {
         await tx.registroLeche.createMany({ data: registrosLeche });
         await tx.registroPeso.createMany({ data: registrosPeso });
         await tx.etapaTernero.createMany({ data: etapas });
+        await tx.palpacion.createMany({ data: palpaciones });
+        await tx.cambioEstadoReproductivo.createMany({ data: cambiosEstado });
       },
       { timeout: 60000 }
     );

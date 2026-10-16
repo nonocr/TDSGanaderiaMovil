@@ -3,11 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { Card, EstadoBadge, SexoBadge, AnimalLink, PageHeader, Badge, Vacio, BotonPrimario } from "@/components/ui";
 import { formatearFecha, calcularEdad } from "@/lib/fechas";
 import {
-  etapaActualTernero,
+  etapaDeAnimal,
   situacionReproductivaVaca,
   etiquetaEstadoRepro,
 } from "@/lib/estado";
-import { ETAPA_LABEL, etiquetaArete, terminoBusqueda } from "@/lib/tipos";
+import { ETAPA_LABEL, CATEGORIA_LABEL, etiquetaArete, terminoBusqueda } from "@/lib/tipos";
 import { FiltroAnimales } from "@/components/FiltroAnimales";
 import { BuscadorAnimales } from "@/components/BuscadorAnimales";
 import { IconoFlecha, IconoRespaldo, IconoAnimal, IconoBuscar, IconoMas } from "@/components/iconos";
@@ -22,8 +22,9 @@ const FILTROS_VACA = [
   { v: "POSPARTO", label: "Posparto" },
   { v: "LISTA_MONTAR", label: "Lista para montar" },
 ];
+// Etapas de engorde (calculadas por la edad).
 const FILTROS_ETAPA = [
-  { v: "LACTANCIA", label: "Lactancia" },
+  { v: "DESTETE", label: "Destete" },
   { v: "DESARROLLO", label: "Desarrollo" },
   { v: "ENGORDE", label: "Engorde" },
 ];
@@ -71,7 +72,7 @@ export async function ListaAnimales({
     ...(modulo ? { modulo } : {}),
     ...(soloActivos ? { estado: "ACTIVO" } : soloBajas ? { estado: { not: "ACTIVO" } } : {}),
   };
-  const [base, montas, partos, etapas] = await Promise.all([
+  const [base, montas, partos, etapas, cambios] = await Promise.all([
     prisma.animal.findMany({
       where: filtroAnimal,
       orderBy: { arete: "asc" },
@@ -84,6 +85,8 @@ export async function ListaAnimales({
         sexo: true,
         raza: true,
         estado: true,
+        modulo: true,
+        categoria: true,
         fechaNacimiento: true,
         fechaBaja: true,
         fotoMiniatura: true,
@@ -91,15 +94,25 @@ export async function ListaAnimales({
     }),
     // Solo las montas/partos de las vacas de esta lista (filtro de relación: misma consulta).
     usaRepro
-      ? prisma.monta.findMany({ where: { vaca: filtroAnimal }, select: { vacaId: true, fecha: true } })
+      ? prisma.monta.findMany({ where: { vaca: filtroAnimal }, select: { vacaId: true, fecha: true, createdAt: true } })
       : Promise.resolve([]),
     usaRepro
-      ? prisma.parto.findMany({ where: { vaca: filtroAnimal }, select: { vacaId: true, fecha: true } })
+      ? prisma.parto.findMany({ where: { vaca: filtroAnimal }, select: { vacaId: true, fecha: true, createdAt: true } })
       : Promise.resolve([]),
-    prisma.etapaTernero.findMany({
-      where: { animal: filtroAnimal },
-      select: { animalId: true, etapa: true, fechaInicio: true, fechaFin: true },
-    }),
+    // En Engorde la etapa sale de la edad: las etapas manuales solo hacen falta fuera de Engorde.
+    modulo === "ENGORDE"
+      ? Promise.resolve([])
+      : prisma.etapaTernero.findMany({
+          where: { animal: { AND: [filtroAnimal, { modulo: { not: "ENGORDE" } }] } },
+          select: { animalId: true, etapa: true, fechaInicio: true, fechaFin: true },
+        }),
+    // Cambios manuales del estado reproductivo.
+    usaRepro
+      ? prisma.cambioEstadoReproductivo.findMany({
+          where: { vaca: filtroAnimal },
+          select: { vacaId: true, fecha: true, estadoNuevo: true },
+        })
+      : Promise.resolve([]),
   ]);
 
   const agrupar = <T,>(filas: T[], clave: (f: T) => string) => {
@@ -115,11 +128,13 @@ export async function ListaAnimales({
   const montasPor = agrupar(montas, (m) => m.vacaId);
   const partosPor = agrupar(partos, (p) => p.vacaId);
   const etapasPor = agrupar(etapas, (e) => e.animalId);
+  const cambiosPor = agrupar(cambios, (c) => c.vacaId);
   const animales = base.map((a) => ({
     ...a,
     montasComoVaca: montasPor.get(a.id) ?? [],
     partosComoVaca: partosPor.get(a.id) ?? [],
     etapas: etapasPor.get(a.id) ?? [],
+    cambios: cambiosPor.get(a.id) ?? [],
   }));
 
   const hoy = new Date();
@@ -131,17 +146,18 @@ export async function ListaAnimales({
 
   // Calcular situacion (etapa de ternero o estado reproductivo) de cada animal.
   const filas = animales.map((a) => {
-    const etapa = etapaActualTernero(a.etapas);
+    // En Engorde, la etapa de su edad; en otros módulos, la manual (como antes).
+    const etapa = etapaDeAnimal(a, a.etapas, hoy);
     const sit =
       usaRepro && a.sexo === "HEMBRA"
-        ? situacionReproductivaVaca(a.montasComoVaca, a.partosComoVaca, hoy)
+        ? situacionReproductivaVaca(a.montasComoVaca, a.partosComoVaca, hoy, a.cambios)
         : { estado: null, partoEstimado: null };
     // "Situacion": en engorde se muestra la etapa; en lechería el estado reproductivo.
     return { a, etapa, repro: sit.estado, partoEstimado: sit.partoEstimado };
   });
 
-  // Busqueda por arete, arete de CENASA o nombre (texto libre, sin distinguir mayusculas).
-  // Si el animal no tiene arete físico, el `arete` es interno (no se busca por él); sí por CENASA.
+  // Busqueda por arete, arete de SENASA o nombre (texto libre, sin distinguir mayusculas).
+  // Si el animal no tiene arete físico, el `arete` es interno (no se busca por él); sí por SENASA.
   const termino = terminoBusqueda(q).toLowerCase();
   const porBusqueda = termino
     ? filas.filter(({ a }) => {
@@ -273,6 +289,7 @@ export async function ListaAnimales({
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                       {/* En Toros/Vacas el sexo ya se sabe por la lista. */}
                       {!sexo && <SexoBadge sexo={a.sexo} />}
+                      {a.modulo === "LECHERIA" && a.categoria && <Badge>{CATEGORIA_LABEL[a.categoria] ?? a.categoria}</Badge>}
                       <Situacion etapa={etapa} repro={repro} partoEstimado={partoEstimado} compacta />
                     </div>
                   </div>

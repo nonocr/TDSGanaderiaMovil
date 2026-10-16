@@ -32,6 +32,7 @@ export type ValoresAnimal = {
   areteCenasa?: string | null;
   sinArete?: boolean;
   esPajilla?: boolean;
+  categoria?: string | null; // "NOVILLA" | "VACA" (solo hembras de lechería)
   fechaBaja?: string | null; // ISO o yyyy-mm-dd
   motivoBaja?: string | null;
   padreId?: string | null;
@@ -71,7 +72,7 @@ export function FormularioAnimal({
   const [estado, setEstado] = useState<string>(valores?.estado ?? "ACTIVO");
   const esBaja = estado === "VENDIDO" || estado === "MUERTO";
 
-  // El animal no tiene arete físico: se identifica por el arete de CENASA (que pasa a ser
+  // El animal no tiene arete físico: se identifica por el arete de SENASA (que pasa a ser
   // obligatorio). El arete interno lo genera/conserva el backend.
   const [sinArete, setSinArete] = useState<boolean>(valores?.sinArete ?? false);
 
@@ -115,7 +116,7 @@ export function FormularioAnimal({
         modulo: "REPRODUCTOR",
         esPajilla: true,
         codigo: fd.get("codigo"),
-        // Arete oficial de CENASA (opcional).
+        // Arete oficial de SENASA (opcional).
         areteCenasa: fd.get("areteCenasa") || null,
         estado: fd.get("estado") ?? "ACTIVO",
         fechaBaja: fd.get("fechaBaja") || null,
@@ -141,9 +142,11 @@ export function FormularioAnimal({
         modulo,
         // Código solo en reproductores.
         codigo: esReproductor ? fd.get("codigo") || null : null,
-        // Arete oficial de CENASA (opcional, cualquier módulo).
+        // Arete oficial de SENASA (opcional, cualquier módulo).
         areteCenasa: fd.get("areteCenasa") || null,
         esPajilla: false,
+        // Novilla / Vaca: solo hembras de lechería.
+        categoria: esLecheria ? fd.get("categoria") || null : null,
         fechaBaja: fd.get("fechaBaja") || null,
         motivoBaja: fd.get("motivoBaja") || null,
       };
@@ -308,9 +311,9 @@ export function FormularioAnimal({
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
             Luego podrás añadir más datos del código.
           </p>
-          {/* Arete oficial de CENASA: opcional, también para pajillas. */}
+          {/* Arete oficial de SENASA: opcional, también para pajillas. */}
           <div className="mt-4">
-            <label htmlFor="fa-arete-cenasa-pajilla" className={etiqueta}>Arete de CENASA (opcional)</label>
+            <label htmlFor="fa-arete-cenasa-pajilla" className={etiqueta}>Arete de SENASA (opcional)</label>
             <input
               id="fa-arete-cenasa-pajilla"
               name="areteCenasa"
@@ -334,7 +337,7 @@ export function FormularioAnimal({
               checked={sinArete}
               onChange={(e) => setSinArete(e.target.checked)}
             />
-            Este animal no tiene arete (se identifica por el arete de CENASA)
+            Este animal no tiene arete (se identifica por el arete de SENASA)
           </label>
         </div>
 
@@ -348,7 +351,7 @@ export function FormularioAnimal({
           </div>
         ) : (
           <div className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-500 dark:border-stone-700 dark:bg-stone-800/50 dark:text-stone-400">
-            Sin arete de la finca. Completa abajo el <strong>arete de CENASA</strong>: será lo que
+            Sin arete de la finca. Completa abajo el <strong>arete de SENASA</strong>: será lo que
             identifique a este animal.
           </div>
         )}
@@ -370,16 +373,40 @@ export function FormularioAnimal({
           <input type="hidden" name="sexo" value={sexoFijo ?? "HEMBRA"} />
         )}
 
+        {/* Novilla o vaca: solo hembras de lechería. Obligatorio al dar de alta. Una novilla
+            pasa sola a vaca al registrar su primer parto. */}
+        {esLecheria && (
+          <div>
+            <label htmlFor="fa-categoria" className={etiqueta}>Categoría {esEdicion ? "" : "*"}</label>
+            <select
+              id="fa-categoria"
+              name="categoria"
+              required={!esEdicion}
+              className={campo}
+              defaultValue={valores?.categoria ?? ""}
+            >
+              <option value="" disabled={!esEdicion}>
+                {esEdicion ? "— Sin indicar —" : "— Elegir —"}
+              </option>
+              <option value="NOVILLA">Novilla (aún no ha parido)</option>
+              <option value="VACA">Vaca</option>
+            </select>
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+              Una novilla pasa a vaca sola cuando se registra su primer parto.
+            </p>
+          </div>
+        )}
+
         <div>
           <label htmlFor="fa-raza" className={etiqueta}>Raza</label>
           <input id="fa-raza" name="raza" maxLength={60} className={campo} defaultValue={valores?.raza ?? ""} />
         </div>
 
-        {/* Arete oficial de CENASA: opcional, salvo cuando el animal no tiene arete de la finca
+        {/* Arete oficial de SENASA: opcional, salvo cuando el animal no tiene arete de la finca
             (entonces es su identificador y pasa a ser obligatorio). */}
         <div>
           <label htmlFor="fa-arete-cenasa" className={etiqueta}>
-            Arete de CENASA {sinArete ? "*" : "(opcional)"}
+            Arete de SENASA {sinArete ? "*" : "(opcional)"}
           </label>
           <input
             id="fa-arete-cenasa"
@@ -518,8 +545,9 @@ export function FormularioAnimal({
       <fieldset className="rounded border border-stone-200 p-3 dark:border-stone-700">
         <legend className="px-1 text-sm font-semibold text-stone-600 dark:text-stone-300">Padre (opcional)</legend>
         <p className="mb-2 text-xs text-stone-500 dark:text-stone-400">
-          Elige &quot;Registrado&quot; si el padre ya está en la app. Elige &quot;De otra finca&quot; si es un
-          animal que no tienes registrado (solo escribes su nombre). Puedes dejarlo en blanco si no lo sabes.
+          Elige &quot;Registrado&quot; si el padre ya está en la app (solo aparecen los toros y pajillas de
+          Reproductores). Elige &quot;De otra finca&quot; si es un animal que no tienes registrado (solo
+          escribes su nombre). Puedes dejarlo en blanco si no lo sabes.
         </p>
         <div className="mb-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
           <label className="flex items-center gap-2 py-1">

@@ -4,11 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { ANIMAL_SIN_FOTO } from "@/lib/validar";
 import { Card, SectionTitle, EstadoBadge, SexoBadge, AnimalLink, Badge } from "@/components/ui";
 import { formatearFecha, calcularEdad } from "@/lib/fechas";
-import { SEXO_LABEL, ETAPA_LABEL, MODULO_LABEL, etiquetaArete } from "@/lib/tipos";
+import { SEXO_LABEL, ETAPA_LABEL, MODULO_LABEL, CATEGORIA_LABEL, etiquetaArete } from "@/lib/tipos";
 import {
-  etapaActualTernero,
+  etapaDeAnimal,
+  iniciosEtapasEdad,
   situacionReproductivaVaca,
   etiquetaEstadoRepro,
+  type EstadoReproductivo,
 } from "@/lib/estado";
 import {
   obtenerAscendencia,
@@ -17,6 +19,7 @@ import {
   obtenerArbol,
   listarAnimales,
   datosCrias,
+  opcionesToro,
   type Progenitor,
 } from "@/lib/genealogia";
 import { ArbolGenealogico } from "@/components/ArbolGenealogico";
@@ -30,6 +33,9 @@ import { IconoAtras, IconoFlecha } from "@/components/iconos";
 import { GraficaPesoDiferida } from "./GraficaPesoDiferida";
 import { FichaTabs } from "./FichaTabs";
 import { ProduccionLecheVaca } from "./ProduccionLecheVaca";
+import { EtapaAutomatica } from "./EtapaAutomatica";
+import { EstadoReproductivoManual } from "./EstadoReproductivoManual";
+import { ResumenPartos, type PartoResumen } from "./ResumenPartos";
 
 export const dynamic = "force-dynamic";
 
@@ -46,10 +52,10 @@ type EventoFila = {
   descripcion?: string | null;
   toroId?: string | null;
   notas?: string | null;
-  // Solo montas: preñez confirmada por palpación (se puede marcar al editar).
-  prenez?: { confirmada: boolean; fechaISO: string | null };
   // Solo partos de la vaca: crías actuales (se pueden cambiar al editar).
   crias?: { id: string; arete: string; nombre: string | null; sinArete: boolean; areteCenasa: string | null }[];
+  // Página de detalle (partos).
+  href?: string;
 };
 
 function TextoProgenitor({ p }: { p: Progenitor }) {
@@ -87,6 +93,9 @@ export default async function AnimalDetallePage({
     todos,
     datosDeCrias,
     criasEnPartos,
+    palpaciones,
+    cambiosEstado,
+    fotosCrias,
   ] = await Promise.all([
     prisma.animal.findUnique({ where: { id }, select: ANIMAL_SIN_FOTO }),
     prisma.monta.findMany({ where: { OR: [{ vacaId: id }, { toroId: id }] }, orderBy: { fecha: "desc" } }),
@@ -102,6 +111,13 @@ export default async function AnimalDetallePage({
     listarAnimales(), // nombres de relacionados + selectores de toro, vaca y crías
     datosCrias(), // misma lectura (cache): fecha y toro propuestos del parto al marcar una cría
     prisma.cria.findMany({ select: { criaId: true } }), // crías ya vinculadas a cualquier parto
+    prisma.palpacion.findMany({ where: { vacaId: id }, orderBy: { fecha: "desc" } }),
+    prisma.cambioEstadoReproductivo.findMany({ where: { vacaId: id }, orderBy: { fecha: "desc" } }),
+    // Miniaturas y sexo de las crías de sus partos (para el historial de partos).
+    prisma.animal.findMany({
+      where: { nacidoEnParto: { some: { parto: { vacaId: id } } } },
+      select: { id: true, sexo: true, fotoMiniatura: true },
+    }),
   ]);
 
   if (!base) notFound();
@@ -134,7 +150,10 @@ export default async function AnimalDetallePage({
 
   const sinSexo = ({ id, arete, nombre, sinArete, areteCenasa }: (typeof todos)[number]) =>
     ({ id, arete, nombre, sinArete, areteCenasa });
-  const toros = todos.filter((a) => a.sexo === "MACHO").map(sinSexo);
+  // Toro / padre: solo reproductores. Para editar registros ya hechos, el toro que tenían sigue en
+  // la lista aunque no sea reproductor (así no se pierde la relación al guardar).
+  const toros = opcionesToro(todos);
+  const torosEdicion = opcionesToro(todos, [...montas.map((m) => m.toroId), ...partos.map((p) => p.toroId)]);
   const vacas = todos.filter((a) => a.sexo === "HEMBRA").map(sinSexo);
   // Una cría tiene una sola madre: no se ofrecen los animales que ya están en algún parto ni los
   // que tienen otra madre (registrada o externa). La API lo valida igual (409).
@@ -167,13 +186,13 @@ export default async function AnimalDetallePage({
       detalle:
         `${m.inseminacion ? "inseminada" : "montada"} por ${m.toro.nombre ?? etiquetaArete(m.toro)}` +
         (m.inseminacion ? " (pajilla)" : "") +
+        // Palpación anotada en la monta (registros anteriores a la palpación propia): se conserva.
         (m.prenezConfirmada
           ? ` · preñez confirmada${m.fechaConfirmacion ? ` (${formatearFecha(m.fechaConfirmacion)})` : ""}`
           : ""),
       editable: true,
       toroId: m.toroId,
       notas: m.notas,
-      prenez: { confirmada: m.prenezConfirmada, fechaISO: m.fechaConfirmacion?.toISOString() ?? null },
     });
   for (const m of animal.montasComoToro)
     eventos.push({
@@ -184,10 +203,9 @@ export default async function AnimalDetallePage({
         `${m.inseminacion ? "inseminó a" : "montó a"} ${m.vaca.nombre ?? etiquetaArete(m.vaca)}` +
         (m.inseminacion ? " (pajilla)" : "") +
         (m.prenezConfirmada ? " · preñez confirmada" : ""),
-      // Desde el toro no se edita el toro mismo; solo fecha, notas y preñez.
+      // Desde el toro no se edita el toro mismo; solo fecha y notas.
       editable: true,
       notas: m.notas,
-      prenez: { confirmada: m.prenezConfirmada, fechaISO: m.fechaConfirmacion?.toISOString() ?? null },
     });
   for (const p of animal.partosComoVaca)
   {
@@ -211,6 +229,7 @@ export default async function AnimalDetallePage({
         const a = porId.get(c.criaId);
         return a ? [sinSexo(a)] : [];
       }),
+      href: `/partos/${p.id}`,
     });
   }
   for (const p of animal.partosComoToro)
@@ -220,6 +239,19 @@ export default async function AnimalDetallePage({
       tipo: "Parto",
       detalle: `padre · parto de ${p.vaca.nombre ?? etiquetaArete(p.vaca)}`,
       // Vista desde el toro: no editable aqui (se edita desde la vaca).
+      href: `/partos/${p.id}`,
+    });
+  for (const p of palpaciones)
+    eventos.push({ id: p.id, fecha: p.fecha, tipo: "Palpación", detalle: "revisión por palpación", editable: true, notas: p.notas });
+  for (const c of cambiosEstado)
+    eventos.push({
+      fecha: c.fecha,
+      tipo: "Estado",
+      detalle:
+        `${etiquetaEstadoRepro(c.estadoAnterior as EstadoReproductivo) ?? "Sin estado"} → ` +
+        (c.estadoNuevo ? etiquetaEstadoRepro(c.estadoNuevo as EstadoReproductivo) : "cálculo automático") +
+        " (cambio manual)",
+      notas: c.descripcion,
     });
   for (const r of animal.registrosLeche)
     eventos.push({
@@ -270,15 +302,41 @@ export default async function AnimalDetallePage({
     (a, b) => a.fechaInicio.getTime() - b.fechaInicio.getTime()
   );
 
-  // Situacion actual DERIVADA (A18): etapa de ternero o estado reproductivo de la vaca.
+  // Situacion actual DERIVADA (A18): etapa (en engorde, por la edad) o estado reproductivo de la vaca.
   const esEngorde = animal.modulo === "ENGORDE";
   const esLecheria = animal.modulo === "LECHERIA";
-  const etapaActual = etapaActualTernero(animal.etapas);
-  // La situación reproductiva solo tiene sentido para vacas de lechería.
-  const situacionVaca =
-    esLecheria && animal.sexo === "HEMBRA"
-      ? situacionReproductivaVaca(animal.montasComoVaca, animal.partosComoVaca, new Date())
-      : { estado: null, partoEstimado: null };
+  const esVacaLeche = esLecheria && animal.sexo === "HEMBRA";
+  const hoy = new Date();
+  const etapaActual = etapaDeAnimal(animal, animal.etapas, hoy);
+  const iniciosEtapas = esEngorde ? iniciosEtapasEdad(animal.fechaNacimiento) : null;
+  // La situación reproductiva solo tiene sentido para vacas de lechería. Un cambio manual vigente manda.
+  const situacionVaca = esVacaLeche
+    ? situacionReproductivaVaca(animal.montasComoVaca, animal.partosComoVaca, hoy, cambiosEstado)
+    : { estado: null, partoEstimado: null, manual: false };
+
+  // Palpaciones anteriores: las propias y las que se anotaban en la monta (registros viejos).
+  const palpacionesPrevias = [
+    ...palpaciones.map((p) => ({ fecha: p.fecha, notas: p.notas, enMonta: false })),
+    ...animal.montasComoVaca
+      .filter((m) => m.prenezConfirmada)
+      .map((m) => ({ fecha: m.fechaConfirmacion ?? m.fecha, notas: "Preñez confirmada", enMonta: true })),
+  ]
+    .sort((a, b) => b.fecha.getTime() - a.fecha.getTime())
+    .map((p) => ({ fechaISO: p.fecha.toISOString(), notas: p.notas, enMonta: p.enMonta }));
+
+  // Historial de partos con sus crías (sexo y foto de la ficha de cada cría, sin duplicar datos).
+  const fotoPorId = new Map(fotosCrias.map((f) => [f.id, f]));
+  const partosResumen: PartoResumen[] = animal.partosComoVaca.map((p) => ({
+    id: p.id,
+    fechaISO: p.fecha.toISOString(),
+    toro: p.toro ? p.toro.nombre ?? etiquetaArete(p.toro) : null,
+    crias: p.crias.flatMap((c) => {
+      const a = porId.get(c.criaId);
+      if (!a) return [];
+      const f = fotoPorId.get(c.criaId);
+      return [{ ...sinSexo(a), sexo: f?.sexo ?? a.sexo ?? null, fotoMiniatura: f?.fotoMiniatura ?? null }];
+    }),
+  }));
   const situacionTexto = etapaActual
     ? ETAPA_LABEL[etapaActual] ?? etapaActual
     : etiquetaEstadoRepro(situacionVaca.estado);
@@ -322,10 +380,14 @@ export default async function AnimalDetallePage({
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                 <SexoBadge sexo={animal.sexo} />
                 <Badge tono="neutral">{MODULO_LABEL[animal.modulo] ?? animal.modulo}</Badge>
+                {esVacaLeche && animal.categoria && (
+                  <Badge tono="neutral">{CATEGORIA_LABEL[animal.categoria] ?? animal.categoria}</Badge>
+                )}
                 <EstadoBadge estado={animal.estado} />
                 {situacionTexto && (
                   <Badge tono={etapaActual ? "azul" : "verde"} punto>
                     {situacionTexto}
+                    {situacionVaca.manual ? " (manual)" : ""}
                   </Badge>
                 )}
                 {situacionVaca.partoEstimado && (
@@ -362,17 +424,38 @@ export default async function AnimalDetallePage({
       <FichaTabs
         info={
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+            {/* Gestión reproductiva: estado actual y cambio manual (solo vacas de lechería). */}
+            {esVacaLeche && (
+              <Card>
+                <SectionTitle>Estado reproductivo</SectionTitle>
+                <EstadoReproductivoManual
+                  vacaId={animal.id}
+                  estado={situacionVaca.estado}
+                  manual={Boolean(situacionVaca.manual)}
+                  cambios={cambiosEstado.map((c) => ({
+                    id: c.id,
+                    fechaISO: c.fecha.toISOString(),
+                    anterior: c.estadoAnterior,
+                    nuevo: c.estadoNuevo,
+                    descripcion: c.descripcion,
+                  }))}
+                />
+              </Card>
+            )}
             <Card>
               <SectionTitle>Datos básicos</SectionTitle>
               <dl className="space-y-1 text-sm">
-                <Dato k="Arete" v={animal.sinArete ? "Sin arete (identificado por CENASA)" : animal.arete} />
+                <Dato k="Arete" v={animal.sinArete ? "Sin arete (identificado por SENASA)" : animal.arete} />
                 <Dato k="Nombre" v={animal.nombre ?? "—"} />
                 <Dato k="Módulo" v={MODULO_LABEL[animal.modulo] ?? animal.modulo} />
+                {esVacaLeche && (
+                  <Dato k="Categoría" v={animal.categoria ? CATEGORIA_LABEL[animal.categoria] ?? animal.categoria : "—"} />
+                )}
                 {animal.modulo === "REPRODUCTOR" && (
                   <Dato k="Tipo" v={animal.esPajilla ? "Pajilla" : "Toro"} />
                 )}
                 {animal.codigo && <Dato k="Código" v={animal.codigo} />}
-                {animal.areteCenasa && <Dato k="Arete CENASA" v={animal.areteCenasa} />}
+                {animal.areteCenasa && <Dato k="Arete SENASA" v={animal.areteCenasa} />}
                 <Dato k="Sexo" v={SEXO_LABEL[animal.sexo]} />
                 <Dato k="Raza" v={animal.raza ?? "—"} />
                 <Dato k="Nacimiento" v={formatearFecha(animal.fechaNacimiento)} />
@@ -452,10 +535,17 @@ export default async function AnimalDetallePage({
         }
         historial={
           <div className="space-y-6">
+            {/* Partos de la hembra: crías con foto y sexo, y cuántos machos y hembras nacieron. */}
+            {animal.sexo === "HEMBRA" && (esLecheria || partosResumen.length > 0) && (
+              <Card>
+                <SectionTitle>Partos y crías</SectionTitle>
+                <ResumenPartos partos={partosResumen} />
+              </Card>
+            )}
             <Card>
               <SectionTitle>Historial</SectionTitle>
               <HistorialEventos
-                toros={toros}
+                toros={torosEdicion}
                 posiblesCrias={posiblesCrias}
                 eventos={eventos.map((e) => ({
                   id: e.id,
@@ -469,23 +559,24 @@ export default async function AnimalDetallePage({
                   descripcion: e.descripcion,
                   toroId: e.toroId,
                   notas: e.notas,
-                  prenez: e.prenez,
                   crias: e.crias,
+                  href: e.href,
                   puedeEditarToro: e.toroId !== undefined,
                 }))}
               />
             </Card>
 
-            {/* Etapas de engorde: solo para el módulo de engorde (histórico editable). */}
+            {/* Etapas de engorde: se calculan por la edad. Las registradas a mano antes se
+                conservan abajo como historial (editables). */}
             {esEngorde && (
               <Card>
-                <SectionTitle>Etapas de engorde</SectionTitle>
-                {etapasOrdenadas.length === 0 ? (
-                  <p className="text-sm text-stone-500 dark:text-stone-400">
-                    Sin etapas registradas todavía. Cámbiala en la pestaña Registrar → Etapa;
-                    la fecha se pone sola.
+                <SectionTitle>Etapa de engorde</SectionTitle>
+                <EtapaAutomatica etapaActual={etapaActual} inicios={iniciosEtapas} />
+                {etapasOrdenadas.length > 0 && (
+                  <>
+                  <p className="mb-2 mt-5 text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
+                    Etapas registradas a mano (historial)
                   </p>
-                ) : (
                   <ol className="space-y-3">
                     {etapasOrdenadas.map((et) => {
                       const actual = !et.fechaFin;
@@ -496,7 +587,7 @@ export default async function AnimalDetallePage({
                               <span className="font-medium text-stone-700 dark:text-stone-200">
                                 {ETAPA_LABEL[et.etapa] ?? et.etapa}
                               </span>
-                              {actual && <Badge tono="verde">Etapa actual</Badge>}
+                              {actual && <Badge>Sin fecha de fin</Badge>}
                             </div>
                             <AccionesEtapa
                               etapaId={et.id}
@@ -516,6 +607,7 @@ export default async function AnimalDetallePage({
                       );
                     })}
                   </ol>
+                  </>
                 )}
               </Card>
             )}
@@ -528,10 +620,12 @@ export default async function AnimalDetallePage({
               animalId={animal.id}
               modulo={animal.modulo}
               etapaActual={etapaActual}
+              iniciosEtapas={iniciosEtapas}
               toros={toros}
               vacas={vacas}
               posiblesCrias={posiblesCrias}
               criasSugeridas={criasSugeridas}
+              palpacionesPrevias={palpacionesPrevias}
             />
           </div>
         }

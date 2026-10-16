@@ -14,9 +14,9 @@ import {
 
 export const dynamic = "force-dynamic";
 
-// Celdas del desglose por etapa (orden: Lactancia → Desarrollo → Engorde → Sin etapa).
+// Celdas del desglose por etapa (orden: Destete → Desarrollo → Engorde → Sin fecha de nacimiento).
 const ETAPAS_CELDA = [
-  { clave: "LACTANCIA", Icono: IconoBiberon, acento: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300" },
+  { clave: "DESTETE", Icono: IconoBiberon, acento: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300" },
   { clave: "DESARROLLO", Icono: IconoReloj, acento: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" },
   { clave: "ENGORDE", Icono: IconoPeso, acento: "bg-marca-100 text-marca-700 dark:bg-marca-950 dark:text-marca-300" },
   { clave: "SIN_ETAPA", Icono: IconoInfo, acento: "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400" },
@@ -62,7 +62,7 @@ async function Resumen({
   const etapasCeldas: Celda[] = ETAPAS_CELDA.map((e) => ({
     clave: e.clave,
     valor: etapas[e.clave] ?? 0,
-    etiqueta: e.clave === "SIN_ETAPA" ? "Sin etapa" : ETAPA_LABEL[e.clave] ?? e.clave,
+    etiqueta: e.clave === "SIN_ETAPA" ? "Sin fecha de nacimiento" : ETAPA_LABEL[e.clave] ?? e.clave,
     Icono: e.Icono,
     acento: e.acento,
     // "Sin etapa" no tiene filtro propio en la lista: celda estática.
@@ -76,7 +76,7 @@ async function Resumen({
         titulo="Por etapa"
         celdas={etapasCeldas}
         columnas={2}
-        nota="Cada animal se cuenta en su etapa actual (la última sin fecha de fin). Cambia la etapa desde la ficha del animal."
+        nota="La etapa se calcula sola por la edad: Destete hasta los 4 meses, Desarrollo hasta los 16 y Engorde desde entonces. Los animales sin fecha de nacimiento no se pueden ubicar."
       />
     </>
   );

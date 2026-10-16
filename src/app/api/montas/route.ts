@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ruta, leerJson, id, idObligatorio, fechaObligatoria, fecha, texto, LARGO } from "@/lib/validar";
+import { validarReproductor } from "@/lib/crias";
 
 // POST /api/montas -> registrar monta (vaca + toro + fecha). NO implica parto.
 // `id` opcional: lo genera el teléfono para los registros hechos sin señal (src/lib/cola-offline.ts).
@@ -12,12 +13,16 @@ export const POST = ruta(async (req: NextRequest) => {
     const ya = await prisma.monta.findUnique({ where: { id: idCliente } });
     if (ya) return NextResponse.json(ya, { status: 200 });
   }
+  // La palpación ya no se registra en la monta (tiene su propio registro, /api/palpaciones); los
+  // campos de preñez se siguen aceptando por compatibilidad (registros sin señal ya encolados).
   const prenezConfirmada = Boolean(body.prenezConfirmada);
+  const toroId = idObligatorio(body.toroId, "El toro");
+  await validarReproductor(toroId, "El toro");
   const monta = await prisma.monta.create({
     data: {
       ...(idCliente ? { id: idCliente } : {}),
       vacaId: idObligatorio(body.vacaId, "La vaca"),
-      toroId: idObligatorio(body.toroId, "El toro"),
+      toroId,
       fecha: fechaObligatoria(body.fecha, "La fecha"),
       notas: texto(body.notas, "Notas", LARGO.notas),
       prenezConfirmada,

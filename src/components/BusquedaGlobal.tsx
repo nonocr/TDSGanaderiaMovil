@@ -92,8 +92,8 @@ export function BusquedaGlobal({
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           onFocus={() => resultados.length > 0 && setAbierto(true)}
-          placeholder="Buscar arete, CENASA o nombre…"
-          aria-label="Buscar animal por arete, arete de CENASA o nombre"
+          placeholder="Buscar arete, SENASA o nombre…"
+          aria-label="Buscar animal por arete, arete de SENASA o nombre"
           className="h-11 w-full rounded-xl border border-stone-300 bg-white pl-10 pr-10 text-sm outline-none focus:border-marca-500 focus:ring-2 focus:ring-marca-200 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500 [&::-webkit-search-cancel-button]:hidden"
         />
         {texto && (

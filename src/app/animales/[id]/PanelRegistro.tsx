@@ -7,31 +7,36 @@ import {
   FormMonta,
   FormMontaDesdeToro,
   FormParto,
+  FormPalpacion,
 } from "./FormulariosEventos";
-import { CambiarEtapa } from "./CambiarEtapa";
+import { EtapaAutomatica } from "./EtapaAutomatica";
 
 type Opcion = { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 
 // Panel con pestañas para registrar eventos. Lo que se puede registrar depende del módulo:
-//  - ENGORDE:     peso y etapa.
-//  - LECHERIA:    leche, monta y parto (su ciclo reproductivo).
+//  - ENGORDE:     peso; la etapa se calcula sola por la edad (solo se muestra).
+//  - LECHERIA:    leche, monta, parto y palpación (su ciclo reproductivo).
 //  - REPRODUCTOR: monta / inseminación (pajilla).
 export function PanelRegistro({
   animalId,
   modulo,
   etapaActual,
+  iniciosEtapas,
   toros,
   vacas,
   posiblesCrias,
   criasSugeridas,
+  palpacionesPrevias,
 }: {
   animalId: string;
   modulo: string;
   etapaActual: string | null;
-  toros: Opcion[];
+  iniciosEtapas: { DESTETE: string; DESARROLLO: string; ENGORDE: string } | null;
+  toros: Opcion[]; // solo reproductores
   vacas: Opcion[];
   posiblesCrias: (Opcion & { fechaNacimiento?: string | null; padreId?: string | null })[];
   criasSugeridas: string[]; // ids de los hijos de esta vaca aún sin parto (van primero)
+  palpacionesPrevias: { fechaISO: string; notas: string | null; enMonta: boolean }[];
 }) {
   const tabs =
     modulo === "ENGORDE"
@@ -44,6 +49,7 @@ export function PanelRegistro({
           { id: "leche", label: "Leche" },
           { id: "monta", label: "Monta" },
           { id: "parto", label: "Parto" },
+          { id: "palpacion", label: "Palpación" },
         ]
       : [{ id: "monta", label: "Monta / inseminación" }];
 
@@ -79,8 +85,8 @@ export function PanelRegistro({
         {tab === "peso" && <FormPeso animalId={animalId} />}
         {tab === "etapa" && (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Cambiar de etapa</p>
-            <CambiarEtapa animalId={animalId} etapaActual={etapaActual} />
+            <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Etapa según la edad</p>
+            <EtapaAutomatica etapaActual={etapaActual} inicios={iniciosEtapas} />
           </div>
         )}
         {tab === "leche" && <FormLeche vacaId={animalId} />}
@@ -88,6 +94,7 @@ export function PanelRegistro({
         {tab === "parto" && (
           <FormParto vacaId={animalId} toros={toros} posiblesCrias={posiblesCrias} criasSugeridas={criasSugeridas} />
         )}
+        {tab === "palpacion" && <FormPalpacion vacaId={animalId} previas={palpacionesPrevias} />}
         {tab === "monta" && modulo === "REPRODUCTOR" && (
           <FormMontaDesdeToro toroId={animalId} vacas={vacas} />
         )}

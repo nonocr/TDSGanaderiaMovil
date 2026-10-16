@@ -2,7 +2,7 @@
 // en vez de perder el registro, se guarda en el teléfono (IndexedDB) y se envía solo cuando
 // vuelve la señal (ver EstadoConexion.tsx).
 //
-// - Solo se encolan ALTAS de eventos (ordeño, peso, monta, parto, cambio de etapa). Editar,
+// - Solo se encolan ALTAS de eventos (ordeño, peso, monta, parto, palpación, cambio de etapa). Editar,
 //   borrar y dar de alta animales siguen pidiendo conexión.
 // - Cada registro lleva un `id` generado aquí. El servidor lo usa como id del registro: si un
 //   envío llegó pero la respuesta se perdió, reenviarlo no crea un duplicado.
@@ -26,6 +26,7 @@ const TIPOS: Record<string, string> = {
   "/api/pesos": "Peso",
   "/api/montas": "Monta",
   "/api/partos": "Parto",
+  "/api/palpaciones": "Palpación",
   "/api/etapas/cambiar": "Cambio de etapa",
 };
 

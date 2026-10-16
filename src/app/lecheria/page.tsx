@@ -87,7 +87,7 @@ async function Resumen({
       <DesgloseGrid
         titulo="Por estado reproductivo"
         celdas={reproCeldas}
-        nota='Estado derivado del ciclo de cada vaca. "Sin ciclo" son vacas sin montas registradas.'
+        nota='Estado derivado del ciclo de cada vaca, o el fijado a mano en su ficha. "Sin ciclo" son vacas sin montas registradas.'
       />
     </>
   );

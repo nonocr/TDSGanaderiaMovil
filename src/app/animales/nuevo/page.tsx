@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listarAnimales } from "@/lib/genealogia";
+import { listarAnimales, opcionesToro } from "@/lib/genealogia";
 import { Card } from "@/components/ui";
 import { FormularioAnimal } from "@/components/FormularioAnimal";
 import { MODULO_LABEL } from "@/lib/tipos";
@@ -17,11 +17,12 @@ export default async function NuevoAnimalPage({
   const moduloInicial = modulo && (MODULOS as readonly string[]).includes(modulo) ? modulo : undefined;
 
   // Padres posibles: una sola consulta (la misma que usa editar), con sinArete/areteCenasa para
-  // que los animales sin arete se vean como "CENASA …" en los selectores.
+  // que los animales sin arete se vean como "SENASA …" en los selectores.
+  // Padre: solo reproductores (toros y pajillas del módulo Reproductores).
   const todos = await listarAnimales();
   const sinSexo = ({ id, arete, nombre, sinArete, areteCenasa }: (typeof todos)[number]) =>
     ({ id, arete, nombre, sinArete, areteCenasa });
-  const machos = todos.filter((a) => a.sexo === "MACHO").map(sinSexo);
+  const machos = opcionesToro(todos);
   const hembras = todos.filter((a) => a.sexo === "HEMBRA").map(sinSexo);
 
   return (

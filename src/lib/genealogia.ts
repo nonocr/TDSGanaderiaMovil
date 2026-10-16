@@ -13,9 +13,11 @@ export type NodoAnimal = {
   nombre: string | null;
   sexo: string;
   // Para mostrar el identificador correcto cuando el animal no tiene arete físico (ver
-  // etiquetaArete en src/lib/tipos.ts): se identifica por el arete de CENASA.
+  // etiquetaArete en src/lib/tipos.ts): se identifica por el arete de SENASA.
   sinArete: boolean;
   areteCenasa: string | null;
+  // Módulo guardado: los selectores de toro/padre solo ofrecen REPRODUCTOR.
+  modulo: string;
 };
 
 export type Progenitor =
@@ -40,6 +42,7 @@ const cargarParentesco = cache(async (): Promise<Map<string, FilaParentesco>> =>
       areteCenasa: true,
       nombre: true,
       sexo: true,
+      modulo: true,
       padreId: true,
       madreId: true,
       padreExterno: true,
@@ -55,6 +58,19 @@ const cargarParentesco = cache(async (): Promise<Map<string, FilaParentesco>> =>
 // lectura de la genealogía: sirve para los selectores de toro/vaca/cría sin otra consulta.
 export async function listarAnimales(): Promise<NodoAnimal[]> {
   return [...(await cargarParentesco()).values()].map(nodo);
+}
+
+// Opciones del selector de toro / padre: solo los REPRODUCTORES (toros y pajillas del módulo
+// Reproductores), según el módulo guardado. `conservar`: ids que ya están asignados en el registro
+// que se edita; se mantienen en la lista aunque no sean reproductores, para no perder la relación.
+export function opcionesToro(
+  todos: NodoAnimal[],
+  conservar: (string | null | undefined)[] = []
+): { id: string; arete: string; nombre: string | null; sinArete: boolean; areteCenasa: string | null }[] {
+  const extra = new Set(conservar.filter(Boolean));
+  return todos
+    .filter((a) => a.modulo === "REPRODUCTOR" || extra.has(a.id))
+    .map(({ id, arete, nombre, sinArete, areteCenasa }) => ({ id, arete, nombre, sinArete, areteCenasa }));
 }
 
 // Fecha de nacimiento ("YYYY-MM-DD", día UTC como se guardan) y padre registrado por id, de la
@@ -82,7 +98,7 @@ export async function datosCrias(): Promise<Map<string, DatosCria>> {
 function nodo(f: FilaParentesco): NodoAnimal {
   return {
     id: f.id, arete: f.arete, nombre: f.nombre, sexo: f.sexo,
-    sinArete: f.sinArete, areteCenasa: f.areteCenasa,
+    sinArete: f.sinArete, areteCenasa: f.areteCenasa, modulo: f.modulo,
   };
 }
 

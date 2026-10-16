@@ -71,13 +71,13 @@ export const GET = ruta(async (req: NextRequest) => {
     "Modulo",
     "Tipo",
     "Codigo",
-    "Arete CENASA",
+    "Arete SENASA",
     "Padre",
     "Madre",
     "Descripcion",
   ];
 
-  // Progenitor registrado "Nombre (#arete)" (o "CENASA …" si no tiene arete), externo
+  // Progenitor registrado "Nombre (#arete)" (o "SENASA …" si no tiene arete), externo
   // "Texto (externo)" o vacío.
   const progenitor = (idRegistrado: string | null, externo: string | null) => {
     const p = idRegistrado ? porId.get(idRegistrado) : undefined;
@@ -91,7 +91,7 @@ export const GET = ruta(async (req: NextRequest) => {
 
     return [
       // Si no tiene arete físico, el `arete` es un valor interno: no se exporta (se identifica
-      // por el arete de CENASA, que va en su propia columna).
+      // por el arete de SENASA, que va en su propia columna).
       a.sinArete ? "(sin arete)" : a.arete,
       a.nombre ?? "",
       SEXO_LABEL[a.sexo] ?? a.sexo,

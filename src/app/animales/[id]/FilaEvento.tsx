@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui";
-import { formatearFecha, hoyLocalISO } from "@/lib/fechas";
+import { formatearFecha } from "@/lib/fechas";
 import { llamarApi } from "@/lib/api-cliente";
 import {
   IconoNacimiento,
@@ -14,9 +15,13 @@ import {
   IconoPin,
   IconoEditar,
   IconoBasura,
+  IconoCheck,
+  IconoReloj,
+  IconoFlecha,
   type IconoProps,
 } from "@/components/iconos";
 import { etiquetaArete, terminoBusqueda } from "@/lib/tipos";
+import { EditorCriasNuevas, criasNuevasPayload, type CriaNuevaForm } from "./FormulariosEventos";
 
 type Opcion = { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 
@@ -25,6 +30,7 @@ const ENDPOINT: Record<string, string> = {
   Parto: "/api/partos",
   Leche: "/api/leche",
   Peso: "/api/pesos",
+  "Palpación": "/api/palpaciones",
 };
 
 export type DatosFila = {
@@ -40,10 +46,10 @@ export type DatosFila = {
   toroId?: string | null;
   notas?: string | null;
   puedeEditarToro?: boolean;
-  // Solo montas: preñez confirmada por palpación (normalmente semanas después de la monta).
-  prenez?: { confirmada: boolean; fechaISO: string | null };
   // Solo partos de la vaca: crías actuales (se pueden cambiar al editar).
   crias?: Opcion[];
+  // Página de detalle del registro (partos).
+  href?: string;
 };
 
 const campo =
@@ -58,6 +64,8 @@ const ESTILO_TIPO: Record<string, { Icono: (p: IconoProps) => React.JSX.Element;
   Leche: { Icono: IconoLeche, acento: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300" },
   Peso: { Icono: IconoPeso, acento: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" },
   Etapa: { Icono: IconoPin, acento: "bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300" },
+  "Palpación": { Icono: IconoCheck, acento: "bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300" },
+  Estado: { Icono: IconoReloj, acento: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" },
 };
 
 export function FilaEvento({
@@ -76,14 +84,14 @@ export function FilaEvento({
   const [guardando, setGuardando] = useState(false);
   const [borrando, setBorrando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [prenez, setPrenez] = useState(datos.prenez?.confirmada ?? false);
   const [crias, setCrias] = useState<string[]>([]);
+  const [criasNuevas, setCriasNuevas] = useState<CriaNuevaForm[]>([]);
   const [filtroCria, setFiltroCria] = useState("");
 
   // Al abrir la edición se parte siempre de lo guardado (por si antes se canceló a medias).
   function abrirEdicion() {
-    setPrenez(datos.prenez?.confirmada ?? false);
     setCrias(datos.crias?.map((c) => c.id) ?? []);
+    setCriasNuevas([]);
     setFiltroCria("");
     setError(null);
     setEditando(true);
@@ -106,15 +114,14 @@ export function FilaEvento({
     }
     if (datos.tipo === "Peso") payload.pesoKg = fd.get("pesoKg");
     if (datos.tipo === "Parto") payload.descripcion = fd.get("descripcion");
-    if (datos.tipo === "Parto" && datos.crias) payload.crias = crias.map((criaId) => ({ criaId }));
+    if (datos.tipo === "Parto" && datos.crias) {
+      payload.crias = crias.map((criaId) => ({ criaId }));
+      payload.criasNuevas = criasNuevasPayload(criasNuevas);
+    }
     if ((datos.tipo === "Monta" || datos.tipo === "Parto") && datos.puedeEditarToro)
       payload.toroId = fd.get("toroId") || null;
-    if (datos.tipo === "Monta" || datos.tipo === "Leche" || datos.tipo === "Peso")
+    if (datos.tipo === "Monta" || datos.tipo === "Leche" || datos.tipo === "Peso" || datos.tipo === "Palpación")
       payload.notas = fd.get("notas");
-    if (datos.tipo === "Monta" && datos.prenez) {
-      payload.prenezConfirmada = prenez;
-      payload.fechaConfirmacion = prenez ? fd.get("fechaConfirmacion") || null : null;
-    }
 
     const r = await llamarApi(`${base}/${datos.id}`, { method: "PUT", body: payload });
     setGuardando(false);
@@ -167,6 +174,11 @@ export function FilaEvento({
             {datos.detalle && (
               <p className="mt-0.5 text-sm text-stone-600 dark:text-stone-300">{datos.detalle}</p>
             )}
+            {datos.href && (
+              <Link href={datos.href} className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-marca-700 hover:underline dark:text-marca-400">
+                Ver detalle <IconoFlecha className="h-3.5 w-3.5" />
+              </Link>
+            )}
             {datos.notas && (
               <p className="mt-0.5 text-xs text-stone-400 dark:text-stone-500">{datos.notas}</p>
             )}
@@ -205,7 +217,13 @@ export function FilaEvento({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <Badge>{datos.tipo}</Badge>
-            <span className="truncate text-stone-600 dark:text-stone-300">{datos.detalle}</span>
+            {datos.href ? (
+              <Link href={datos.href} className="truncate text-marca-700 underline-offset-2 hover:underline dark:text-marca-400">
+                {datos.detalle}
+              </Link>
+            ) : (
+              <span className="truncate text-stone-600 dark:text-stone-300">{datos.detalle}</span>
+            )}
           </div>
           <span className="mt-0.5 block text-xs text-stone-400 dark:text-stone-500">
             {formatearFecha(datos.fechaISO)}
@@ -300,32 +318,7 @@ export function FilaEvento({
             </div>
           )}
           {datos.tipo === "Parto" && datos.crias && selectorCrias(datos.crias)}
-          {datos.tipo === "Monta" && datos.prenez && (
-            <div className="space-y-2">
-              <label className="flex min-h-11 items-center gap-2.5 text-sm text-stone-700 dark:text-stone-200">
-                <input
-                  type="checkbox"
-                  checked={prenez}
-                  onChange={(e) => setPrenez(e.target.checked)}
-                  className="h-5 w-5 accent-marca-600"
-                />
-                Preñez confirmada por palpación
-              </label>
-              {prenez && (
-                <div>
-                  <label htmlFor={`ev-palpacion-${datos.id}`} className={etiqueta}>Fecha de la palpación</label>
-                  <input
-                    id={`ev-palpacion-${datos.id}`}
-                    type="date"
-                    name="fechaConfirmacion"
-                    defaultValue={datos.prenez.fechaISO?.slice(0, 10) ?? hoyLocalISO()}
-                    className={campo}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-          {(datos.tipo === "Monta" || datos.tipo === "Leche" || datos.tipo === "Peso") && (
+          {(datos.tipo === "Monta" || datos.tipo === "Leche" || datos.tipo === "Peso" || datos.tipo === "Palpación") && (
             <div>
               <label htmlFor={`ev-notas-${datos.id}`} className={etiqueta}>Notas</label>
               <input id={`ev-notas-${datos.id}`} name="notas" maxLength={2000} defaultValue={datos.notas ?? ""} className={campo} />
@@ -386,8 +379,8 @@ export function FilaEvento({
               type="search"
               value={filtroCria}
               onChange={(e) => setFiltroCria(e.target.value)}
-              aria-label="Buscar otra cría por arete, CENASA o nombre"
-              placeholder="Agregar otra cría: buscar arete, CENASA o nombre…"
+              aria-label="Buscar otra cría por arete, SENASA o nombre"
+              placeholder="Agregar otra cría: buscar arete, SENASA o nombre…"
               className={campo + " mt-1"}
             />
             <div className="max-h-48 overflow-y-auto">
@@ -398,9 +391,10 @@ export function FilaEvento({
             </div>
           </>
         )}
-        <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-          Desmarca la cría equivocada y marca la correcta. Si la cría no aparece, primero agrégala como animal nuevo.
+        <p className="mt-1 mb-2 text-xs text-stone-500 dark:text-stone-400">
+          Desmarca la cría equivocada y marca la correcta. Si la cría no está registrada, regístrala aquí.
         </p>
+        <EditorCriasNuevas crias={criasNuevas} onChange={setCriasNuevas} claseCampo={campo} claseEtiqueta={etiqueta} />
       </div>
     );
   }

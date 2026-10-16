@@ -7,6 +7,7 @@ import {
 } from "@/lib/validar";
 import { procesarFoto } from "@/lib/fotos";
 import { etiquetaArete } from "@/lib/tipos";
+import { validarReproductor } from "@/lib/crias";
 
 // Fotos: solo JPEG/PNG/WebP en base64 (sin SVG, que puede llevar código).
 const FOTO_VALIDA = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/;
@@ -44,14 +45,38 @@ export const PUT = ruta(async (req: NextRequest, { params }: ConId) => {
 
   // Si es cría de un parto registrado, su madre es la vaca de ese parto: no se puede cambiar
   // por otra (ni quitar) sin antes eliminar ese parto.
-  const comoCria = await prisma.cria.findFirst({
-    where: { criaId: id },
-    select: {
-      parto: {
-        select: { vaca: { select: { id: true, arete: true, sinArete: true, areteCenasa: true, nombre: true } } },
+  const [comoCria, actual] = await Promise.all([
+    prisma.cria.findFirst({
+      where: { criaId: id },
+      select: {
+        parto: {
+          select: { vaca: { select: { id: true, arete: true, sinArete: true, areteCenasa: true, nombre: true } } },
+        },
       },
-    },
-  });
+    }),
+    prisma.animal.findUnique({
+      where: { id },
+      select: { padreId: true, modulo: true, _count: { select: { partosComoVaca: true } } },
+    }),
+  ]);
+  if (!actual) return NextResponse.json({ error: "Animal no encontrado." }, { status: 404 });
+
+  // Novilla / Vaca: solo hembras de lechería, y una hembra que ya parió no puede ser novilla.
+  if (datos.categoria) {
+    if ((datos.modulo ?? actual.modulo) !== "LECHERIA" || datos.sexo !== "HEMBRA") {
+      throw new ErrorValidacion("La categoría Novilla / Vaca solo aplica a hembras de lechería.");
+    }
+    const partos = actual._count.partosComoVaca;
+    if (datos.categoria === "NOVILLA" && partos > 0) {
+      throw new ErrorValidacion(
+        `No puede ser novilla: ya tiene ${partos} parto${partos === 1 ? "" : "s"} registrado${partos === 1 ? "" : "s"}.`,
+        409
+      );
+    }
+  }
+  // Un padre nuevo debe ser reproductor; el que ya tenía se conserva aunque no lo sea.
+  await validarReproductor(datos.padreId, "El padre", actual.padreId);
+
   const madreParto = comoCria?.parto.vaca;
   if (madreParto && datos.madreId !== madreParto.id) {
     const ident = madreParto.nombre
@@ -119,7 +144,8 @@ export const DELETE = ruta(async (_req: NextRequest, { params }: ConId) => {
     return NextResponse.json({ error: "Animal no encontrado." }, { status: 404 });
   }
 
-  // Sus propios eventos (montas, partos, leche, peso, etapas) se borran en cascada manual
+  // Sus propios eventos (montas, partos, leche, peso, etapas, palpaciones, cambios de estado)
+  // se borran en cascada manual
   // (las filas Cria de sus partos caen por onDelete: Cascade). Además:
   // - Sus hijos registrados se conservan, pero quedan sin ese padre/madre.
   // - Si era la única cría de un parto, se borra el parto; si el parto tiene más crías
@@ -138,6 +164,8 @@ export const DELETE = ruta(async (_req: NextRequest, { params }: ConId) => {
     prisma.registroLeche.deleteMany({ where: { vacaId: id } }),
     prisma.registroPeso.deleteMany({ where: { animalId: id } }),
     prisma.etapaTernero.deleteMany({ where: { animalId: id } }),
+    prisma.palpacion.deleteMany({ where: { vacaId: id } }),
+    prisma.cambioEstadoReproductivo.deleteMany({ where: { vacaId: id } }),
     prisma.animal.delete({ where: { id } }),
   ]);
 

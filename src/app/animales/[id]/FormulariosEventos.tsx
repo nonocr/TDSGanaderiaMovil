@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { hoyLocalISO } from "@/lib/fechas";
+import { hoyLocalISO, formatearFecha } from "@/lib/fechas";
 import { llamarApi } from "@/lib/api-cliente";
 import { etiquetaArete, terminoBusqueda } from "@/lib/tipos";
 
@@ -144,7 +144,6 @@ export function FormLeche({ vacaId }: { vacaId: string }) {
 export function FormMonta({ vacaId, toros }: { vacaId: string; toros: Opcion[] }) {
   const { error, cargando, enviar } = useEnviar();
   const hoy = useHoy();
-  const [prenez, setPrenez] = useState(false);
   return (
     <form
       className="space-y-2"
@@ -159,14 +158,9 @@ export function FormMonta({ vacaId, toros }: { vacaId: string; toros: Opcion[] }
             toroId: fd.get("toroId"),
             fecha: fd.get("fecha"),
             notas: fd.get("notas"),
-            prenezConfirmada: prenez,
-            fechaConfirmacion: prenez ? fd.get("fechaConfirmacion") : null,
             inseminacion: fd.get("inseminacion") === "on",
           },
-          () => {
-            form.reset();
-            setPrenez(false);
-          }
+          () => form.reset()
         );
       }}
     >
@@ -193,25 +187,10 @@ export function FormMonta({ vacaId, toros }: { vacaId: string; toros: Opcion[] }
         Fue inseminación (pajilla), no monta natural
       </label>
 
-      {/* Confirmación de preñez por palpación (B1). */}
-      <label className="flex items-center gap-2.5 rounded-md py-1 text-sm text-stone-700 dark:text-stone-200">
-        <input
-          type="checkbox"
-          checked={prenez}
-          onChange={(e) => setPrenez(e.target.checked)}
-          className="h-4 w-4 accent-marca-600"
-        />
-        Preñez confirmada por palpación
-      </label>
-      {prenez && (
-        <div>
-          <label htmlFor="monta-fecha-palpacion" className={etiqueta}>Fecha de la palpación</label>
-          <input id="monta-fecha-palpacion" type="date" name="fechaConfirmacion" key={hoy} defaultValue={hoy} className={campo} />
-        </div>
-      )}
-
       <input name="notas" aria-label="Notas (opcional)" placeholder="Notas (opcional)" maxLength={2000} className={campo} />
-      <p className="text-xs text-stone-500 dark:text-stone-400">Esto solo registra la monta. El parto se anota aparte cuando ocurra.</p>
+      <p className="text-xs text-stone-500 dark:text-stone-400">
+        Esto solo registra la monta. La palpación y el parto se anotan aparte, en sus pestañas.
+      </p>
       <button className={boton} disabled={cargando}>Guardar monta</button>
     </form>
   );
@@ -284,6 +263,8 @@ export function FormParto({
   const { error, cargando, enviar } = useEnviar();
   const hoy = useHoy();
   const [crias, setCrias] = useState<string[]>([]);
+  // Crías que no están registradas: se crean como animales nuevos al guardar el parto.
+  const [criasNuevas, setCriasNuevas] = useState<CriaNuevaForm[]>([]);
   // Fecha controlada: empieza en hoy (cuando el navegador la calcula) y se reemplaza por la fecha
   // de nacimiento de la cría que se marque. Se puede cambiar a mano igual.
   const [fecha, setFecha] = useState("");
@@ -360,10 +341,12 @@ export function FormParto({
             necesitoAyuda: fd.get("necesitoAyuda"),
             pesoNacimientoKg: fd.get("pesoNacimientoKg"),
             crias: crias.map((criaId) => ({ criaId })),
+            criasNuevas: criasNuevasPayload(criasNuevas),
           },
           () => {
             form.reset();
             setCrias([]);
+            setCriasNuevas([]);
             setFecha(hoy);
             setFechaDeCria(null);
             setToroId("");
@@ -450,15 +433,12 @@ export function FormParto({
       <div>
         <span className={etiqueta}>Cría(s) que nacieron</span>
         <p className="text-xs text-stone-500 dark:text-stone-400 mb-1">
-          Primero agrega la cría como un animal nuevo (con esta vaca como madre, así sale arriba); luego
-          aquí la marcas. Puedes marcar más de una si fueron gemelos.
+          Registra la cría aquí mismo con &quot;Registrar cría nueva&quot;, o márcala si ya la agregaste como
+          animal. Si fueron gemelos, agrega o marca cada una.
         </p>
-        {posiblesCrias.length === 0 ? (
-          <div className="rounded border border-stone-200 p-2 text-sm text-stone-400 dark:border-stone-700">
-            No hay animales para vincular todavía.
-          </div>
-        ) : (
-          <div className="space-y-2 text-sm">
+        <EditorCriasNuevas crias={criasNuevas} onChange={setCriasNuevas} claseCampo={campo} claseEtiqueta={etiqueta} />
+        {posiblesCrias.length === 0 ? null : (
+          <div className="mt-2 space-y-2 text-sm">
             {/* Hijos registrados de esta vaca que aún no están en un parto: lo más probable. */}
             {sugeridas.length > 0 && (
               <div className="rounded border border-marca-200 bg-marca-50/50 p-2 dark:border-marca-900 dark:bg-marca-950/30">
@@ -477,8 +457,8 @@ export function FormParto({
                       type="search"
                       value={filtro}
                       onChange={(e) => setFiltro(e.target.value)}
-                      aria-label="Buscar otra cría por arete, CENASA o nombre"
-                      placeholder="Buscar arete, CENASA o nombre…"
+                      aria-label="Buscar otra cría por arete, SENASA o nombre"
+                      placeholder="Buscar arete, SENASA o nombre…"
                       className={campo + " mt-0 mb-1"}
                     />
                     <div className="max-h-48 overflow-y-auto">
@@ -508,6 +488,214 @@ export function FormParto({
       </div>
       <button className={boton} disabled={cargando}>Guardar parto</button>
     </form>
+  );
+}
+
+// --- Crías nuevas del parto --------------------------------------------------
+// Filas para registrar crías que aún no existen como animales. Al guardar el parto, el servidor
+// las crea en Engorde con la vaca como madre, el toro del parto como padre y la fecha del parto
+// como nacimiento. Se usa al registrar y al editar un parto.
+export type CriaNuevaForm = {
+  clave: string;
+  sinArete: boolean;
+  arete: string;
+  areteCenasa: string;
+  nombre: string;
+  sexo: string;
+};
+
+export function criasNuevasPayload(crias: CriaNuevaForm[]) {
+  return crias.map(({ sinArete, arete, areteCenasa, nombre, sexo }) => ({
+    sinArete,
+    arete: sinArete ? null : arete,
+    areteCenasa: areteCenasa || null,
+    nombre: nombre || null,
+    sexo,
+  }));
+}
+
+export function EditorCriasNuevas({
+  crias,
+  onChange,
+  claseCampo,
+  claseEtiqueta,
+}: {
+  crias: CriaNuevaForm[];
+  onChange: (crias: CriaNuevaForm[]) => void;
+  claseCampo: string;
+  claseEtiqueta: string;
+}) {
+  const cambiar = (clave: string, cambio: Partial<CriaNuevaForm>) =>
+    onChange(crias.map((c) => (c.clave === clave ? { ...c, ...cambio } : c)));
+  const agregar = () =>
+    onChange([
+      ...crias,
+      { clave: Math.random().toString(36).slice(2), sinArete: false, arete: "", areteCenasa: "", nombre: "", sexo: "" },
+    ]);
+
+  return (
+    <div className="space-y-2">
+      {crias.map((c, i) => {
+        const pre = `cria-nueva-${c.clave}`;
+        return (
+          <fieldset
+            key={c.clave}
+            className="rounded-lg border border-marca-200 bg-marca-50/40 p-3 dark:border-marca-900 dark:bg-marca-950/20"
+          >
+            <legend className="px-1 text-xs font-semibold text-marca-700 dark:text-marca-300">
+              Cría nueva{crias.length > 1 ? ` ${i + 1}` : ""}
+            </legend>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {c.sinArete ? (
+                <div>
+                  <label htmlFor={`${pre}-senasa`} className={claseEtiqueta}>Arete SENASA *</label>
+                  <input
+                    id={`${pre}-senasa`}
+                    required
+                    maxLength={60}
+                    value={c.areteCenasa}
+                    onChange={(e) => cambiar(c.clave, { areteCenasa: e.target.value })}
+                    className={claseCampo}
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label htmlFor={`${pre}-arete`} className={claseEtiqueta}>Arete *</label>
+                  <input
+                    id={`${pre}-arete`}
+                    required
+                    maxLength={60}
+                    value={c.arete}
+                    onChange={(e) => cambiar(c.clave, { arete: e.target.value })}
+                    className={claseCampo}
+                    placeholder="Ej. 031"
+                  />
+                </div>
+              )}
+              <div>
+                <label htmlFor={`${pre}-nombre`} className={claseEtiqueta}>Nombre (opcional)</label>
+                <input
+                  id={`${pre}-nombre`}
+                  maxLength={120}
+                  value={c.nombre}
+                  onChange={(e) => cambiar(c.clave, { nombre: e.target.value })}
+                  className={claseCampo}
+                />
+              </div>
+              <div>
+                <label htmlFor={`${pre}-sexo`} className={claseEtiqueta}>Sexo *</label>
+                <select
+                  id={`${pre}-sexo`}
+                  required
+                  value={c.sexo}
+                  onChange={(e) => cambiar(c.clave, { sexo: e.target.value })}
+                  className={claseCampo}
+                >
+                  <option value="" disabled>— Elegir —</option>
+                  <option value="HEMBRA">Hembra</option>
+                  <option value="MACHO">Macho</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+              <label className="flex min-h-11 items-center gap-2 text-sm text-stone-600 dark:text-stone-300">
+                <input
+                  type="checkbox"
+                  checked={c.sinArete}
+                  onChange={(e) => cambiar(c.clave, { sinArete: e.target.checked })}
+                  className="h-4 w-4 accent-marca-600"
+                />
+                No tiene arete (usar el de SENASA)
+              </label>
+              <button
+                type="button"
+                onClick={() => onChange(crias.filter((x) => x.clave !== c.clave))}
+                className="min-h-11 rounded-lg px-3 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-stone-800"
+              >
+                Quitar
+              </button>
+            </div>
+          </fieldset>
+        );
+      })}
+      <button
+        type="button"
+        onClick={agregar}
+        className="min-h-11 w-full rounded-lg border border-dashed border-marca-300 px-3 text-sm font-medium text-marca-700 hover:bg-marca-50 dark:border-marca-800 dark:text-marca-400 dark:hover:bg-stone-800/50"
+      >
+        + Registrar cría nueva
+      </button>
+      {crias.length > 0 && (
+        <p className="text-xs text-stone-500 dark:text-stone-400">
+          Se guardará como animal de Engorde, con esta vaca como madre, el toro elegido como padre y la
+          fecha del parto como nacimiento. La foto se agrega después desde su ficha.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// --- Palpación: solo hembras; fecha + notas opcionales ---
+// `previas`: palpaciones anteriores (las nuevas y las que se anotaban en la monta), más reciente primero.
+export function FormPalpacion({
+  vacaId,
+  previas,
+}: {
+  vacaId: string;
+  previas: { fechaISO: string; notas: string | null; enMonta: boolean }[];
+}) {
+  const { error, cargando, enviar } = useEnviar();
+  const hoy = useHoy();
+  return (
+    <div className="space-y-4">
+      <form
+        className="space-y-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          const form = e.currentTarget;
+          enviar("/api/palpaciones", { vacaId, fecha: fd.get("fecha"), notas: fd.get("notas") }, () => form.reset());
+        }}
+      >
+        <Aviso error={error} />
+        <div>
+          <label htmlFor="palpacion-fecha" className={etiqueta}>Fecha de la palpación</label>
+          <input id="palpacion-fecha" type="date" name="fecha" required key={hoy} defaultValue={hoy} className={campo} />
+        </div>
+        <div>
+          <label htmlFor="palpacion-notas" className={etiqueta}>Notas (opcional)</label>
+          <textarea
+            id="palpacion-notas"
+            name="notas"
+            rows={2}
+            maxLength={2000}
+            className={campo}
+            placeholder="Ej. preñada de ~2 meses"
+          />
+        </div>
+        <button className={boton} disabled={cargando}>Guardar palpación</button>
+      </form>
+
+      <div>
+        <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Palpaciones anteriores</p>
+        {previas.length === 0 ? (
+          <p className="mt-1 text-sm text-stone-400 dark:text-stone-500">Sin palpaciones registradas.</p>
+        ) : (
+          <ul className="mt-1 divide-y divide-stone-100 text-sm dark:divide-stone-800">
+            {previas.map((p, i) => (
+              <li key={i} className="py-1.5">
+                <span className="font-medium text-stone-700 dark:text-stone-200">{formatearFecha(p.fechaISO)}</span>
+                {p.enMonta && (
+                  <span className="ml-2 text-xs text-stone-400 dark:text-stone-500">(anotada en la monta)</span>
+                )}
+                {p.notas && <p className="text-xs text-stone-500 dark:text-stone-400">{p.notas}</p>}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">Se editan o eliminan desde el Historial.</p>
+      </div>
+    </div>
   );
 }
 
