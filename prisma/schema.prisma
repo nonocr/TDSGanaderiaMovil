@@ -94,10 +94,12 @@ model Animal {
   updatedAt      DateTime @updatedAt
 
   // Índices: Postgres no indexa solas las claves foráneas.
+  // Los listados filtran por sexo/estado o modulo/estado y SIEMPRE ordenan por `arete` asc, así que
+  // `arete` va al final del índice: cubre filtro + orden y evita que Postgres ordene en memoria.
   @@index([padreId])
   @@index([madreId])
-  @@index([sexo, estado])
-  @@index([modulo, estado])
+  @@index([sexo, estado, arete])
+  @@index([modulo, estado, arete])
 }
 
 // --- MONTA ------------------------------------------------------------------

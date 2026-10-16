@@ -35,6 +35,9 @@ caracteres (notas/descripción ≤ 2000; arete/raza ≤ 60).
 | `POST /api/etapas` | `animalId*`, `etapa*` (LACTANCIA\|DESTETE\|DESARROLLO\|ENGORDE), `fechaInicio*`, `fechaFin`, `notas` | 201 |
 | `PUT/DELETE /api/etapas/[id]` | `etapa`, `fechaInicio`, `fechaFin` (si no se manda se conserva; `null` reabre la etapa), `notas` | 200 |
 | `POST /api/etapas/cambiar` | `animalId*`, `etapa*`, `fecha` (día **local** `"YYYY-MM-DD"`; mandarlo siempre), `notas`. Cierra la etapa abierta con esa fecha y abre la nueva | 201 etapa nueva · 200 si ya estaba en esa etapa · 404 |
+| `POST /api/palpaciones` | `vacaId*`, `fecha*`, `notas`, `id` (opcional, del cliente para la cola offline). Solo **vacas de lechería** | 201 · 404 · 400 si no es hembra de lechería |
+| `PUT/DELETE /api/palpaciones/[id]` | `fecha`, `notas` | 200 |
+| `POST /api/estado-reproductivo` | `vacaId*`, `estado*` (uno de ORDENIO\|SECADO\|POR_PARIR\|POSPARTO\|LISTA_MONTAR, o `AUTOMATICO` para volver al cálculo), `descripcion`. Solo **vacas de lechería**. El estado manual manda hasta que se registre una monta o parto posterior | 201 · 404 · 400 |
 | `GET /api/exportar` | `?sexo=&modulo=&estado=ACTIVOS\|BAJAS` (sin `estado` = todos) | archivo CSV (incluye columnas Módulo y Código) |
 | `GET /api/respaldo` | — | archivo JSON con todos los datos |
 | `POST /api/respaldo` | JSON del respaldo (≤ 80 MB; **en Vercel ≤ 4,5 MB**) | `{ ok, animales }` · **reemplaza todo** |

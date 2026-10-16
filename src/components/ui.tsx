@@ -160,3 +160,14 @@ export function BotonPrimario({
     </Link>
   );
 }
+
+// --- Estilos de formulario compartidos -------------------------------------
+// Clases reutilizables para inputs/selects/textarea y sus etiquetas, para no repetir la misma
+// cadena de Tailwind en cada formulario (FormularioAnimal, FormulariosEventos, etc.).
+// En móvil, globals.css fuerza 16px en los inputs para evitar el zoom de iOS.
+export const claseCampo =
+  "mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm outline-none focus:border-marca-500 focus:ring-2 focus:ring-marca-200 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500";
+export const claseEtiqueta = "block text-sm font-medium text-stone-600 dark:text-stone-400";
+// Botón primario de formulario (área táctil ≥44px). Para enlaces usar <BotonPrimario>.
+export const claseBotonPrimario =
+  "inline-flex min-h-11 items-center justify-center rounded-lg bg-marca-600 px-4 text-sm font-medium text-white shadow-sm hover:bg-marca-700 disabled:opacity-50";

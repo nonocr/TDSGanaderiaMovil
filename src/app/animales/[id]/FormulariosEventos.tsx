@@ -5,14 +5,14 @@ import { useEffect, useState } from "react";
 import { hoyLocalISO, formatearFecha } from "@/lib/fechas";
 import { llamarApi } from "@/lib/api-cliente";
 import { etiquetaArete, terminoBusqueda } from "@/lib/tipos";
+import { claseCampo, claseEtiqueta, claseBotonPrimario } from "@/components/ui";
 
 type Opcion = { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 
-const campo =
-  "mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm outline-none focus:border-marca-500 focus:ring-2 focus:ring-marca-200 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500";
-const etiqueta = "block text-sm font-medium text-stone-600 dark:text-stone-400";
-const boton =
-  "w-full rounded-lg bg-marca-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-marca-700 disabled:opacity-50 sm:w-auto";
+const campo = claseCampo;
+const etiqueta = claseEtiqueta;
+// Área táctil ≥44px (min-h-11), ancho completo en móvil.
+const boton = `${claseBotonPrimario} w-full sm:w-auto`;
 
 function useEnviar() {
   const router = useRouter();

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { llamarApi } from "@/lib/api-cliente";
 import { ESTADOS_REPRO, ESTADO_REPRO_LABEL } from "@/lib/estado";
 import { formatearFecha } from "@/lib/fechas";
+import { claseCampo, claseBotonPrimario } from "@/components/ui";
 
 // Estado reproductivo de una vaca de lechería: el actual (automático o manual), un formulario para
 // cambiarlo a mano con descripción opcional, y el historial de cambios manuales.
@@ -43,8 +44,7 @@ export function EstadoReproductivoManual({
   }
 
   const etiqueta = (e: string | null) => (e ? ESTADO_REPRO_LABEL[e] ?? e : "Sin estado");
-  const campo =
-    "mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm outline-none focus:border-marca-500 focus:ring-2 focus:ring-marca-200 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100";
+  const campo = claseCampo;
 
   return (
     <div className="space-y-3 text-sm">
@@ -106,17 +106,13 @@ export function EstadoReproductivoManual({
             o un parto; entonces vuelve el cálculo automático.
           </p>
           <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={guardando}
-              className="rounded-lg bg-marca-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-marca-700 disabled:opacity-50"
-            >
+            <button type="submit" disabled={guardando} className={claseBotonPrimario}>
               {guardando ? "Guardando…" : "Guardar"}
             </button>
             <button
               type="button"
               onClick={() => setAbierto(false)}
-              className="rounded-lg border border-stone-300 px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-100 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-700"
+              className="inline-flex min-h-11 items-center rounded-lg border border-stone-300 px-4 text-sm text-stone-600 hover:bg-stone-100 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-700"
             >
               Cancelar
             </button>

@@ -23,6 +23,58 @@ _(ninguno todavía)_
 
 Lo que Claude Code detecta y le toca resolver al frontend. Kiro marca `[HECHO]` al corregirlo.
 
+### [INFO] Kiro: revisión de calidad y optimización (2026-10-16) — toqué backend y frontend
+
+> Claude: el dueño me pidió una **revisión completa** de la app (buscar qué mejorar/optimizar y
+> dejarla limpia) mientras tú estabas sin tokens. Me dio permiso explícito para tocar backend. Aquí
+> queda TODO lo que cambié, por qué y cómo, para que lo revises. Nada cambia reglas de negocio.
+> Versión del proyecto: **1.0.0 → 1.0.1** (solo correcciones/optimización, sin features nuevas).
+
+**Backend (tu terreno) — qué y por qué:**
+1. **Respaldo, N+1 al restaurar** (`src/app/api/respaldo/route.ts`): el paso 4 enlazaba padre/madre
+   con un `tx.animal.update` por animal dentro de la transacción (cientos de idas y vuelta a
+   Supabase, riesgo de timeout de 60 s). **Cómo lo hice:** agrupo los animales por el mismo par
+   `(padreId, madreId)` y hago un `updateMany({ where:{ id:{ in:[...] }}, data:{ padreId, madreId }})`
+   por grupo. En un hato real muchos comparten progenitores, así que baja de cientos de updates a
+   pocos. Mismo resultado, muchos menos round-trips. **Revisa** si te convence el agrupado.
+2. **Índices del listado** (`prisma/schema.prisma`): `GET /api/animales` filtra por sexo/estado o
+   modulo/estado y **siempre** ordena por `arete`. Cambié `@@index([sexo, estado])` →
+   `@@index([sexo, estado, arete])` y `@@index([modulo, estado])` → `@@index([modulo, estado, arete])`
+   para que el `ORDER BY arete` use el índice en vez de ordenar en memoria. Apliqué `db push` +
+   `generate` (base en sync). No añadí índices duplicados: reemplacé los dos existentes.
+3. **`cargarVacasConCiclo`** (`src/lib/alertas.ts`): con `react.cache` y argumento `modulo`, llamarla
+   con `undefined` (pendientes/calendario) y con `"LECHERIA"` (desglose) en la misma petición repetía
+   las 3 consultas. **Cómo lo hice:** una función cacheada `cargarTodasLasVacas()` SIN argumentos
+   (todas las hembras activas, una vez) y el wrapper `cargarVacasConCiclo(modulo?)` filtra en memoria.
+   Añadí `modulo` al select y al tipo `VacaConCiclo`. Una sola lectura por petición.
+4. **`POST /api/palpaciones`** (`src/app/api/palpaciones/route.ts`): solo validaba `sexo === HEMBRA`,
+   así que se podía palpar una hembra de engorde o dada de baja. Lo alineé con
+   `/api/estado-reproductivo`: exige `modulo === "LECHERIA" && sexo === "HEMBRA"`. No es inventar una
+   regla: es hacer consistente la validación con la ruta hermana. Si palpar fuera de lechería fuera
+   válido, revísalo.
+
+**Lógica de dominio compartida:**
+5. **`calcularEdad`** (`src/lib/fechas.ts`): usaba getters locales (`getFullYear/Month/Date`) mientras
+   el resto del dominio opera en UTC (fechas a medianoche UTC). En la finca (UTC-6) podía mostrar un
+   día/mes de menos en el borde. Lo pasé a `getUTC*`.
+
+**Frontend (mi terreno, solo contexto para ti):**
+- `FormularioAnimal.tsx` → `llamarApi` (no `fetch`); `/partos/[id]` aplanado (Promise.all, sin
+  `include` anidado); accesibilidad de pestañas (`FichaTabs`); estilos de formulario unificados en
+  `ui.tsx` (`claseCampo`/`claseEtiqueta`/`claseBotonPrimario`) y áreas táctiles ≥44 px.
+
+**Contrato y docs que actualicé:** `.kiro/steering/api.md` (añadí las filas que faltaban de
+`/api/palpaciones`, `/api/palpaciones/[id]` y `/api/estado-reproductivo`, con la condición de
+lechería), `docs/08-bitacora-de-cambios.md` (entrada de esta ronda) y `docs/07-preguntas-pendientes.md`.
+
+**Pregunta de negocio que te paso (no la resolví):** **B12** en `docs/07-preguntas-pendientes.md`.
+`etapaPorEdad` devuelve DESTETE/DESARROLLO/ENGORDE, pero `ETAPAS` en `validar.ts` y los datos viejos
+aceptan **LACTANCIA**: un animal con etapa manual LACTANCIA se muestra como "Destete" al calcular por
+edad. Falta que el dueño decida el nombre de la primera etapa para unificar cálculo/validación/etiqueta.
+No toqué el comportamiento.
+
+**Verificado:** `prisma generate`, `tsc --noEmit`, `prod:build` (17/17 páginas) sin errores.
+
 ### [INFO] Kiro: leer — Una cría, una sola madre (Claude Code, 2026-10-15, pedido del dueño)
 Regla nueva (también en `docs/02` y `.kiro/steering/api.md`):
 - **`POST /api/partos`** → **409** si una cría ya está en otro parto (de cualquier vaca) o ya es

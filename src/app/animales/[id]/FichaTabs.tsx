@@ -68,8 +68,11 @@ export function FichaTabs({
             return (
               <button
                 key={t.id}
+                id={`tab-${t.id}`}
                 role="tab"
                 aria-selected={activo}
+                aria-controls={`panel-${t.id}`}
+                tabIndex={activo ? 0 : -1}
                 onClick={() => elegir(t.id)}
                 className={
                   "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-2 text-[11px] font-medium transition-colors sm:min-h-0 sm:flex-row sm:gap-1.5 sm:px-3 sm:py-2 sm:text-sm " +
@@ -98,7 +101,9 @@ export function FichaTabs({
           return (
             <section
               key={t.id}
+              id={`panel-${t.id}`}
               role="tabpanel"
+              aria-labelledby={`tab-${t.id}`}
               className={
                 (esActiva ? "block" : "hidden") +
                 " " +

@@ -17,9 +17,13 @@ export const POST = ruta(async (req: NextRequest) => {
   const fecha = fechaObligatoria(body.fecha, "La fecha");
   const notas = texto(body.notas, "Notas", LARGO.notas);
 
-  const vaca = await prisma.animal.findUnique({ where: { id: vacaId }, select: { sexo: true } });
+  const vaca = await prisma.animal.findUnique({ where: { id: vacaId }, select: { sexo: true, modulo: true } });
   if (!vaca) return NextResponse.json({ error: "Animal no encontrado." }, { status: 404 });
-  if (vaca.sexo !== "HEMBRA") throw new ErrorValidacion("La palpación solo se registra a hembras.");
+  // La palpación es parte del ciclo reproductivo: solo vacas de lechería (mismo criterio que
+  // /api/estado-reproductivo). Evita registrarla a machos, engorde o reproductores.
+  if (vaca.modulo !== "LECHERIA" || vaca.sexo !== "HEMBRA") {
+    throw new ErrorValidacion("La palpación solo se registra en vacas de lechería.");
+  }
 
   const palpacion = await prisma.palpacion.create({
     data: { ...(idCliente ? { id: idCliente } : {}), vacaId, fecha, notas },

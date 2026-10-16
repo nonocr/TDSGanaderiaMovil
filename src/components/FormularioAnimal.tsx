@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MODULO_LABEL, etiquetaArete } from "@/lib/tipos";
 import { hoyLocalISO } from "@/lib/fechas";
+import { llamarApi } from "@/lib/api-cliente";
+import { claseCampo, claseEtiqueta, claseBotonPrimario } from "@/components/ui";
 
 // Prefijo del arete interno que genera el backend para los animales sin arete físico. No se le
 // muestra al usuario (ver src/lib/validar.ts, PREFIJO_SIN_ARETE).
@@ -161,59 +163,41 @@ export function FormularioAnimal({
     const url = esEdicion ? `/api/animales/${valores!.id}` : "/api/animales";
     const method = esEdicion ? "PUT" : "POST";
 
-    try {
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "No se pudo guardar el animal.");
-        setGuardando(false);
-        return;
-      }
-      const animal = await res.json();
-
-      // Engorde en alta: si se indicó peso al nacer, se guarda como el primer registro de
-      // peso, con la fecha de nacimiento (o la de hoy si no hay fecha de nacimiento).
-      // Si falla, el animal ya existe: se avisa y se sigue a su ficha (allí se puede añadir).
-      const pesoNacer = (fd.get("pesoNacer") as string) || "";
-      if (!esEdicion && esEngorde && pesoNacer.trim()) {
-        // En engorde la fecha de nacimiento sale del formulario; si no hay, se usa hoy.
-        const fechaNac = (fd.get("fechaNacimiento") as string) || hoyLocalISO();
-        const resPeso = await fetch("/api/pesos", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            animalId: animal.id,
-            fecha: fechaNac,
-            pesoKg: pesoNacer,
-            notas: "Peso al nacer",
-          }),
-        }).catch(() => null);
-        if (!resPeso?.ok) {
-          const data = await resPeso?.json().catch(() => ({}));
-          alert(
-            `El animal se guardó, pero no el peso al nacer${data?.error ? `: ${data.error}` : ""}. ` +
-              "Puedes añadirlo desde su ficha en Registrar → Peso."
-          );
-        }
-      }
-
-      router.push(`/animales/${animal.id}`);
-      router.refresh();
-    } catch {
-      // fetch solo lanza si no hay conexión: sin esto el botón quedaba en "Guardando…".
-      setError("Sin conexión. Revisa la señal e intenta de nuevo.");
+    // llamarApi nunca lanza: sin señal o con red lenta devuelve { ok:false, error } en vez de
+    // dejar el botón en "Guardando…" para siempre (ver src/lib/api-cliente.ts).
+    const r = await llamarApi<{ id: string }>(url, { method, body: payload });
+    if (!r.ok) {
+      setError(r.error);
       setGuardando(false);
+      return;
     }
+    const animal = r.data!;
+
+    // Engorde en alta: si se indicó peso al nacer, se guarda como el primer registro de
+    // peso, con la fecha de nacimiento (o la de hoy si no hay fecha de nacimiento).
+    // Si falla, el animal ya existe: se avisa y se sigue a su ficha (allí se puede añadir).
+    const pesoNacer = (fd.get("pesoNacer") as string) || "";
+    if (!esEdicion && esEngorde && pesoNacer.trim()) {
+      // En engorde la fecha de nacimiento sale del formulario; si no hay, se usa hoy.
+      const fechaNac = (fd.get("fechaNacimiento") as string) || hoyLocalISO();
+      const rPeso = await llamarApi("/api/pesos", {
+        method: "POST",
+        body: { animalId: animal.id, fecha: fechaNac, pesoKg: pesoNacer, notas: "Peso al nacer" },
+      });
+      if (!rPeso.ok) {
+        alert(
+          `El animal se guardó, pero no el peso al nacer: ${rPeso.error} ` +
+            "Puedes añadirlo desde su ficha en Registrar → Peso."
+        );
+      }
+    }
+
+    router.push(`/animales/${animal.id}`);
+    router.refresh();
   }
 
-  const campo =
-    "mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm outline-none focus:border-marca-500 focus:ring-2 focus:ring-marca-200 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500";
-  const etiqueta = "block text-sm font-medium text-stone-600 dark:text-stone-400";
+  const campo = claseCampo;
+  const etiqueta = claseEtiqueta;
 
   // Evitar que el animal sea su propio progenitor: lo quitamos de las listas.
   const machosFiltrados = machos.filter((m) => m.id !== valores?.id);
@@ -609,7 +593,7 @@ export function FormularioAnimal({
       <button
         type="submit"
         disabled={guardando}
-        className="w-full rounded-lg bg-marca-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-marca-700 disabled:opacity-50 sm:w-auto"
+        className={`${claseBotonPrimario} w-full sm:w-auto`}
       >
         {guardando ? "Guardando…" : esEdicion ? "Guardar cambios" : "Guardar animal"}
       </button>

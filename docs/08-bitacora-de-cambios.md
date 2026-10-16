@@ -247,3 +247,42 @@ teléfono en POST de leche/pesos/montas/partos (evita duplicados por reintento).
 9. **Etapas de engorde por edad, para TODO Engorde** (decisión del dueño): Destete < 4 meses,
    Desarrollo < 16 meses, Engorde desde los 16. Se calcula sin guardarse. Sin fecha de nacimiento
    no se asigna etapa. Las etapas manuales viejas quedan como historial. Reemplaza A15/A17.
+
+---
+
+## 2026-10-16 · Fuente: dueño — revisión de calidad y optimización (Kiro)
+
+**Qué llegó:** el dueño pidió una revisión completa de la app para encontrar qué mejorar u
+optimizar, dejar el proyecto limpio y subir la versión. No hubo cambios de negocio; todo es
+corrección, rendimiento, accesibilidad y consistencia. Versión del proyecto: **1.0.0 → 1.0.1**.
+
+**Rendimiento / backend:**
+- Restaurar respaldo ya no hace un `UPDATE` por animal para enlazar padre/madre (N+1 que podía
+  agotar el timeout con la base en EE. UU.): se agrupan los animales con el mismo par
+  (padre, madre) y se actualizan con pocos `updateMany`. `src/app/api/respaldo/route.ts`.
+- Índices del listado de animales: `@@index([sexo, estado])` y `@@index([modulo, estado])` pasaron
+  a incluir `arete` al final (`[sexo, estado, arete]`, `[modulo, estado, arete]`), porque el listado
+  siempre ordena por `arete`; así Postgres no ordena en memoria. `prisma/schema.prisma` (db push aplicado).
+- `cargarVacasConCiclo` ya no repite sus 3 consultas cuando en la misma petición se la pide con y
+  sin módulo: una única carga cacheada de todas las hembras y el filtro por módulo se hace en
+  memoria. `src/lib/alertas.ts`.
+
+**Correctitud:**
+- `POST /api/palpaciones` ahora exige **vaca de lechería** (antes solo "hembra"), igual que
+  `/api/estado-reproductivo`. `src/app/api/palpaciones/route.ts`.
+- `calcularEdad` calcula en **UTC** (antes con getters locales, podía dar un día/mes de menos en la
+  finca UTC-6). Alineado con el resto del dominio. `src/lib/fechas.ts`.
+
+**Frontend (mi terreno):**
+- `FormularioAnimal.tsx` usa `llamarApi` en vez de `fetch` directo (evita el botón "Guardando…"
+  colgado sin señal; era el único componente que no seguía la regla).
+- `/partos/[id]` se aplanó: `Promise.all` con consultas planas en vez de `include` anidado encadenado.
+- Accesibilidad de pestañas de la ficha (`FichaTabs`): `aria-controls`/`aria-labelledby` y foco por
+  teclado. En `/leche` los selectores de vista (que son enlaces) pasaron a `aria-current`.
+- Estilos de formulario unificados en `src/components/ui.tsx` (`claseCampo`, `claseEtiqueta`,
+  `claseBotonPrimario`) y reutilizados; botones de formulario con área táctil ≥44 px.
+
+**Pendiente nuevo:** B12 (¿la primera etapa de engorde se llama "Lactancia" o "Destete"?) en
+`docs/07-preguntas-pendientes.md`. No se cambió comportamiento; espera decisión del dueño.
+
+**Verificación:** `prisma generate`, `tsc --noEmit` y `npm run prod:build` (17/17 páginas) sin errores.

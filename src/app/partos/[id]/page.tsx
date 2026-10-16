@@ -5,41 +5,40 @@ import { Card, SectionTitle, AnimalLink, SexoBadge, EstadoBadge, Badge } from "@
 import { IconoAtras, IconoFlecha } from "@/components/iconos";
 import { formatearFecha, calcularEdad } from "@/lib/fechas";
 import { etiquetaArete } from "@/lib/tipos";
+import { listarAnimales } from "@/lib/genealogia";
 import { FotoCria, contarCrias } from "@/app/animales/[id]/ResumenPartos";
 
 export const dynamic = "force-dynamic";
 
 // Detalle de un parto: sus datos y los de la madre, el padre y cada cría. Todo sale de los
 // registros relacionados (la madre y las crías son animales con su propia ficha); no se copia nada.
-const IDENT = { id: true, arete: true, nombre: true, sinArete: true, areteCenasa: true } as const;
 
 export default async function PartoDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const parto = await prisma.parto.findUnique({
-    where: { id },
-    include: {
-      vaca: { select: IDENT },
-      toro: { select: { ...IDENT, esPajilla: true } },
-      crias: {
-        select: {
-          cria: {
-            select: {
-              ...IDENT,
-              sexo: true,
-              fotoMiniatura: true,
-              fechaNacimiento: true,
-              estado: true,
-              fechaBaja: true,
-              raza: true,
-            },
-          },
-        },
+
+  // Consultas PLANAS y en PARALELO (la base está en EE. UU.: cada `include` anidado encadenaría
+  // idas y vueltas). El parto trae solo escalares + ids; las crías de este parto se piden aparte
+  // con los campos que la vista muestra; vaca/toro salen de la lista compartida (genealogia).
+  const [parto, crias, todos] = await Promise.all([
+    prisma.parto.findUnique({
+      where: { id },
+      // Parto plano + el padre embebido solo para saber si es pajilla (un solo nivel, barato).
+      include: { toro: { select: { id: true, arete: true, nombre: true, sinArete: true, areteCenasa: true, esPajilla: true } } },
+    }),
+    prisma.animal.findMany({
+      where: { nacidoEnParto: { some: { partoId: id } } },
+      select: {
+        id: true, arete: true, nombre: true, sinArete: true, areteCenasa: true,
+        sexo: true, fotoMiniatura: true, fechaNacimiento: true, estado: true, fechaBaja: true, raza: true,
       },
-    },
-  });
+    }),
+    listarAnimales(),
+  ]);
   if (!parto) notFound();
 
-  const crias = parto.crias.map((c) => c.cria);
+  const porId = new Map(todos.map((a) => [a.id, a]));
+  const vaca = porId.get(parto.vacaId) ?? { id: parto.vacaId, arete: "?", nombre: null, sinArete: false, areteCenasa: null };
+  const toro = parto.toro;
   const { machos, hembras } = contarCrias([
     { id: parto.id, fechaISO: "", toro: null, crias: crias.map((c) => ({ ...c, fotoMiniatura: null })) },
   ]);
@@ -49,11 +48,11 @@ export default async function PartoDetallePage({ params }: { params: Promise<{ i
     <div className="mx-auto max-w-3xl space-y-5">
       <div>
         <Link
-          href={`/animales/${parto.vaca.id}`}
+          href={`/animales/${vaca.id}`}
           className="-ml-1 mb-2 inline-flex items-center gap-0.5 rounded-lg py-1.5 pl-1 pr-2 text-sm text-stone-500 hover:text-marca-700 dark:text-stone-400 dark:hover:text-marca-400"
         >
           <IconoAtras className="h-4 w-4" />
-          {parto.vaca.nombre ?? etiquetaArete(parto.vaca)}
+          {vaca.nombre ?? etiquetaArete(vaca)}
         </Link>
         <h1 className="text-2xl font-bold tracking-tight text-stone-800 dark:text-stone-100">
           Parto del {formatearFecha(parto.fecha)}
@@ -64,14 +63,14 @@ export default async function PartoDetallePage({ params }: { params: Promise<{ i
         <SectionTitle>Datos del parto</SectionTitle>
         <dl className="space-y-1.5 text-sm">
           <Fila k="Fecha del parto" v={formatearFecha(parto.fecha)} />
-          <Fila k="Madre" v={<AnimalLink animal={parto.vaca} />} />
+          <Fila k="Madre" v={<AnimalLink animal={vaca} />} />
           <Fila
             k="Padre / toro"
             v={
-              parto.toro ? (
+              toro ? (
                 <>
-                  <AnimalLink animal={parto.toro} />
-                  {parto.toro.esPajilla && <span className="ml-1 text-xs text-stone-400">(pajilla)</span>}
+                  <AnimalLink animal={toro} />
+                  {toro.esPajilla && <span className="ml-1 text-xs text-stone-400">(pajilla)</span>}
                 </>
               ) : (
                 "Sin especificar"

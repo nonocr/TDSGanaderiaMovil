@@ -67,9 +67,12 @@ export function calcularEdad(
   const fin = hasta ? (typeof hasta === "string" ? new Date(hasta) : hasta) : new Date();
   if (isNaN(fin.getTime()) || fin.getTime() < ini.getTime()) return "—";
 
-  let anios = fin.getFullYear() - ini.getFullYear();
-  let meses = fin.getMonth() - ini.getMonth();
-  let dias = fin.getDate() - ini.getDate();
+  // UTC en todo el cálculo: las fechas se guardan a medianoche UTC (igual que mesesCumplidos y el
+  // resto del dominio). Con getters locales, en la finca (UTC-6) una fecha a medianoche UTC se lee
+  // como las 18:00 del día anterior y podía dar un día/mes de menos en el borde.
+  let anios = fin.getUTCFullYear() - ini.getUTCFullYear();
+  let meses = fin.getUTCMonth() - ini.getUTCMonth();
+  const dias = fin.getUTCDate() - ini.getUTCDate();
 
   if (dias < 0) meses -= 1;
   if (meses < 0) {

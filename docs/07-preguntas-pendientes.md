@@ -66,3 +66,14 @@
 - **B7** — Leche en litros, con nota de que es el total del día y suele registrarse semanal.
   Actualización (2026-10-12): la app registra cada ordeño por separado (turno mañana/tarde); el total del día es la suma.
 - **B2, B3, B5, B8, B9, B10, B11** — confirmaban el comportamiento que ya tenía la app; sin cambios de código.
+
+---
+
+## Pendientes NUEVAS (posteriores al 2026-10-07)
+
+> Estas sí están **abiertas**: surgieron de cambios posteriores y requieren una decisión del dueño.
+> No se resuelven inventando; mientras tanto el comportamiento actual se deja como está.
+
+| ID | Pregunta | Estado |
+|---|---|---|
+| B12 | **¿"Lactancia" o "Destete" para la primera etapa de engorde?** Desde el 2026-10-16 la etapa de engorde se calcula por edad y devuelve **DESTETE** (< 4 meses) → DESARROLLO → ENGORDE (`etapaPorEdad` en `src/lib/estado.ts`). Pero la validación y los datos antiguos aún aceptan **LACTANCIA** como etapa manual (`ETAPAS` en `src/lib/validar.ts`), y la etiqueta "Lactancia" sigue existiendo. Resultado: un animal viejo con etapa manual "LACTANCIA" se muestra como "Destete" al calcularse por edad. **Falta confirmar con el dueño** si la primera etapa debe llamarse Lactancia o Destete, para unificar el nombre en cálculo, validación y etiquetas. Mientras tanto no se cambia el comportamiento (las etapas manuales viejas se conservan como historial). |

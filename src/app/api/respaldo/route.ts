@@ -212,11 +212,21 @@ export const POST = ruta(async (req: NextRequest) => {
         // un INSERT por fila puede agotar el timeout de la transacción.
         await tx.animal.createMany({ data: animales });
 
-        // 4) Enlazar padre/madre ahora que todos los animales existen.
+        // 4) Enlazar padre/madre ahora que todos los animales existen. Para no hacer un UPDATE
+        // por animal (N+1 costoso con la base remota), se agrupan los que comparten el MISMO par
+        // (padreId, madreId) y se actualizan juntos con updateMany + `id in [...]`. En un hato real
+        // muchos animales comparten progenitores, así que suele bajar de cientos de updates a pocos.
+        const porPar = new Map<string, { padreId: string | null; madreId: string | null; ids: string[] }>();
         for (const v of vinculos) {
-          await tx.animal.update({
-            where: { id: v.id },
-            data: { padreId: v.padreId, madreId: v.madreId },
+          const clave = `${v.padreId ?? ""}|${v.madreId ?? ""}`;
+          const grupo = porPar.get(clave);
+          if (grupo) grupo.ids.push(v.id);
+          else porPar.set(clave, { padreId: v.padreId, madreId: v.madreId, ids: [v.id] });
+        }
+        for (const g of porPar.values()) {
+          await tx.animal.updateMany({
+            where: { id: { in: g.ids } },
+            data: { padreId: g.padreId, madreId: g.madreId },
           });
         }
 

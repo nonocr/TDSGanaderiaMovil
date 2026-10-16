@@ -30,13 +30,12 @@ export default async function LechePage({ searchParams }: { searchParams: Promis
       <Card>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <SectionTitle>Litros por día del hato</SectionTitle>
-          <div role="tablist" className="flex gap-1 rounded-lg bg-stone-100 p-1 dark:bg-stone-800">
+          <div role="group" aria-label="Agrupar producción por" className="flex gap-1 rounded-lg bg-stone-100 p-1 dark:bg-stone-800">
             {VISTAS.map((x) => (
               <Link
                 key={x.id}
                 href={`/leche?vista=${x.id}`}
-                role="tab"
-                aria-selected={vista === x.id}
+                aria-current={vista === x.id ? "true" : undefined}
                 className={
                   "rounded-md px-3 py-1.5 text-xs font-medium transition-colors " +
                   (vista === x.id

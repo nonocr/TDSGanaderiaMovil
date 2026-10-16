@@ -40,20 +40,21 @@ export type VacaConCiclo = {
   sinArete: boolean;
   areteCenasa: string | null;
   nombre: string | null;
+  modulo: string;
   // createdAt: lo usa el estado manual (ver estadoManualVigente); los avisos solo usan la fecha.
   montasComoVaca: { fecha: Date; createdAt: Date }[];
   partosComoVaca: { fecha: Date; createdAt: Date }[];
 };
 
-// Hembras activas (de un módulo, o de todos) con las fechas de sus montas y partos.
-// Tres consultas EN PARALELO (en vez de encadenadas) y, gracias a `cache`, compartidas por
-// todo lo que las pida con el mismo módulo en la misma petición.
-// Pendientes y calendario usan TODAS las hembras (no perder un aviso si se registró una monta
-// fuera de lechería); el desglose de la página de Lechería usa solo "LECHERIA".
-export const cargarVacasConCiclo = cache(async (modulo?: string): Promise<VacaConCiclo[]> => {
-  const where = { sexo: "HEMBRA", estado: "ACTIVO", ...(modulo ? { modulo } : {}) };
+// Carga TODAS las hembras activas (de cualquier módulo) con las fechas de sus montas y partos.
+// Tres consultas EN PARALELO (en vez de encadenadas). Se memoiza con `cache` SIN argumentos, para
+// que una sola lectura sirva a toda la petición; el filtro por módulo se hace en memoria
+// (`cargarVacasConCiclo`). Antes se llamaba con/sin módulo y `cache` repetía las 3 consultas por
+// tener argumentos distintos.
+const cargarTodasLasVacas = cache(async (): Promise<VacaConCiclo[]> => {
+  const where = { sexo: "HEMBRA", estado: "ACTIVO" };
   const [vacas, montas, partos] = await Promise.all([
-    prisma.animal.findMany({ where, select: { id: true, arete: true, sinArete: true, areteCenasa: true, nombre: true } }),
+    prisma.animal.findMany({ where, select: { id: true, arete: true, sinArete: true, areteCenasa: true, nombre: true, modulo: true } }),
     prisma.monta.findMany({ where: { vaca: where }, select: { vacaId: true, fecha: true, createdAt: true } }),
     prisma.parto.findMany({ where: { vaca: where }, select: { vacaId: true, fecha: true, createdAt: true } }),
   ]);
@@ -64,6 +65,14 @@ export const cargarVacasConCiclo = cache(async (modulo?: string): Promise<VacaCo
   for (const p of partos) porVaca.get(p.vacaId)?.partosComoVaca.push({ fecha: p.fecha, createdAt: p.createdAt });
   return [...porVaca.values()];
 });
+
+// Hembras activas con su ciclo, de un módulo o de todos. Reutiliza la carga única y filtra en
+// memoria. Pendientes y calendario usan TODAS (no perder un aviso si se registró una monta fuera
+// de lechería); el desglose de la página de Lechería usa solo "LECHERIA".
+export async function cargarVacasConCiclo(modulo?: string): Promise<VacaConCiclo[]> {
+  const todas = await cargarTodasLasVacas();
+  return modulo ? todas.filter((v) => v.modulo === modulo) : todas;
+}
 
 export async function calcularPendientes(hoy: Date = new Date()): Promise<Pendiente[]> {
   const vacas = await cargarVacasConCiclo();
