@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { FilaEvento, type DatosFila } from "./FilaEvento";
 import { IconoHistorial, IconoCerrar } from "@/components/iconos";
+import { useModalAccesible } from "@/lib/usar-modal";
 
 type Opcion = { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 
@@ -20,26 +21,12 @@ export function HistorialEventos({
 }) {
   const [ampliado, setAmpliado] = useState(false);
   const botonAbrir = useRef<HTMLButtonElement>(null);
-  const botonCerrar = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
 
-  // Cerrar con Escape y bloquear el scroll del fondo mientras el modal está abierto.
-  // Accesibilidad: al abrir, el foco va a "Cerrar"; al cerrar, vuelve a "Ver todo".
-  useEffect(() => {
-    if (!ampliado) return;
-    botonCerrar.current?.focus();
-    const abridor = botonAbrir.current;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setAmpliado(false);
-    };
-    window.addEventListener("keydown", onKey);
-    const overflowPrevio = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = overflowPrevio;
-      abridor?.focus();
-    };
-  }, [ampliado]);
+  // Accesibilidad del modal: atrapa el foco, cierra con Escape, bloquea el scroll del fondo y
+  // devuelve el foco a "Ver todo" al cerrar (ver src/lib/usar-modal.ts).
+  const cerrar = useCallback(() => setAmpliado(false), []);
+  useModalAccesible(ampliado, panel, cerrar);
 
   if (eventos.length === 0) {
     return (
@@ -104,7 +91,7 @@ export function HistorialEventos({
             onClick={() => setAmpliado(false)}
           />
           {/* Panel */}
-          <div className="relative z-10 mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl dark:border-stone-800 dark:bg-stone-900">
+          <div ref={panel} className="relative z-10 mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl dark:border-stone-800 dark:bg-stone-900">
             {/* Encabezado */}
             <div className="flex items-center justify-between gap-3 border-b border-stone-200 bg-stone-50/80 px-5 py-4 dark:border-stone-800 dark:bg-stone-800/40">
               <div className="flex items-center gap-3">
@@ -121,9 +108,8 @@ export function HistorialEventos({
                 </div>
               </div>
               <button
-                ref={botonCerrar}
                 type="button"
-                onClick={() => setAmpliado(false)}
+                onClick={cerrar}
                 className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
               >
                 <IconoCerrar className="h-4 w-4" /> Cerrar

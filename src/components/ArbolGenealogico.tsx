@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { NodoArbol, Progenitor } from "@/lib/genealogia";
 import { VisorArbol } from "@/components/VisorArbol";
 import { IconoAnimal, IconoCerrar } from "@/components/iconos";
 import { etiquetaArete } from "@/lib/tipos";
+import { useModalAccesible } from "@/lib/usar-modal";
 
 // Árbol de ascendencia de izquierda (este animal) a derecha (bisabuelos). Cada generación es
 // una columna de ancho fijo; las ramas padre/madre se unen con conectores en corchete.
@@ -155,7 +156,7 @@ function Encabezados({ n }: { n: number }) {
 export function ArbolGenealogico({ arbol }: { arbol: NodoArbol }) {
   const [ampliado, setAmpliado] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const cerrarRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const [desborda, setDesborda] = useState(false);
   const [alFinal, setAlFinal] = useState(false);
   const sinAncestros = !arbol.padre && !arbol.madre;
@@ -179,24 +180,10 @@ export function ArbolGenealogico({ arbol }: { arbol: NodoArbol }) {
     };
   }, [sinAncestros]);
 
-  // Cerrar con Escape, bloquear el scroll del fondo y gestionar el foco mientras está abierto.
-  useEffect(() => {
-    if (!ampliado) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setAmpliado(false);
-    };
-    window.addEventListener("keydown", onKey);
-    const overflowPrevio = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    // Recordar qué tenía el foco para devolverlo al cerrar, y mover el foco al botón Cerrar.
-    const focoPrevio = document.activeElement as HTMLElement | null;
-    cerrarRef.current?.focus();
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = overflowPrevio;
-      focoPrevio?.focus?.();
-    };
-  }, [ampliado]);
+  // Accesibilidad del modal de pantalla completa: atrapa el foco, cierra con Escape, bloquea el
+  // scroll del fondo y devuelve el foco al abridor al cerrar (ver src/lib/usar-modal.ts).
+  const cerrarAmpliado = useCallback(() => setAmpliado(false), []);
+  useModalAccesible(ampliado, panelRef, cerrarAmpliado);
 
   if (sinAncestros) {
     return (
@@ -255,7 +242,7 @@ export function ArbolGenealogico({ arbol }: { arbol: NodoArbol }) {
           aria-labelledby="titulo-arbol-completo"
         >
           <div className="absolute inset-0 bg-black/50" onClick={() => setAmpliado(false)} />
-          <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-stone-200 bg-white shadow-xl dark:border-stone-800 dark:bg-stone-900">
+          <div ref={panelRef} className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-stone-200 bg-white shadow-xl dark:border-stone-800 dark:bg-stone-900">
             <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3 dark:border-stone-800">
               <h3 id="titulo-arbol-completo" className="text-sm font-semibold text-stone-700 dark:text-stone-200">Árbol genealógico</h3>
               <div className="flex items-center gap-3">
@@ -263,7 +250,6 @@ export function ArbolGenealogico({ arbol }: { arbol: NodoArbol }) {
                   Rueda del mouse o pellizca para acercar · arrastra para mover
                 </span>
                 <button
-                  ref={cerrarRef}
                   type="button"
                   onClick={() => setAmpliado(false)}
                   className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-200"

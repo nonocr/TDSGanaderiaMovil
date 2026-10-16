@@ -24,7 +24,11 @@ export const viewport: Viewport = {
   maximumScale: 5,
   // Ocupa toda la pantalla en iPhone; las barras respetan las zonas seguras (notch).
   viewportFit: "cover",
-  themeColor: "#4b7a3f",
+  // Color de la barra del sistema según el tema: verde de marca en claro, piedra oscuro en oscuro.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#4b7a3f" },
+    { media: "(prefers-color-scheme: dark)", color: "#1c1917" },
+  ],
 };
 
 // Script que aplica el tema guardado ANTES de pintar, para evitar parpadeo.

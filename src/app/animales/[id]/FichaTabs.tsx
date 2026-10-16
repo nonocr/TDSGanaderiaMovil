@@ -54,6 +54,22 @@ export function FichaTabs({
     }
   }
 
+  // Navegación por teclado del patrón ARIA tabs: flechas mueven entre pestañas, Inicio/Fin a los
+  // extremos. Mueve la selección y enfoca la nueva pestaña.
+  function onTeclaTab(e: React.KeyboardEvent<HTMLDivElement>) {
+    const teclas: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 1, ArrowUp: -1 };
+    const i = tabsVisibles.findIndex((t) => t.id === activa);
+    let destino = -1;
+    if (e.key in teclas) destino = (i + teclas[e.key] + tabsVisibles.length) % tabsVisibles.length;
+    else if (e.key === "Home") destino = 0;
+    else if (e.key === "End") destino = tabsVisibles.length - 1;
+    else return;
+    e.preventDefault();
+    const nueva = tabsVisibles[destino].id;
+    setActiva(nueva);
+    document.getElementById(`tab-${nueva}`)?.focus();
+  }
+
   return (
     <div>
       {/* Barra de pestañas: en móvil las 5 caben a lo ancho (icono + texto); no se imprime. */}
@@ -61,7 +77,7 @@ export function FichaTabs({
         id="pestanas-ficha"
         className="no-print sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 mb-4 scroll-mt-[calc(3.5rem+env(safe-area-inset-top))] border-b border-stone-200 bg-stone-100/95 px-2 backdrop-blur sm:mx-0 sm:rounded-xl sm:border sm:bg-white sm:shadow-card lg:top-0 lg:scroll-mt-0 dark:border-stone-800 dark:bg-stone-950/95 sm:dark:bg-stone-900"
       >
-        <div role="tablist" className={`grid gap-1 py-1.5 sm:flex ${tabsVisibles.length === 5 ? "grid-cols-5" : "grid-cols-4"}`}>
+        <div role="tablist" aria-label="Secciones del animal" onKeyDown={onTeclaTab} className={`grid gap-1 py-1.5 sm:flex ${tabsVisibles.length === 5 ? "grid-cols-5" : "grid-cols-4"}`}>
           {tabsVisibles.map((t) => {
             const activo = activa === t.id;
             const Icono = t.Icono;

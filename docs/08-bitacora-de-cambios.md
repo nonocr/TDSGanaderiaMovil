@@ -286,3 +286,33 @@ corrección, rendimiento, accesibilidad y consistencia. Versión del proyecto: *
 `docs/07-preguntas-pendientes.md`. No se cambió comportamiento; espera decisión del dueño.
 
 **Verificación:** `prisma generate`, `tsc --noEmit` y `npm run prod:build` (17/17 páginas) sin errores.
+
+---
+
+## 2026-10-16 · Fuente: dueño — accesibilidad, PWA y medición (Kiro)
+
+**Qué llegó:** el dueño pidió mejoras técnicas (accesibilidad, medir el índice del listado y mejorar
+la app instalable). Todo frontend/medición; no se tocó backend ni el contrato de la API.
+Versión del proyecto: **1.0.1 → 1.0.2**.
+
+**Accesibilidad:**
+- Nuevo hook `src/lib/usar-modal.ts`: atrapa el foco dentro del modal (Tab/Shift+Tab no se escapan),
+  cierra con Escape, bloquea el scroll del fondo y devuelve el foco al abridor. Aplicado al modal
+  del historial completo (`HistorialEventos`) y al árbol a pantalla completa (`ArbolGenealogico`),
+  reemplazando su lógica manual.
+- Pestañas de la ficha (`FichaTabs`): navegación por teclado con flechas / Inicio / Fin, completando
+  el patrón ARIA tabs (ya tenían `aria-controls`/`aria-labelledby`/tabIndex roving).
+
+**Medición del índice del listado (`[modulo, estado, arete]`):** con `EXPLAIN ANALYZE` sobre la base
+real (48 animales), Postgres **no usa** el índice: prefiere Seq Scan + Sort (~0,1 ms), igual con o
+sin índice. Es lo esperado con pocas filas. El índice es correcto y **no estorba**; su beneficio es
+**a futuro** (cientos/miles de animales), cuando evitará el ordenamiento en memoria. No hay nada que
+cambiar hoy.
+
+**PWA / app instalable:**
+- `manifest.ts`: accesos directos (`shortcuts`) al mantener presionado el ícono — "Agregar animal",
+  "Producción de leche" y "Calendario" — y `categories`.
+- `layout.tsx`: color de la barra del sistema (`themeColor`) ahora se adapta a claro/oscuro.
+- El service worker (modo sin conexión) no se tocó: ya estaba resuelto.
+
+**Verificación:** `tsc --noEmit` y `npm run prod:build` (17/17 páginas) sin errores.
