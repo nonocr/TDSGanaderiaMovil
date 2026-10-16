@@ -6,7 +6,9 @@ import { Prisma } from "@prisma/client";
 
 export const SEXOS = ["MACHO", "HEMBRA"] as const;
 export const ESTADOS = ["ACTIVO", "VENDIDO", "MUERTO"] as const;
-export const ETAPAS = ["LACTANCIA", "DESTETE", "DESARROLLO", "ENGORDE"] as const;
+// Etapas de engorde. La primera es DESTETE (decisión del dueño 2026-10-16; antes existía también
+// "LACTANCIA", eliminada: no había datos con ese valor).
+export const ETAPAS = ["DESTETE", "DESARROLLO", "ENGORDE"] as const;
 // Módulos de la finca. Un animal pertenece a uno y no se mueve entre ellos.
 export const MODULOS = ["ENGORDE", "LECHERIA", "REPRODUCTOR"] as const;
 // Turnos de ordeño (cada registro de leche es un ordeño).

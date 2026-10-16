@@ -23,6 +23,22 @@ _(ninguno todavía)_
 
 Lo que Claude Code detecta y le toca resolver al frontend. Kiro marca `[HECHO]` al corregirlo.
 
+### [INFO] Kiro: B12 resuelta — la primera etapa de engorde se llama "Destete" (2026-10-16)
+
+> Claude: el dueño decidió que la primera etapa de engorde se llame **"Destete"** (no "Lactancia").
+> Cerré la B12. Toqué `validar.ts` (tu terreno) con su permiso; aviso para que lo tengas.
+>
+> - `src/lib/validar.ts`: `ETAPAS = ["DESTETE", "DESARROLLO", "ENGORDE"]` — quité `"LACTANCIA"`.
+>   **Verifiqué antes que la tabla de etapas estaba vacía** (0 filas con cualquier etapa), así que
+>   eliminar el valor no rompe datos existentes ni el respaldo. `etapaPorEdad` ya devolvía DESTETE.
+> - `src/lib/tipos.ts`: quité la etiqueta "Lactancia" de `ETAPA_LABEL`.
+> - `src/components/ListaAnimales.tsx`: el filtro por etapa ya no incluye LACTANCIA.
+> - `.kiro/steering/api.md`: `POST /api/etapas` ahora acepta `DESTETE|DESARROLLO|ENGORDE`.
+>
+> Nota: esto corrige una contradicción histórica (la B6 del 2026-10-07 había eliminado "Destete";
+> el cambio de etapas por edad lo reintrodujo). La decisión vigente del dueño es **Destete**.
+> Verificado: `tsc --noEmit` y `prod:build` (17/17 páginas).
+
 ### [INFO] Kiro: revisión de calidad y optimización (2026-10-16) — toqué backend y frontend
 
 > Claude: el dueño me pidió una **revisión completa** de la app (buscar qué mejorar/optimizar y

@@ -316,3 +316,24 @@ cambiar hoy.
 - El service worker (modo sin conexión) no se tocó: ya estaba resuelto.
 
 **Verificación:** `tsc --noEmit` y `npm run prod:build` (17/17 páginas) sin errores.
+
+---
+
+## 2026-10-16 · Fuente: dueño — decisión B12: la primera etapa se llama "Destete"
+
+**Qué llegó:** el dueño decidió que la primera etapa de engorde se llame **"Destete"** (no
+"Lactancia"), cerrando la pregunta B12. Versión del proyecto: **1.0.2 → 1.0.3**.
+
+**Qué se cambió:** se eliminó "LACTANCIA" del código, que había quedado como resto de una definición
+anterior. Se verificó que **no había ningún dato** con esa etapa (la tabla de etapas estaba vacía),
+así que quitarlo es seguro y no se pierde nada.
+- `src/lib/validar.ts`: `ETAPAS = ["DESTETE", "DESARROLLO", "ENGORDE"]` (antes incluía LACTANCIA).
+- `src/lib/tipos.ts`: se quitó la etiqueta "Lactancia" de `ETAPA_LABEL`.
+- `src/components/ListaAnimales.tsx`: el filtro por etapa ya no incluye LACTANCIA.
+- `.kiro/steering/api.md`: `POST /api/etapas` acepta `DESTETE|DESARROLLO|ENGORDE`.
+
+Las tres etapas de engorde quedan: **Destete (< 4 meses) → Desarrollo (< 16) → Engorde (desde 16)**,
+calculadas por edad. Esto resuelve la contradicción con la B6 original (que en su momento había
+eliminado "Destete"); la decisión vigente es esta.
+
+**Verificación:** `tsc --noEmit` y `npm run prod:build` (17/17 páginas) sin errores.

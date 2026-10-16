@@ -28,7 +28,6 @@ export const ETAPA_LABEL: Record<string, string> = {
   DESTETE: "Destete",
   DESARROLLO: "Desarrollo",
   ENGORDE: "Engorde",
-  LACTANCIA: "Lactancia", // solo para mostrar etapas manuales antiguas
 };
 
 // Etapas de engorde, calculadas solas por la edad (etapaPorEdad en src/lib/estado.ts):

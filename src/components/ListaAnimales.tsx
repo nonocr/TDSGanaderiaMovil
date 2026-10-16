@@ -177,7 +177,7 @@ export async function ListaAnimales({
         if (filtro.startsWith("raza:")) return a.raza === filtro.slice(5);
         if (filtro === "INACTIVOS") return a.estado !== "ACTIVO";
         if (["ACTIVO", "VENDIDO", "MUERTO"].includes(filtro)) return a.estado === filtro;
-        if (["LACTANCIA", "DESTETE", "DESARROLLO", "ENGORDE"].includes(filtro))
+        if (["DESTETE", "DESARROLLO", "ENGORDE"].includes(filtro))
           return etapa === filtro;
         // estados reproductivos
         return repro === filtro;

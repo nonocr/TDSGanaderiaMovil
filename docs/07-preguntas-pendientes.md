@@ -69,11 +69,8 @@
 
 ---
 
-## Pendientes NUEVAS (posteriores al 2026-10-07)
+## Decisiones posteriores al 2026-10-07
 
-> Estas sí están **abiertas**: surgieron de cambios posteriores y requieren una decisión del dueño.
-> No se resuelven inventando; mientras tanto el comportamiento actual se deja como está.
-
-| ID | Pregunta | Estado |
+| ID | Pregunta | Respuesta |
 |---|---|---|
-| B12 | **¿"Lactancia" o "Destete" para la primera etapa de engorde?** Desde el 2026-10-16 la etapa de engorde se calcula por edad y devuelve **DESTETE** (< 4 meses) → DESARROLLO → ENGORDE (`etapaPorEdad` en `src/lib/estado.ts`). Pero la validación y los datos antiguos aún aceptan **LACTANCIA** como etapa manual (`ETAPAS` en `src/lib/validar.ts`), y la etiqueta "Lactancia" sigue existiendo. Resultado: un animal viejo con etapa manual "LACTANCIA" se muestra como "Destete" al calcularse por edad. **Falta confirmar con el dueño** si la primera etapa debe llamarse Lactancia o Destete, para unificar el nombre en cálculo, validación y etiquetas. Mientras tanto no se cambia el comportamiento (las etapas manuales viejas se conservan como historial). |
+| B12 | **¿"Lactancia" o "Destete" para la primera etapa de engorde?** El cálculo por edad (`etapaPorEdad`) devolvía **DESTETE**, pero la validación y una etiqueta aún aceptaban "LACTANCIA". | **RESUELTO (2026-10-16): la primera etapa se llama "Destete".** Se eliminó "LACTANCIA" del código (ya no había datos con ese valor: la tabla de etapas estaba vacía). Las tres etapas de engorde son **Destete → Desarrollo → Engorde**, calculadas por edad (Destete < 4 meses, Desarrollo < 16, Engorde desde 16). Esto corrige la contradicción con la B6 original (que había eliminado "Destete"); la decisión vigente es la de hoy. |
