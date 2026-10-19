@@ -548,14 +548,14 @@ export function EditorCriasNuevas({
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {c.sinArete ? (
                 <div>
-                  <label htmlFor={`${pre}-senasa`} className={claseEtiqueta}>Arete SENASA *</label>
+                  <label htmlFor={`${pre}-senasa`} className={claseEtiqueta}>Arete SENASA (opcional)</label>
                   <input
                     id={`${pre}-senasa`}
-                    required
                     maxLength={60}
                     value={c.areteCenasa}
                     onChange={(e) => cambiar(c.clave, { areteCenasa: e.target.value })}
                     className={claseCampo}
+                    placeholder="Si ya lo tiene"
                   />
                 </div>
               ) : (
@@ -605,7 +605,7 @@ export function EditorCriasNuevas({
                   onChange={(e) => cambiar(c.clave, { sinArete: e.target.checked })}
                   className="h-4 w-4 accent-marca-600"
                 />
-                No tiene arete (usar el de SENASA)
+                No tiene arete todavía (aparece como &quot;Sin arete&quot;)
               </label>
               <button
                 type="button"

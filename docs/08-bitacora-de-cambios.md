@@ -363,3 +363,23 @@ Flujo para el dueño: al registrar la cría, marcar "Este animal no tiene arete 
 animal y ponerle el arete real (o el de SENASA).
 
 **Verificación:** `tsc --noEmit` y `npm run prod:build` (17/17 páginas) sin errores.
+
+---
+
+## 2026-10-16 · Fuente: dueño — cría sin arete también al registrarla desde el parto
+
+**Qué llegó:** el cambio anterior (registrar sin arete ni SENASA) faltaba en el **otro** sitio donde
+se da de alta una cría: el formulario de crías nuevas dentro del parto. Ahí, al marcar "no tiene
+arete", todavía se **exigía** el SENASA. Versión del proyecto: **1.0.4 → 1.0.5**.
+
+**Qué se cambió (solo frontend):**
+- `src/app/animales/[id]/FormulariosEventos.tsx`, `EditorCriasNuevas`: con "no tiene arete" el campo
+  SENASA pasó de obligatorio a **opcional**; la casilla ahora dice "No tiene arete todavía (aparece
+  como «Sin arete»)". El payload ya mandaba `areteCenasa || null`, así que vacío llega como null.
+- El backend no necesitó cambios: `leerCriasNuevas`/`datosAnimal` (`src/lib/crias.ts`,
+  `src/lib/validar.ts`) ya aceptaban `sinArete` sin exigir SENASA tras el cambio de la v1.0.4.
+
+Así, una cría recién nacida se puede registrar desde el parto sin ningún número y aparece como
+"Sin arete" hasta que se le asigne editándola. Mismo comportamiento que el alta normal de animal.
+
+**Verificación:** `tsc --noEmit` y `npm run prod:build` (17/17 páginas) sin errores.
