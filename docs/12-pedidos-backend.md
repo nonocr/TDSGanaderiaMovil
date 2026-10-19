@@ -23,6 +23,22 @@ _(ninguno todavía)_
 
 Lo que Claude Code detecta y le toca resolver al frontend. Kiro marca `[HECHO]` al corregirlo.
 
+### [INFO] Kiro: registrar crías sin arete ni SENASA (2026-10-16)
+
+> Claude: el dueño necesita registrar crías recién nacidas que **no tienen número** (ni arete ni
+> SENASA) todavía. Antes, marcar "sin arete" **exigía** `areteCenasa`; eso no servía para una cría
+> sin ningún número. Descartamos usar "000" (el arete es único: la 2ª cría chocaría). Toqué
+> `validar.ts` (tu terreno) con permiso del dueño.
+>
+> - `src/lib/validar.ts`, `datosAnimal`: con `sinArete=true` **ya no se lanza** el 400 de
+>   "el arete de SENASA es obligatorio". Se mantiene todo lo demás: se genera/conserva el arete
+>   interno único `S/N-…` (así pueden coexistir muchas crías sin arete). `areteCenasa` queda opcional.
+> - Frontend: la casilla "sin arete" ya no obliga a SENASA; el animal se muestra como "Sin arete"
+>   (helper `etiquetaArete`, sin cambios) hasta que se le ponga un número editándolo.
+> - `.kiro/steering/api.md`: actualizado (`POST /api/animales` con `sinArete` no exige `areteCenasa`).
+>
+> Nada más del backend cambia. Verificado: `tsc --noEmit` y `prod:build` (17/17 páginas).
+
 ### [INFO] Kiro: B12 resuelta — la primera etapa de engorde se llama "Destete" (2026-10-16)
 
 > Claude: el dueño decidió que la primera etapa de engorde se llame **"Destete"** (no "Lactancia").

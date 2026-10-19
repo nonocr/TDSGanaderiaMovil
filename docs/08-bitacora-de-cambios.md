@@ -337,3 +337,29 @@ calculadas por edad. Esto resuelve la contradicción con la B6 original (que en 
 eliminado "Destete"); la decisión vigente es esta.
 
 **Verificación:** `tsc --noEmit` y `npm run prod:build` (17/17 páginas) sin errores.
+
+---
+
+## 2026-10-16 · Fuente: dueño — registrar crías sin arete ni SENASA
+
+**Qué llegó:** al nacer, las crías no tienen número de arete (ni de SENASA) todavía, y había que
+registrarlas igual. El dueño descartó usar un valor fijo como "000" (el arete es único: la segunda
+cría chocaría). Decisión (opción B): permitir registrar un animal **sin arete** aunque **tampoco
+tenga SENASA**; aparece como **"Sin arete"** hasta que se le ponga un número editándolo.
+Versión del proyecto: **1.0.3 → 1.0.4**.
+
+**Qué se cambió:**
+- `src/lib/validar.ts`: con `sinArete`, ya **no se exige** `areteCenasa`. Se sigue guardando un arete
+  interno único (`S/N-…`, invisible) para respetar la unicidad; por eso pueden coexistir muchas
+  crías sin arete.
+- `src/components/FormularioAnimal.tsx`: el campo "Arete de SENASA" es siempre opcional (se quitó el
+  obligatorio al marcar "sin arete"); textos ajustados y la casilla ahora dice "Este animal no tiene
+  arete todavía (p. ej. una cría recién nacida)".
+- `etiquetaArete` (`src/lib/tipos.ts`) ya mostraba "Sin arete" cuando no hay SENASA; sin cambios.
+- `.kiro/steering/api.md`: `POST /api/animales` con `sinArete` ya no exige `areteCenasa`.
+
+Flujo para el dueño: al registrar la cría, marcar "Este animal no tiene arete todavía" y guardar
+(con su nombre/madre si se quiere). Aparece como "Sin arete". Cuando consiga el número, editar el
+animal y ponerle el arete real (o el de SENASA).
+
+**Verificación:** `tsc --noEmit` y `npm run prod:build` (17/17 páginas) sin errores.

@@ -74,8 +74,8 @@ export function FormularioAnimal({
   const [estado, setEstado] = useState<string>(valores?.estado ?? "ACTIVO");
   const esBaja = estado === "VENDIDO" || estado === "MUERTO";
 
-  // El animal no tiene arete físico: se identifica por el arete de SENASA (que pasa a ser
-  // obligatorio). El arete interno lo genera/conserva el backend.
+  // El animal no tiene arete físico: se muestra como "Sin arete" (o por su SENASA si se captura,
+  // que es opcional). El arete interno lo genera/conserva el backend.
   const [sinArete, setSinArete] = useState<boolean>(valores?.sinArete ?? false);
 
   // El módulo determina qué campos se muestran. Controlado para poder reaccionar al cambio.
@@ -321,7 +321,7 @@ export function FormularioAnimal({
               checked={sinArete}
               onChange={(e) => setSinArete(e.target.checked)}
             />
-            Este animal no tiene arete (se identifica por el arete de SENASA)
+            Este animal no tiene arete todavía (p. ej. una cría recién nacida)
           </label>
         </div>
 
@@ -335,8 +335,8 @@ export function FormularioAnimal({
           </div>
         ) : (
           <div className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-500 dark:border-stone-700 dark:bg-stone-800/50 dark:text-stone-400">
-            Sin arete de la finca. Completa abajo el <strong>arete de SENASA</strong>: será lo que
-            identifique a este animal.
+            Sin arete de la finca. Aparecerá como <strong>&quot;Sin arete&quot;</strong> hasta que le
+            pongas un número (arete o SENASA) editándolo. Útil para una cría recién nacida.
           </div>
         )}
         <div>
@@ -386,24 +386,22 @@ export function FormularioAnimal({
           <input id="fa-raza" name="raza" maxLength={60} className={campo} defaultValue={valores?.raza ?? ""} />
         </div>
 
-        {/* Arete oficial de SENASA: opcional, salvo cuando el animal no tiene arete de la finca
-            (entonces es su identificador y pasa a ser obligatorio). */}
+        {/* Arete oficial de SENASA: siempre opcional. Si el animal no tiene arete de la finca,
+            este sirve para identificarlo, pero puede quedar vacío (p. ej. una cría recién nacida
+            sin ningún número todavía) y ponerse más tarde editando el animal. */}
         <div>
-          <label htmlFor="fa-arete-cenasa" className={etiqueta}>
-            Arete de SENASA {sinArete ? "*" : "(opcional)"}
-          </label>
+          <label htmlFor="fa-arete-cenasa" className={etiqueta}>Arete de SENASA (opcional)</label>
           <input
             id="fa-arete-cenasa"
             name="areteCenasa"
             maxLength={60}
-            required={sinArete}
             className={campo}
             placeholder="Ej. CR-000123456"
             defaultValue={valores?.areteCenasa ?? ""}
           />
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
             {sinArete
-              ? "Obligatorio: identifica al animal al no tener arete de la finca."
+              ? "Si ya lo tiene, identifica al animal. Puedes dejarlo en blanco y ponerlo después."
               : "Arete oficial de trazabilidad. Déjalo en blanco si el animal no lo tiene."}
           </p>
         </div>

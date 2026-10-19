@@ -203,14 +203,13 @@ export function datosAnimal(body: Record<string, unknown>) {
     };
   }
 
-  // Arete: normalmente obligatorio y único. Si el animal NO tiene arete físico (sinArete), se
-  // identifica por el de SENASA (que pasa a ser obligatorio) y se guarda un arete interno único.
-  // Al editar un animal que ya era sin arete, se conserva su arete interno (el body lo reenvía).
+  // Arete: normalmente obligatorio y único. Si el animal NO tiene arete físico (sinArete) se guarda
+  // un arete interno único y en pantalla se muestra "Sin arete" (o el de SENASA si luego se captura).
+  // El SENASA NO es obligatorio: una cría recién nacida puede no tener aún ningún número; el arete
+  // real o el SENASA se le ponen después editándolo. Al editar un animal que ya era sin arete, se
+  // conserva su arete interno (el body lo reenvía).
   let arete: string;
   if (sinArete) {
-    if (!areteCenasa) {
-      throw new ErrorValidacion("Si el animal no tiene arete, el arete de SENASA es obligatorio.");
-    }
     arete = esAreteInterno(body.arete as string) ? (body.arete as string) : nuevoAreteInterno();
   } else {
     arete = sinPrefijoReservado(textoObligatorio(body.arete, "El arete", LARGO.corto), "El arete");
