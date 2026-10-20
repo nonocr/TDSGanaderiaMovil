@@ -46,7 +46,12 @@ export const POST = ruta(async (req: NextRequest) => {
   const ip = ipDe(req);
   const estado = await prisma.intentoLogin.findUnique({ where: { ip } });
   if (estado?.hasta && estado.hasta.getTime() > Date.now()) {
-    throw new ErrorValidacion("Demasiados intentos. Espera 15 minutos e intenta de nuevo.", 429);
+    // Retry-After: segundos que faltan para que se levante el bloqueo.
+    const faltanS = Math.ceil((estado.hasta.getTime() - Date.now()) / 1000);
+    return NextResponse.json(
+      { error: "Demasiados intentos. Espera 15 minutos e intenta de nuevo." },
+      { status: 429, headers: { "Retry-After": String(faltanS) } }
+    );
   }
 
   const body = await leerJson(req, 2 * KB);

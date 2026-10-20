@@ -433,3 +433,15 @@ Lo demás de esas versiones se revisó y queda como está. Versión: **1.0.6 →
 
 **Verificación:** `tsc --noEmit`, `npm run prod:build` sin errores; la consulta `unnest` con nulos se
 probó en la base con un SELECT de solo lectura.
+
+---
+
+## 2026-10-20 · Fuente: dueño — revisión de seguridad (Claude Code)
+
+Versión **1.0.7 → 1.0.8**. Detalle y riesgos aceptados en `docs/11-seguridad.md` ("Revisión
+2026-10-20"): permisos de `anon`/`authenticated` revocados en Supabase, detector de secretos en
+commits, 429 con `Retry-After`, APK sin copia de seguridad, pruebas `npm run seguridad`,
+dependencias al último parche.
+
+**Verificación:** `tsc`, `prod:build`, `npm run seguridad` (25/25) y las páginas principales con sesión
+responden 200.

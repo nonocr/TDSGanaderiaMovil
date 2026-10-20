@@ -62,6 +62,32 @@ Content-Security-Policy (solo recursos propios), `X-Frame-Options: DENY`,
   solo corren al compilar el CSS, nunca en el servidor. Se resuelven migrando a Tailwind 4.
 - Revisar cada tanto con `npm.cmd audit`.
 
+## Revisión 2026-10-20 (Claude Code)
+
+- **Permisos de Supabase**: además de RLS, se quitaron todos los permisos de los roles públicos
+  `anon` y `authenticated` sobre tablas, secuencias y funciones (también para tablas futuras):
+  `prisma/supabase-privilegios.sql` (aplicado y verificado: 0 permisos). Si se crea una tabla
+  nueva, correr de nuevo `supabase-rls.sql` y este archivo.
+- **Secretos en Git**: el historial (31 commits) no tiene secretos. `.gitignore` excluye todo
+  `.env.*` (menos `.env.example`) y las llaves de firma Android. Hook `.githooks/pre-commit`
+  (`scripts/revisar-secretos.mjs`) bloquea commits con secretos. Activarlo en cada clon:
+  `git config core.hooksPath .githooks`. Revisión completa: `node scripts/revisar-secretos.mjs --todo`.
+- **Login bloqueado** responde 429 con `Retry-After`.
+- **APK Android**: `allowBackup="false"` (una copia de seguridad del teléfono ya no se lleva la
+  cookie de sesión) y sin tráfico HTTP sin cifrar. Requiere generar el APK de nuevo.
+- **Pruebas**: `npm.cmd run seguridad` (o `node scripts/probar-seguridad.mjs <url>`) contra la app
+  local: sesión, CSRF, cabeceras, validación, inyección y errores. No escribe datos.
+- **Dependencias**: Next 15.5.28, React 19.3.1, PostCSS 8.5.31. `npm audit --omit=dev`: 0.
+
+### Riesgos que quedan (aceptados)
+- La sesión es una cookie firmada sin registro en el servidor: **cerrar sesión borra la cookie
+  del dispositivo, pero una cookie robada sigue valiendo** hasta que vence (1 año). La única
+  forma de invalidarlas todas es cambiar la contraseña (`npm run clave`, que rota
+  `SESSION_SECRET`) y actualizar las variables en Vercel.
+- La CSP permite `'unsafe-inline'` en scripts (lo exige el script del tema y Next sin nonces).
+  React escapa todo el texto y no hay HTML de usuario, así que el riesgo es bajo.
+- Una sola contraseña compartida: no hay roles ni usuarios separados (todos pueden todo).
+
 ## Recomendaciones fuera del código
 
 1. **Cuenta de Supabase**: activar verificación en dos pasos (MFA).

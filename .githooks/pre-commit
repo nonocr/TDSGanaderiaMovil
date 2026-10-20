@@ -1,0 +1,3 @@
+#!/bin/sh
+# Bloquea commits con secretos. Activar una vez por clon: git config core.hooksPath .githooks
+exec node scripts/revisar-secretos.mjs

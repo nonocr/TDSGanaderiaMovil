@@ -4,7 +4,13 @@ out
 build
 *.log
 .env
-.env*.local
+.env.*
+!.env.example
+# Firma de la app Android (nunca al repo)
+*.jks
+*.keystore
+*.p12
+keystore.properties
 .DS_Store
 
 # Archivos temporales de pruebas (salidas de curl, etc.)
