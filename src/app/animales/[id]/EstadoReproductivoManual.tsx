@@ -15,11 +15,14 @@ export function EstadoReproductivoManual({
   vacaId,
   estado,
   manual,
+  listaParaMontar = false,
   cambios,
 }: {
   vacaId: string;
   estado: string | null;
   manual: boolean;
+  // Tras parir la vaca está "En ordeño" y, pasados 40 días, además "Lista para montar".
+  listaParaMontar?: boolean;
   cambios: { id: string; fechaISO: string; anterior: string | null; nuevo: string | null; descripcion: string | null }[];
 }) {
   const router = useRouter();
@@ -50,7 +53,13 @@ export function EstadoReproductivoManual({
     <div className="space-y-3 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <span className="text-base font-semibold text-stone-800 dark:text-stone-100">{etiqueta(estado)}</span>
+          <span className="text-base font-semibold text-stone-800 dark:text-stone-100">
+            {etiqueta(estado)}
+            {/* Tras parir sigue en ordeño y, pasados 40 días, además lista para montar. */}
+            {listaParaMontar && estado !== "LISTA_MONTAR" && (
+              <> · {ESTADO_REPRO_LABEL.LISTA_MONTAR}</>
+            )}
+          </span>
           <span className="ml-2 text-xs text-stone-500 dark:text-stone-400">
             {manual ? "fijado a mano" : "calculado por montas y partos"}
           </span>

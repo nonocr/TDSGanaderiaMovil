@@ -8,7 +8,6 @@ import {
   IconoLeche,
   IconoSecado,
   IconoReloj,
-  IconoBiberon,
   IconoCorazon,
   IconoVaca,
   IconoGrafica,
@@ -22,7 +21,6 @@ const REPRO_CELDA = [
   { clave: "ORDENIO", etiqueta: ESTADO_REPRO_LABEL.ORDENIO, Icono: IconoLeche, acento: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300" },
   { clave: "SECADO", etiqueta: ESTADO_REPRO_LABEL.SECADO, Icono: IconoSecado, acento: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" },
   { clave: "POR_PARIR", etiqueta: ESTADO_REPRO_LABEL.POR_PARIR, Icono: IconoReloj, acento: "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300" },
-  { clave: "POSPARTO", etiqueta: ESTADO_REPRO_LABEL.POSPARTO, Icono: IconoBiberon, acento: "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300" },
   { clave: "LISTA_MONTAR", etiqueta: ESTADO_REPRO_LABEL.LISTA_MONTAR, Icono: IconoCorazon, acento: "bg-marca-100 text-marca-700 dark:bg-marca-950 dark:text-marca-300" },
   { clave: "SIN_CICLO", etiqueta: "Sin ciclo", Icono: IconoVaca, acento: "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400" },
 ] as const;

@@ -23,6 +23,34 @@ _(ninguno todavía)_
 
 Lo que Claude Code detecta y le toca resolver al frontend. Kiro marca `[HECHO]` al corregirlo.
 
+### [INFO] Kiro: se elimina el estado "Posparto" (2026-10-16)
+
+> Claude: decisión del dueño sobre el ciclo de la vaca. **Ya no existe "Posparto".** Al parir, la
+> vaca vuelve a **En ordeño** y, pasados **40 días** del parto, queda **además** "Lista para montar"
+> (se muestran los dos). Toqué lógica de dominio compartida (`estado.ts`, `modulos.ts`, `alertas.ts`);
+> aviso para que lo tengas.
+>
+> - `src/lib/estado.ts`: quité el estado `POSPARTO` (del tipo `EstadoReproductivo`, de
+>   `ESTADO_REPRO_LABEL` y de `ESTADOS_REPRO`, que son los estados fijables a mano). `SituacionVaca`
+>   gana el campo **`listaParaMontar: boolean`**. En `situacionAutomatica`, con parto en el ciclo el
+>   estado es `ORDENIO` y `listaParaMontar = hoy ≥ parto + DIAS_POSPARTO (40)`. El estado manual
+>   sigue siendo un valor único (`listaParaMontar` solo si se fijó a mano `LISTA_MONTAR`).
+> - `src/lib/modulos.ts` (`desgloseReproLecheria`): quité `POSPARTO`; `LISTA_MONTAR` se cuenta con el
+>   indicador (una vaca en ordeño que pasó los 40 días suma en ORDENIO y en LISTA_MONTAR).
+> - `src/lib/alertas.ts`: sin cambios de lógica (ya avisaba "lista para montar" a los 40 días, no
+>   posparto); solo ajusté un comentario.
+> - `DIAS_POSPARTO` (en `src/lib/fechas.ts`) **no cambió** (sigue 40); ya no es "posparto" sino
+>   "días desde el parto hasta que queda lista para montar". No le cambié el nombre para no tocar
+>   imports; si prefieres renombrarlo, es tu terreno.
+> - `/api/estado-reproductivo` valida contra `ESTADOS_REPRO`, que ya no incluye `POSPARTO`: un POST
+>   con `estado: "POSPARTO"` ahora da 400. Es lo correcto (ese estado dejó de existir).
+> - Frontend (contexto): ficha, listas, filtros y desglose de lechería muestran "En ordeño · Lista
+>   para montar"; se quitó la tarjeta/filtro "Posparto".
+> - `docs/02-reglas-de-negocio.md` (A12, A18) actualizado.
+>
+> **Dato**: no hay datos "POSPARTO" guardados en la base (el estado se calcula, no se guarda; y
+> ningún `CambioEstadoReproductivo` manual lo usaba). Verificado: `tsc` y `prod:build` (17/17).
+
 ### [INFO] Kiro: registrar crías sin arete ni SENASA (2026-10-16)
 
 > Claude: el dueño necesita registrar crías recién nacidas que **no tienen número** (ni arete ni

@@ -87,7 +87,6 @@ export type EstadoReproductivo =
   | "ORDENIO"
   | "SECADO"
   | "POR_PARIR"
-  | "POSPARTO"
   | "LISTA_MONTAR"
   | null;
 
@@ -95,12 +94,11 @@ export const ESTADO_REPRO_LABEL: Record<string, string> = {
   ORDENIO: "En ordeño",
   SECADO: "En secado",
   POR_PARIR: "Por parir",
-  POSPARTO: "Posparto",
   LISTA_MONTAR: "Lista para montar",
 };
 
 // Estados que se pueden fijar a mano (CambioEstadoReproductivo.estadoNuevo).
-export const ESTADOS_REPRO = ["ORDENIO", "SECADO", "POR_PARIR", "POSPARTO", "LISTA_MONTAR"] as const;
+export const ESTADOS_REPRO = ["ORDENIO", "SECADO", "POR_PARIR", "LISTA_MONTAR"] as const;
 
 // createdAt: cuándo se REGISTRÓ (lo usa el estado manual; ver estadoManualVigente).
 type MontaMin = { fecha: Date; createdAt?: Date };
@@ -126,6 +124,9 @@ export type SituacionVaca = {
   partoEstimado: Date | null;
   // true si el estado lo fijó alguien a mano (CambioEstadoReproductivo) y sigue vigente.
   manual?: boolean;
+  // Tras parir, la vaca queda EN ORDEÑO y, pasados 40 días, además "lista para montar": por eso es
+  // un indicador aparte del estado (se muestran los dos: "En ordeño · Lista para montar").
+  listaParaMontar: boolean;
 };
 
 // --- Estado reproductivo MANUAL ----------------------------------------------
@@ -165,20 +166,29 @@ export function situacionReproductivaVaca(
   const manual = estadoManualVigente(cambios, montas, partos);
   if (manual === undefined) return auto;
   const prenada = manual === "ORDENIO" || manual === "SECADO" || manual === "POR_PARIR";
-  return { estado: manual, partoEstimado: prenada ? auto.partoEstimado : null, manual: true };
+  // Un estado manual es un valor único; "lista para montar" solo si así se fijó a mano.
+  return {
+    estado: manual,
+    partoEstimado: prenada ? auto.partoEstimado : null,
+    manual: true,
+    listaParaMontar: manual === "LISTA_MONTAR",
+  };
 }
 
 function situacionAutomatica(montas: MontaMin[], partos: PartoMin[], hoy: Date): SituacionVaca {
   const ciclo = cicloVaca(montas, partos);
-  if (!ciclo) return { estado: null, partoEstimado: null };
+  if (!ciclo) return { estado: null, partoEstimado: null, listaParaMontar: false };
   const { ultimaMonta, partoDelCiclo } = ciclo;
 
-  // Con parto real: posparto 40 dias, luego lista para montar. No hay parto estimado.
+  // Con parto real: la vaca vuelve a ORDEÑO (hasta la próxima monta/secado del siguiente ciclo) y,
+  // pasados 40 días del parto, además queda "lista para montar". Se muestran los dos. No hay parto
+  // estimado hasta que se registre una nueva monta.
   if (partoDelCiclo) {
-    const finPosparto = sumarDias(partoDelCiclo.fecha, DIAS_POSPARTO);
+    const listaDesde = sumarDias(partoDelCiclo.fecha, DIAS_POSPARTO);
     return {
-      estado: hoy < finPosparto ? "POSPARTO" : "LISTA_MONTAR",
+      estado: "ORDENIO",
       partoEstimado: null,
+      listaParaMontar: hoy >= listaDesde,
     };
   }
 
@@ -191,7 +201,7 @@ function situacionAutomatica(montas: MontaMin[], partos: PartoMin[], hoy: Date):
   else if (hoy < partoEstimado) estado = "SECADO";
   else estado = "POR_PARIR";
 
-  return { estado, partoEstimado };
+  return { estado, partoEstimado, listaParaMontar: false };
 }
 
 export function etiquetaEstadoRepro(estado: EstadoReproductivo): string | null {

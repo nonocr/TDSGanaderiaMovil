@@ -6,6 +6,7 @@ import {
   etapaDeAnimal,
   situacionReproductivaVaca,
   etiquetaEstadoRepro,
+  ESTADO_REPRO_LABEL,
 } from "@/lib/estado";
 import { ETAPA_LABEL, CATEGORIA_LABEL, etiquetaArete, terminoBusqueda } from "@/lib/tipos";
 import { FiltroAnimales } from "@/components/FiltroAnimales";
@@ -19,7 +20,6 @@ const FILTROS_VACA = [
   { v: "ORDENIO", label: "En ordeño" },
   { v: "SECADO", label: "En secado" },
   { v: "POR_PARIR", label: "Por parir" },
-  { v: "POSPARTO", label: "Posparto" },
   { v: "LISTA_MONTAR", label: "Lista para montar" },
 ];
 // Etapas de engorde (calculadas por la edad).
@@ -151,9 +151,9 @@ export async function ListaAnimales({
     const sit =
       usaRepro && a.sexo === "HEMBRA"
         ? situacionReproductivaVaca(a.montasComoVaca, a.partosComoVaca, hoy, a.cambios)
-        : { estado: null, partoEstimado: null };
+        : { estado: null, partoEstimado: null, listaParaMontar: false };
     // "Situacion": en engorde se muestra la etapa; en lechería el estado reproductivo.
-    return { a, etapa, repro: sit.estado, partoEstimado: sit.partoEstimado };
+    return { a, etapa, repro: sit.estado, partoEstimado: sit.partoEstimado, listaParaMontar: sit.listaParaMontar };
   });
 
   // Busqueda por arete, arete de SENASA o nombre (texto libre, sin distinguir mayusculas).
@@ -173,13 +173,16 @@ export async function ListaAnimales({
 
   // Aplicar filtro (incluye razas con prefijo "raza:").
   const filtradas = filtro
-    ? base2.filter(({ a, etapa, repro }) => {
+    ? base2.filter(({ a, etapa, repro, listaParaMontar }) => {
         if (filtro.startsWith("raza:")) return a.raza === filtro.slice(5);
         if (filtro === "INACTIVOS") return a.estado !== "ACTIVO";
         if (["ACTIVO", "VENDIDO", "MUERTO"].includes(filtro)) return a.estado === filtro;
         if (["DESTETE", "DESARROLLO", "ENGORDE"].includes(filtro))
           return etapa === filtro;
-        // estados reproductivos
+        // "Lista para montar" es un indicador aparte: incluye a las vacas en ordeño que ya pasaron
+        // los 40 días del parto (listaParaMontar), no solo a las que tienen ese estado principal.
+        if (filtro === "LISTA_MONTAR") return repro === "LISTA_MONTAR" || listaParaMontar;
+        // resto de estados reproductivos
         return repro === filtro;
       })
     : base2;
@@ -257,7 +260,7 @@ export async function ListaAnimales({
         <>
           {/* Vista MÓVIL: tarjetas apiladas, cómodas para tocar. */}
           <ul className="space-y-2 sm:hidden">
-            {filtradas.map(({ a, etapa, repro, partoEstimado }) => (
+            {filtradas.map(({ a, etapa, repro, partoEstimado, listaParaMontar }) => (
               <li key={a.id}>
                 <Link
                   href={`/animales/${a.id}`}
@@ -290,7 +293,7 @@ export async function ListaAnimales({
                       {/* En Toros/Vacas el sexo ya se sabe por la lista. */}
                       {!sexo && <SexoBadge sexo={a.sexo} />}
                       {a.modulo === "LECHERIA" && a.categoria && <Badge>{CATEGORIA_LABEL[a.categoria] ?? a.categoria}</Badge>}
-                      <Situacion etapa={etapa} repro={repro} partoEstimado={partoEstimado} compacta />
+                      <Situacion etapa={etapa} repro={repro} partoEstimado={partoEstimado} listaParaMontar={listaParaMontar} compacta />
                     </div>
                   </div>
                   <IconoFlecha className="h-4 w-4 shrink-0 text-stone-300 dark:text-stone-600" />
@@ -315,7 +318,7 @@ export async function ListaAnimales({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
-                  {filtradas.map(({ a, etapa, repro, partoEstimado }) => (
+                  {filtradas.map(({ a, etapa, repro, partoEstimado, listaParaMontar }) => (
                     <tr key={a.id} className="transition-colors hover:bg-marca-50/40 dark:hover:bg-stone-800/40">
                       <td className="py-2 pl-4">
                         {a.fotoMiniatura ? (
@@ -337,7 +340,7 @@ export async function ListaAnimales({
                       <td className="px-4 py-3 text-stone-600 dark:text-stone-300">{a.nombre ?? "—"}</td>
                       <td className="px-4 py-3"><SexoBadge sexo={a.sexo} /></td>
                       <td className="px-4 py-3">
-                        <Situacion etapa={etapa} repro={repro} partoEstimado={partoEstimado} />
+                        <Situacion etapa={etapa} repro={repro} partoEstimado={partoEstimado} listaParaMontar={listaParaMontar} />
                       </td>
                       <td className="px-4 py-3 text-stone-600 dark:text-stone-300">
                         {formatearFecha(a.fechaNacimiento)}
@@ -364,11 +367,15 @@ function Situacion({
   etapa,
   repro,
   partoEstimado,
+  listaParaMontar = false,
   compacta = false,
 }: {
   etapa: string | null;
   repro: string | null;
   partoEstimado: Date | null;
+  // Tras parir la vaca está en ordeño y, pasados 40 días, además "lista para montar": se muestran
+  // los dos. Solo aplica cuando el estado principal no es ya "lista para montar".
+  listaParaMontar?: boolean;
   // En las tarjetas móviles no se muestra el "—" de "sin situación".
   compacta?: boolean;
 }) {
@@ -380,9 +387,13 @@ function Situacion({
         : repro === "SECADO" || repro === "POR_PARIR"
         ? "ambar"
         : "neutral";
+    const tambienLista = listaParaMontar && repro !== "LISTA_MONTAR";
     return (
       <div className={compacta ? "flex flex-wrap items-center gap-x-2 gap-y-1" : "flex flex-col items-start gap-1"}>
-        <Badge tono={tono as any} punto>{etiquetaEstadoRepro(repro as any)}</Badge>
+        <div className="flex flex-wrap items-center gap-1">
+          <Badge tono={tono as any} punto>{etiquetaEstadoRepro(repro as any)}</Badge>
+          {tambienLista && <Badge tono="verde" punto>{ESTADO_REPRO_LABEL.LISTA_MONTAR}</Badge>}
+        </div>
         {partoEstimado && (
           <span className="text-xs text-stone-400 dark:text-stone-500">
             Parto est.: {formatearFecha(partoEstimado)}

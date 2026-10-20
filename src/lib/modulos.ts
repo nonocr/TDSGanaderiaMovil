@@ -83,14 +83,18 @@ export async function desgloseReproLecheria(
     ORDENIO: 0,
     SECADO: 0,
     POR_PARIR: 0,
-    POSPARTO: 0,
     LISTA_MONTAR: 0,
     SIN_CICLO: 0,
   };
   for (const v of vacas) {
-    const { estado } = situacionReproductivaVaca(v.montasComoVaca, v.partosComoVaca, hoy, cambiosPor.get(v.id));
+    const { estado, listaParaMontar } = situacionReproductivaVaca(
+      v.montasComoVaca, v.partosComoVaca, hoy, cambiosPor.get(v.id)
+    );
     const clave = estado ?? "SIN_CICLO";
     conteo[clave] = (conteo[clave] ?? 0) + 1;
+    // "Lista para montar" es un indicador aparte del estado: una vaca en ordeño que ya pasó los
+    // 40 días del parto cuenta en ORDENIO y además aquí (salvo que su estado principal ya sea ese).
+    if (listaParaMontar && clave !== "LISTA_MONTAR") conteo.LISTA_MONTAR += 1;
   }
   return conteo;
 }

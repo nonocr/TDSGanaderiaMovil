@@ -312,7 +312,7 @@ export default async function AnimalDetallePage({
   // La situación reproductiva solo tiene sentido para vacas de lechería. Un cambio manual vigente manda.
   const situacionVaca = esVacaLeche
     ? situacionReproductivaVaca(animal.montasComoVaca, animal.partosComoVaca, hoy, cambiosEstado)
-    : { estado: null, partoEstimado: null, manual: false };
+    : { estado: null, partoEstimado: null, manual: false, listaParaMontar: false };
 
   // Palpaciones anteriores: las propias y las que se anotaban en la monta (registros viejos).
   const palpacionesPrevias = [
@@ -432,6 +432,7 @@ export default async function AnimalDetallePage({
                   vacaId={animal.id}
                   estado={situacionVaca.estado}
                   manual={Boolean(situacionVaca.manual)}
+                  listaParaMontar={situacionVaca.listaParaMontar}
                   cambios={cambiosEstado.map((c) => ({
                     id: c.id,
                     fechaISO: c.fecha.toISOString(),

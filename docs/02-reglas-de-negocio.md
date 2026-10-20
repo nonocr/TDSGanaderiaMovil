@@ -86,14 +86,16 @@ Se cuentan desde la monta. El parto ocurre al final del período de secado.
 - Se quiere una alerta asociada a este proceso.
 
 ### A12. Nueva monta tras parto
-- **~40 días después del parto** la vaca ya puede volver a ser montada.
+- **~40 días después del parto** la vaca ya puede volver a ser montada (queda "Lista para montar",
+  sin dejar de estar "En ordeño"). Ya no hay un estado "Posparto" previo (actualizado 2026-10-16).
 - El sistema debe calcular esa fecha a partir de la fecha **real** del parto y avisar.
 
 ### A18. Estado reproductivo DERIVADO de la vaca (definición 2026-10-06)
 - Los tiempos del ciclo son **fijos** (confirmado por el papá), así que el estado se
   **deriva automáticamente** de los eventos. Si luego varían por animal, se cambia a captura.
 - **Embarazo: 9 meses** desde la monta. Se asume que una monta resulta en preñez (ver B1).
-- **Enfoque (opción 2):** ordeño y secado se calculan desde la **monta**; el posparto arranca
+- **Enfoque (opción 2):** ordeño y secado se calculan desde la **monta**; tras el parto la vaca
+  vuelve a ordeño y el "lista para montar" arranca
   desde el **parto real registrado**, no desde la estimación.
 
 Cálculo, contando **desde la monta más reciente**:
@@ -101,16 +103,19 @@ Cálculo, contando **desde la monta más reciente**:
 - mes 7 a 9 → **En secado** (los 2 meses finales antes del parto).
 - mes 9 en adelante **sin parto registrado** → **Por parir** (espera el parto real).
 
-Cuando hay un **parto** posterior a esa monta:
-- desde el parto hasta +40 días → **Posparto**.
-- después de +40 días → **Lista para montar** (regla A12).
+Cuando hay un **parto** posterior a esa monta (ACTUALIZADO 2026-10-16, decisión del dueño):
+- **ya no existe "Posparto".** Al parir, la vaca vuelve a **En ordeño** (hasta la próxima
+  monta/secado del siguiente ciclo).
+- a partir de **+40 días** del parto, además queda **Lista para montar** (regla A12): se muestran
+  **los dos a la vez** ("En ordeño · Lista para montar"). "Lista para montar" es un indicador
+  aparte del estado, no lo reemplaza.
 
 Sin montas registradas → **sin estado reproductivo**.
 
 - **Fecha estimada de parto** = monta + 9 meses. Se muestra en la vaca (útil sobre todo
-  en ordeño/secado/por parir) como aviso; NO adelanta el estado (el posparto depende del
-  parto real).
-- Duraciones (7 y 9 meses, 40 días) centralizadas en `src/lib/fechas.ts`.
+  en ordeño/secado/por parir) como aviso; NO adelanta el estado.
+- Duraciones (7 y 9 meses, 40 días) centralizadas en `src/lib/fechas.ts` (`DIAS_POSPARTO` = 40 es
+  ahora "días desde el parto hasta que queda lista para montar").
 
 ### A13. Producción de leche
 - Se registra por: vaca + fecha + cantidad.

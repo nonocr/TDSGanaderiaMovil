@@ -16,7 +16,7 @@ export type TipoPendiente =
   | "ORDENIO" // recién montada: entra en ordeño (el ordeño cuenta desde la monta, A18)
   | "SECADO_PROXIMO" // la vaca entra en secado pronto
   | "POR_PARIR" // ya llegó/está por llegar la fecha estimada de parto, sin parto registrado
-  | "LISTA_MONTAR"; // pasaron los 40 días de posparto
+  | "LISTA_MONTAR"; // pasaron los 40 días desde el parto (sigue en ordeño y ya se puede montar)
 
 export type Pendiente = {
   tipo: TipoPendiente;

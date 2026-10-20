@@ -383,3 +383,30 @@ Así, una cría recién nacida se puede registrar desde el parto sin ningún nú
 "Sin arete" hasta que se le asigne editándola. Mismo comportamiento que el alta normal de animal.
 
 **Verificación:** `tsc --noEmit` y `npm run prod:build` (17/17 páginas) sin errores.
+
+---
+
+## 2026-10-16 · Fuente: dueño — se elimina "Posparto"; tras parir queda En ordeño + Lista para montar
+
+**Qué llegó:** decisión del dueño sobre el estado reproductivo tras el parto. Antes, al parir la
+vaca pasaba a **"Posparto"** 40 días y luego a "Lista para montar". Ahora: **se elimina "Posparto"**;
+al parir la vaca vuelve a **"En ordeño"** (hasta el próximo secado del siguiente ciclo) y, pasados
+**40 días** del parto, además queda **"Lista para montar"** — se muestran **los dos a la vez**.
+Versión del proyecto: **1.0.5 → 1.0.6**.
+
+**Qué se cambió:**
+- `src/lib/estado.ts`: quitado el estado `POSPARTO` (del tipo, etiquetas y de los estados manuales).
+  `SituacionVaca` gana el indicador `listaParaMontar`. Con parto, el estado es `ORDENIO` y
+  `listaParaMontar = hoy ≥ parto + 40 días`. "Lista para montar" es un indicador aparte del estado,
+  no lo reemplaza.
+- `src/lib/modulos.ts` (desglose de lechería): ya no cuenta "Posparto"; una vaca en ordeño que pasó
+  los 40 días cuenta en **En ordeño** y además en **Lista para montar**.
+- `src/components/ListaAnimales.tsx`: quitado el filtro "Posparto"; el filtro "Lista para montar"
+  incluye a las vacas en ordeño con el indicador; la situación muestra los dos badges cuando aplica.
+- Ficha (`EstadoReproductivoManual`): muestra "En ordeño · Lista para montar" cuando corresponde.
+- `src/app/lecheria/page.tsx`: quitada la tarjeta "Posparto" del desglose.
+- Pendientes y calendario (`src/lib/alertas.ts`) no cambiaron: ya avisaban "lista para montar" a los
+  40 días (solo se ajustó un comentario).
+- `docs/02-reglas-de-negocio.md` (A12, A18) actualizado.
+
+**Verificación:** `tsc --noEmit` y `npm run prod:build` (17/17 páginas) sin errores.
