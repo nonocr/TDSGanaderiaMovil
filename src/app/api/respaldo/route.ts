@@ -5,7 +5,7 @@ import {
   numero, numeroObligatorio, opcion, SEXOS, ESTADOS, ETAPAS, MODULOS, TURNOS, CATEGORIAS, LARGO, MB,
   ErrorValidacion,
 } from "@/lib/validar";
-import { ESTADOS_REPRO } from "@/lib/estado";
+import { ESTADOS_REPRO_HISTORICOS } from "@/lib/estado";
 import { procesarFoto } from "@/lib/fotos";
 
 // Versión del formato de respaldo. Si en el futuro cambia la estructura, se puede
@@ -188,8 +188,9 @@ export const POST = ruta(async (req: NextRequest) => {
     id: idObligatorio(c.id, "id"),
     vacaId: idObligatorio(c.vacaId, "Vaca"),
     fecha: fechaObligatoria(c.fecha, "Fecha"),
-    estadoAnterior: c.estadoAnterior ? opcion(c.estadoAnterior, ESTADOS_REPRO, "Estado anterior") : null,
-    estadoNuevo: c.estadoNuevo ? opcion(c.estadoNuevo, ESTADOS_REPRO, "Estado nuevo") : null,
+    // Históricos (incluye POSPARTO): un respaldo anterior a la v1.0.6 debe poder restaurarse.
+    estadoAnterior: c.estadoAnterior ? opcion(c.estadoAnterior, ESTADOS_REPRO_HISTORICOS, "Estado anterior") : null,
+    estadoNuevo: c.estadoNuevo ? opcion(c.estadoNuevo, ESTADOS_REPRO_HISTORICOS, "Estado nuevo") : null,
     descripcion: texto(c.descripcion, "Descripción", LARGO.notas),
   }));
 
@@ -212,22 +213,20 @@ export const POST = ruta(async (req: NextRequest) => {
         // un INSERT por fila puede agotar el timeout de la transacción.
         await tx.animal.createMany({ data: animales });
 
-        // 4) Enlazar padre/madre ahora que todos los animales existen. Para no hacer un UPDATE
-        // por animal (N+1 costoso con la base remota), se agrupan los que comparten el MISMO par
-        // (padreId, madreId) y se actualizan juntos con updateMany + `id in [...]`. En un hato real
-        // muchos animales comparten progenitores, así que suele bajar de cientos de updates a pocos.
-        const porPar = new Map<string, { padreId: string | null; madreId: string | null; ids: string[] }>();
-        for (const v of vinculos) {
-          const clave = `${v.padreId ?? ""}|${v.madreId ?? ""}`;
-          const grupo = porPar.get(clave);
-          if (grupo) grupo.ids.push(v.id);
-          else porPar.set(clave, { padreId: v.padreId, madreId: v.madreId, ids: [v.id] });
-        }
-        for (const g of porPar.values()) {
-          await tx.animal.updateMany({
-            where: { id: { in: g.ids } },
-            data: { padreId: g.padreId, madreId: g.madreId },
-          });
+        // 4) Enlazar padre/madre ahora que todos los animales existen, con UN solo UPDATE (la base
+        // está lejos: un UPDATE por animal puede agotar el timeout). Agrupar por par (padre, madre)
+        // no basta: en lechería casi cada cría tiene una madre distinta. Los valores van como
+        // parámetros (arrays), nunca concatenados en el SQL.
+        if (vinculos.length > 0) {
+          await tx.$executeRaw`
+            UPDATE "Animal" AS a
+            SET "padreId" = v.padre, "madreId" = v.madre
+            FROM unnest(
+              ${vinculos.map((v) => v.id)}::text[],
+              ${vinculos.map((v) => v.padreId)}::text[],
+              ${vinculos.map((v) => v.madreId)}::text[]
+            ) AS v(id, padre, madre)
+            WHERE a.id = v.id`;
         }
 
         // 5) Insertar los eventos.

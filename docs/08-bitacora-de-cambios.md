@@ -410,3 +410,26 @@ Versión del proyecto: **1.0.5 → 1.0.6**.
 - `docs/02-reglas-de-negocio.md` (A12, A18) actualizado.
 
 **Verificación:** `tsc --noEmit` y `npm run prod:build` (17/17 páginas) sin errores.
+
+---
+
+## 2026-10-20 · Fuente: dueño — revisión de los cambios de Kiro (v1.0.1–1.0.6) (Claude Code)
+
+**Qué llegó:** el dueño pidió revisar lo que hizo Kiro y corregir/optimizar lo que hiciera falta.
+Lo demás de esas versiones se revisó y queda como está. Versión: **1.0.6 → 1.0.7**.
+
+**Qué se cambió:**
+- **Respaldos viejos con "Posparto" ya no fallan al restaurar.** `estadoAnterior` de un cambio de
+  estado manual guarda el estado *calculado* en ese momento, que antes de la v1.0.6 podía ser
+  `POSPARTO`; al quitarlo de `ESTADOS_REPRO`, restaurar un respaldo así daba 400. Nuevo
+  `ESTADOS_REPRO_HISTORICOS` (`src/lib/estado.ts`) que usa el respaldo, y la etiqueta "Posparto" se
+  conserva solo para mostrar ese historial. Fijar el estado a mano sigue sin ofrecer Posparto.
+- **Restaurar respaldo: un solo UPDATE para padre/madre** (`src/app/api/respaldo/route.ts`). El
+  agrupado por par (padre, madre) de la v1.0.1 casi no ahorraba: en lechería cada cría suele tener
+  una madre distinta, así que seguía siendo ~un UPDATE por animal. Ahora es un `UPDATE … FROM unnest()`
+  con los valores como parámetros.
+- **`/partos/[id]` ya no lee todo el hato.** La v1.0.1 usaba `listarAnimales()` solo para
+  identificar a la madre; ahora la madre viene con el parto (un nivel de relación, igual que el toro).
+
+**Verificación:** `tsc --noEmit`, `npm run prod:build` sin errores; la consulta `unnest` con nulos se
+probó en la base con un SELECT de solo lectura.

@@ -5,40 +5,39 @@ import { Card, SectionTitle, AnimalLink, SexoBadge, EstadoBadge, Badge } from "@
 import { IconoAtras, IconoFlecha } from "@/components/iconos";
 import { formatearFecha, calcularEdad } from "@/lib/fechas";
 import { etiquetaArete } from "@/lib/tipos";
-import { listarAnimales } from "@/lib/genealogia";
 import { FotoCria, contarCrias } from "@/app/animales/[id]/ResumenPartos";
 
 export const dynamic = "force-dynamic";
 
 // Detalle de un parto: sus datos y los de la madre, el padre y cada cría. Todo sale de los
 // registros relacionados (la madre y las crías son animales con su propia ficha); no se copia nada.
+const IDENT = { id: true, arete: true, nombre: true, sinArete: true, areteCenasa: true } as const;
 
 export default async function PartoDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  // Consultas PLANAS y en PARALELO (la base está en EE. UU.: cada `include` anidado encadenaría
-  // idas y vueltas). El parto trae solo escalares + ids; las crías de este parto se piden aparte
-  // con los campos que la vista muestra; vaca/toro salen de la lista compartida (genealogia).
-  const [parto, crias, todos] = await Promise.all([
+  // Dos consultas EN PARALELO (la base está en EE. UU.): el parto con madre y padre (un solo nivel
+  // de relación) y, aparte, las crías de este parto con los campos que la vista muestra.
+  // No se usa listarAnimales(): leería todo el hato solo para identificar a la madre.
+  const [parto, crias] = await Promise.all([
     prisma.parto.findUnique({
       where: { id },
-      // Parto plano + el padre embebido solo para saber si es pajilla (un solo nivel, barato).
-      include: { toro: { select: { id: true, arete: true, nombre: true, sinArete: true, areteCenasa: true, esPajilla: true } } },
+      include: {
+        vaca: { select: IDENT },
+        toro: { select: { ...IDENT, esPajilla: true } },
+      },
     }),
     prisma.animal.findMany({
       where: { nacidoEnParto: { some: { partoId: id } } },
       select: {
-        id: true, arete: true, nombre: true, sinArete: true, areteCenasa: true,
+        ...IDENT,
         sexo: true, fotoMiniatura: true, fechaNacimiento: true, estado: true, fechaBaja: true, raza: true,
       },
     }),
-    listarAnimales(),
   ]);
   if (!parto) notFound();
 
-  const porId = new Map(todos.map((a) => [a.id, a]));
-  const vaca = porId.get(parto.vacaId) ?? { id: parto.vacaId, arete: "?", nombre: null, sinArete: false, areteCenasa: null };
-  const toro = parto.toro;
+  const { vaca, toro } = parto;
   const { machos, hembras } = contarCrias([
     { id: parto.id, fechaISO: "", toro: null, crias: crias.map((c) => ({ ...c, fotoMiniatura: null })) },
   ]);

@@ -95,10 +95,15 @@ export const ESTADO_REPRO_LABEL: Record<string, string> = {
   SECADO: "En secado",
   POR_PARIR: "Por parir",
   LISTA_MONTAR: "Lista para montar",
+  // Ya no se calcula ni se puede fijar (v1.0.6), pero `estadoAnterior` guardaba el estado calculado
+  // del momento: los cambios viejos pueden decir POSPARTO y deben seguir mostrándose bien.
+  POSPARTO: "Posparto",
 };
 
 // Estados que se pueden fijar a mano (CambioEstadoReproductivo.estadoNuevo).
 export const ESTADOS_REPRO = ["ORDENIO", "SECADO", "POR_PARIR", "LISTA_MONTAR"] as const;
+// Lo que puede venir en registros ya guardados (respaldo): los actuales más los retirados.
+export const ESTADOS_REPRO_HISTORICOS = [...ESTADOS_REPRO, "POSPARTO"] as const;
 
 // createdAt: cuándo se REGISTRÓ (lo usa el estado manual; ver estadoManualVigente).
 type MontaMin = { fecha: Date; createdAt?: Date };
