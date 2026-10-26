@@ -28,8 +28,8 @@ function TooltipLeche({ active, payload, tipo }: TooltipProps<number, string> & 
         {p.litros} <span className="text-xs font-medium text-stone-500 dark:text-stone-400">L/día</span>
       </div>
       <div className="mt-0.5 text-stone-600 dark:text-stone-300">{p.titulo}</div>
-      {p.detalle && <div className="text-stone-400 dark:text-stone-500">{p.detalle}</div>}
-      <div className="mt-1 border-t border-stone-100 pt-1 text-[11px] text-stone-400 dark:border-stone-700 dark:text-stone-500">
+      {p.detalle && <div className="text-stone-500 dark:text-stone-400">{p.detalle}</div>}
+      <div className="mt-1 border-t border-stone-100 pt-1 text-[11px] text-stone-500 dark:border-stone-700 dark:text-stone-400">
         {tipo === "barras" ? "Promedio de litros por día del periodo" : "Total del día (mañana + tarde)"}
       </div>
     </div>

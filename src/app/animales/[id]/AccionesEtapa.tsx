@@ -75,7 +75,7 @@ export function AccionesEtapa({
     return (
       <form onSubmit={guardar} className="mt-2 space-y-2 rounded bg-stone-50 p-2 dark:bg-stone-800/60">
         {error && (
-          <div className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+          <div role="alert" className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
             {error}
           </div>
         )}

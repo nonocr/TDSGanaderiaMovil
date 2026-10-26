@@ -54,7 +54,7 @@ export default async function LechePage({ searchParams }: { searchParams: Promis
             <p className="mb-3 text-sm text-stone-500 dark:text-stone-400">
               {vista === "semanas" ? "Esta semana" : "Este mes"}:{" "}
               <span className="font-semibold text-stone-800 dark:text-stone-100">{actual.litros} L/día</span>
-              {actual.detalle && <span className="text-stone-400 dark:text-stone-500"> · {actual.detalle}</span>}
+              {actual.detalle && <span className="text-stone-500 dark:text-stone-400"> · {actual.detalle}</span>}
             </p>
             <GraficaLecheDiferida puntos={puntos} tipo="barras" />
             <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
@@ -76,12 +76,20 @@ export default async function LechePage({ searchParams }: { searchParams: Promis
         <Card>
           <SectionTitle>Por vaca</SectionTitle>
           <div className="-mx-4 overflow-x-auto sm:mx-0">
-            <table className="w-full min-w-[22rem] text-sm">
+            {/* En móvil (360 px) los encabezados largos obligaban a desplazar la tabla de lado y
+                cortaban la última columna: se abrevian y las celdas pueden partirse en dos líneas. */}
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-stone-200 text-left text-xs uppercase tracking-wider text-stone-500 dark:border-stone-800 dark:text-stone-400">
                   <th className="px-4 py-2 font-medium sm:pl-0">Vaca</th>
-                  <th className="px-2 py-2 text-right font-medium">Promedio 30 días</th>
-                  <th className="px-4 py-2 text-right font-medium sm:pr-0">Último registro</th>
+                  <th className="px-2 py-2 text-right font-medium">
+                    <span className="sm:hidden">Prom. 30 d</span>
+                    <span className="hidden sm:inline">Promedio 30 días</span>
+                  </th>
+                  <th className="px-4 py-2 text-right font-medium sm:pr-0">
+                    <span className="sm:hidden">Último</span>
+                    <span className="hidden sm:inline">Último registro</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100 dark:divide-stone-800">

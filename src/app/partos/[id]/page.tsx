@@ -69,7 +69,7 @@ export default async function PartoDetallePage({ params }: { params: Promise<{ i
               toro ? (
                 <>
                   <AnimalLink animal={toro} />
-                  {toro.esPajilla && <span className="ml-1 text-xs text-stone-400">(pajilla)</span>}
+                  {toro.esPajilla && <span className="ml-1 text-xs text-stone-500 dark:text-stone-400">(pajilla)</span>}
                 </>
               ) : (
                 "Sin especificar"
@@ -85,7 +85,7 @@ export default async function PartoDetallePage({ params }: { params: Promise<{ i
           <Fila k="Peso al nacer" v={parto.pesoNacimientoKg != null ? `${parto.pesoNacimientoKg} kg` : "—"} />
           <Fila k="Notas" v={parto.descripcion ?? "—"} />
         </dl>
-        <p className="mt-3 text-xs text-stone-400 dark:text-stone-500">
+        <p className="mt-3 text-xs text-stone-500 dark:text-stone-400">
           Para editar o eliminar este parto, ve a la ficha de la madre → Historial.
         </p>
       </Card>
@@ -108,7 +108,7 @@ export default async function PartoDetallePage({ params }: { params: Promise<{ i
                   <div className="min-w-0 flex-1 space-y-1">
                     <p className="font-semibold text-stone-800 dark:text-stone-100">
                       {c.nombre ? `${c.nombre} ` : ""}
-                      <span className="font-normal text-stone-400 dark:text-stone-500">{etiquetaArete(c)}</span>
+                      <span className="font-normal text-stone-500 dark:text-stone-400">{etiquetaArete(c)}</span>
                     </p>
                     <div className="flex flex-wrap items-center gap-1.5">
                       {c.sexo ? <SexoBadge sexo={c.sexo} /> : <Badge>Sin sexo</Badge>}

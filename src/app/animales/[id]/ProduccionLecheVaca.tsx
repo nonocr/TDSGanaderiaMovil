@@ -27,7 +27,7 @@ export function ProduccionLecheVaca({ registros }: { registros: { fecha: Date; c
               <dt className="text-stone-500 dark:text-stone-400">Último:</dt>
               <dd className="font-semibold text-stone-800 dark:text-stone-100">
                 {r.ultimo!.litros} L{" "}
-                <span className="font-normal text-stone-400 dark:text-stone-500">({formatearFecha(r.ultimo!.fecha)})</span>
+                <span className="font-normal text-stone-500 dark:text-stone-400">({formatearFecha(r.ultimo!.fecha)})</span>
               </dd>
             </div>
             <div className="flex gap-1.5">
@@ -40,7 +40,7 @@ export function ProduccionLecheVaca({ registros }: { registros: { fecha: Date; c
               <dt className="text-stone-500 dark:text-stone-400">Máximo:</dt>
               <dd className="font-semibold text-stone-800 dark:text-stone-100">{r.maximo} L</dd>
             </div>
-            <div className="text-stone-400 dark:text-stone-500">({r.registros} {r.registros === 1 ? "día medido" : "días medidos"})</div>
+            <div className="text-stone-500 dark:text-stone-400">({r.registros} {r.registros === 1 ? "día medido" : "días medidos"})</div>
           </dl>
           {/* La línea de promedio ahora va DENTRO de la gráfica (ReferenceLine). */}
           <GraficaLecheDiferida puntos={puntos} promedio={promedioGeneral} />

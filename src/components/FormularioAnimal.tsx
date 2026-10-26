@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MODULO_LABEL, etiquetaArete } from "@/lib/tipos";
 import { hoyLocalISO } from "@/lib/fechas";
 import { llamarApi } from "@/lib/api-cliente";
-import { claseCampo, claseEtiqueta, claseBotonPrimario } from "@/components/ui";
+import { claseCampo, claseEtiqueta, claseBotonPrimario, AvisoError } from "@/components/ui";
 
 // Prefijo del arete interno que genera el backend para los animales sin arete físico. No se le
 // muestra al usuario (ver src/lib/validar.ts, PREFIJO_SIN_ARETE).
@@ -65,6 +65,12 @@ export function FormularioAnimal({
 
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  // El error se muestra arriba del formulario y el botón está al final: en el celular hay que
+  // llevarlo a la vista o parece que "Guardar" no hizo nada.
+  const refError = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (error) refError.current?.scrollIntoView({ block: "start" });
+  }, [error]);
   const [padreModo, setPadreModo] = useState<"registrado" | "externo">(
     valores?.padreExterno ? "externo" : "registrado"
   );
@@ -206,8 +212,8 @@ export function FormularioAnimal({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       {error && (
-        <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-          {error}
+        <div ref={refError} className="scroll-mt-20">
+          <AvisoError>{error}</AvisoError>
         </div>
       )}
 
@@ -219,7 +225,7 @@ export function FormularioAnimal({
             <input type="hidden" name="modulo" value={modulo} />
             <p className="mt-1 text-sm text-stone-700 dark:text-stone-200">
               {MODULO_LABEL[modulo] ?? modulo}{" "}
-              <span className="text-xs text-stone-400">(no se puede cambiar)</span>
+              <span className="text-xs text-stone-500 dark:text-stone-400">(no se puede cambiar)</span>
             </p>
           </>
         ) : (

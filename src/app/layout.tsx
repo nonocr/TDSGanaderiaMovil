@@ -61,7 +61,7 @@ export default function RootLayout({
             <EstadoConexion />
             {children}
           </main>
-          <footer className="no-print hidden border-t border-stone-200/70 py-5 text-center text-xs text-stone-400 lg:block dark:border-stone-800 dark:text-stone-500">
+          <footer className="no-print hidden border-t border-stone-200/70 py-5 text-center text-xs text-stone-500 lg:block dark:border-stone-800 dark:text-stone-400">
             TDS Ganadería · Finca Tierra de Sueños
           </footer>
         </div>

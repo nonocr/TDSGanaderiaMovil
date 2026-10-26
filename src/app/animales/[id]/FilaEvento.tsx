@@ -167,7 +167,7 @@ export function FilaEvento({
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <span className="font-semibold text-stone-800 dark:text-stone-100">{datos.tipo}</span>
-              <span className="whitespace-nowrap text-xs text-stone-400 dark:text-stone-500">
+              <span className="whitespace-nowrap text-xs text-stone-500 dark:text-stone-400">
                 {formatearFecha(datos.fechaISO)}
               </span>
             </div>
@@ -180,7 +180,7 @@ export function FilaEvento({
               </Link>
             )}
             {datos.notas && (
-              <p className="mt-0.5 text-xs text-stone-400 dark:text-stone-500">{datos.notas}</p>
+              <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{datos.notas}</p>
             )}
 
             {gestionable && !editando && (
@@ -225,7 +225,7 @@ export function FilaEvento({
               <span className="truncate text-stone-600 dark:text-stone-300">{datos.detalle}</span>
             )}
           </div>
-          <span className="mt-0.5 block text-xs text-stone-400 dark:text-stone-500">
+          <span className="mt-0.5 block text-xs text-stone-500 dark:text-stone-400">
             {formatearFecha(datos.fechaISO)}
           </span>
         </div>
@@ -266,7 +266,7 @@ export function FilaEvento({
     return (
         <form onSubmit={guardar} className="mt-2 space-y-2 rounded-lg bg-stone-50 p-3 dark:bg-stone-800/60">
           {error && (
-            <div className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+            <div role="alert" className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
               {error}
             </div>
           )}
@@ -386,7 +386,7 @@ export function FilaEvento({
             <div className="max-h-48 overflow-y-auto">
               {otrosVisibles.map(casilla)}
               {termino && otrosVisibles.length === 0 && (
-                <p className="px-1 py-2 text-sm text-stone-400">Ningún animal coincide.</p>
+                <p className="px-1 py-2 text-sm text-stone-500 dark:text-stone-400">Ningún animal coincide.</p>
               )}
             </div>
           </>

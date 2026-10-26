@@ -106,7 +106,7 @@ export function DesgloseGrid({
         })}
       </div>
       {nota && (
-        <p className="mt-3 border-t border-stone-100 pt-2.5 text-xs text-stone-400 dark:border-stone-800 dark:text-stone-500">
+        <p className="mt-3 border-t border-stone-100 pt-2.5 text-xs text-stone-500 dark:border-stone-800 dark:text-stone-400">
           {nota}
         </p>
       )}

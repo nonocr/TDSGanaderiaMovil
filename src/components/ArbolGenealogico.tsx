@@ -86,13 +86,13 @@ function Nodo({ p, raiz }: { p: Progenitor; raiz: boolean }) {
         className={`${base} border-dashed border-stone-300 bg-stone-50 py-2.5 dark:border-stone-600 dark:bg-stone-800/50`}
       >
         <span className="block truncate font-medium text-stone-700 dark:text-stone-200">{p.texto}</span>
-        <span className="block text-xs text-stone-400 dark:text-stone-500">Externo</span>
+        <span className="block text-xs text-stone-500 dark:text-stone-400">Externo</span>
       </div>
     );
   }
 
   return (
-    <div className={`${base} border-dashed border-stone-200 py-2 text-xs text-stone-400 dark:border-stone-700 dark:text-stone-500`}>
+    <div className={`${base} border-dashed border-stone-200 py-2 text-xs text-stone-500 dark:border-stone-700 dark:text-stone-400`}>
       Sin registro
     </div>
   );
@@ -144,7 +144,7 @@ function Encabezados({ n }: { n: number }) {
       {GENERACIONES.slice(0, n).map((g, i) => (
         <div key={g} className="flex shrink-0">
           {i > 0 && <div className={`${SEPARACION} shrink-0`} />}
-          <div className={`${COLUMNA} text-[11px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500`}>
+          <div className={`${COLUMNA} text-[11px] font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400`}>
             {g}
           </div>
         </div>
@@ -230,7 +230,7 @@ export function ArbolGenealogico({ arbol }: { arbol: NodoArbol }) {
         )}
       </div>
       {desborda && !alFinal && (
-        <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">Desliza a la izquierda para ver más generaciones →</p>
+        <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">Desliza a la izquierda para ver más generaciones →</p>
       )}
 
       {/* Pantalla completa: visor con zoom (pellizco/rueda) y arrastre. */}
@@ -246,7 +246,7 @@ export function ArbolGenealogico({ arbol }: { arbol: NodoArbol }) {
             <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3 dark:border-stone-800">
               <h3 id="titulo-arbol-completo" className="text-sm font-semibold text-stone-700 dark:text-stone-200">Árbol genealógico</h3>
               <div className="flex items-center gap-3">
-                <span className="hidden text-xs text-stone-400 sm:inline dark:text-stone-500">
+                <span className="hidden text-xs text-stone-500 sm:inline dark:text-stone-400">
                   Rueda del mouse o pellizca para acercar · arrastra para mover
                 </span>
                 <button

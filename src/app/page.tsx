@@ -175,10 +175,10 @@ export default async function HomePage() {
                         <span className="truncate font-semibold text-stone-800 dark:text-stone-100">
                           {p.nombre ?? etiquetaArete(p)}
                           {p.nombre && (
-                            <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">{etiquetaArete(p)}</span>
+                            <span className="ml-1 font-normal text-stone-500 dark:text-stone-400">{etiquetaArete(p)}</span>
                           )}
                         </span>
-                        <span className="shrink-0 whitespace-nowrap text-xs text-stone-400 dark:text-stone-500">
+                        <span className="shrink-0 whitespace-nowrap text-xs text-stone-500 dark:text-stone-400">
                           {formatearFecha(p.fecha)}
                         </span>
                       </div>
@@ -195,7 +195,7 @@ export default async function HomePage() {
               ))}
             </ul>
           )}
-          <p className="mt-4 border-t border-stone-100 pt-3 text-xs text-stone-400 dark:border-stone-800 dark:text-stone-500">
+          <p className="mt-4 border-t border-stone-100 pt-3 text-xs text-stone-500 dark:border-stone-800 dark:text-stone-400">
             Solo se muestran los pendientes de este mes. Para ver lo que viene más adelante,
             usa el{" "}
             <Link href="/calendario" className="font-medium text-marca-700 hover:underline dark:text-marca-400">

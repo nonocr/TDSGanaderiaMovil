@@ -19,12 +19,15 @@ const MAX_INTENTOS = 10;
 const BLOQUEO_MS = 15 * 60 * 1000;
 
 function ipDe(req: NextRequest): string {
-  // En Vercel, x-real-ip la pone el propio Vercel (x-forwarded-for la puede enviar el cliente).
-  return (
-    req.headers.get("x-real-ip") ||
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    "local"
-  ).slice(0, 64);
+  // En Vercel, x-real-ip la pone el propio Vercel (el cliente no puede falsificarla).
+  // Fuera de Vercel (npm run prod en la red de la finca) no hay proxy que la fije: cualquier
+  // cabecera de IP la escribe el cliente, y cambiándola en cada intento se saltaba el bloqueo.
+  // Ahí todos los intentos cuentan juntos (un solo contador): más estricto, pero no evitable.
+  if (process.env.VERCEL) {
+    const ip = req.headers.get("x-real-ip");
+    if (ip) return ip.slice(0, 64);
+  }
+  return "local";
 }
 
 // APP_PASSWORD_HASH = "scrypt.<N>.<r>.<p>.<sal_b64url>.<hash_b64url>" (lo genera `npm run clave`).

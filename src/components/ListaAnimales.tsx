@@ -283,7 +283,7 @@ export async function ListaAnimales({
                       <span className="truncate font-semibold text-stone-800 dark:text-stone-100">
                         {a.nombre ? a.nombre : etiquetaArete(a)}
                         {a.nombre && (
-                          <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">{etiquetaArete(a)}</span>
+                          <span className="ml-1 font-normal text-stone-500 dark:text-stone-400">{etiquetaArete(a)}</span>
                         )}
                       </span>
                       {/* Solo se marca el estado cuando NO está activo (lo normal no necesita etiqueta). */}
@@ -345,7 +345,7 @@ export async function ListaAnimales({
                       <td className="px-4 py-3 text-stone-600 dark:text-stone-300">
                         {formatearFecha(a.fechaNacimiento)}
                         {a.fechaNacimiento && (
-                          <span className="block text-xs text-stone-400 dark:text-stone-500">
+                          <span className="block text-xs text-stone-500 dark:text-stone-400">
                             {calcularEdad(a.fechaNacimiento, a.estado !== "ACTIVO" ? a.fechaBaja : null)}
                           </span>
                         )}
@@ -395,7 +395,7 @@ function Situacion({
           {tambienLista && <Badge tono="verde" punto>{ESTADO_REPRO_LABEL.LISTA_MONTAR}</Badge>}
         </div>
         {partoEstimado && (
-          <span className="text-xs text-stone-400 dark:text-stone-500">
+          <span className="text-xs text-stone-500 dark:text-stone-400">
             Parto est.: {formatearFecha(partoEstimado)}
           </span>
         )}
@@ -403,5 +403,5 @@ function Situacion({
     );
   }
   if (compacta) return null;
-  return <span className="text-stone-400 dark:text-stone-500">—</span>;
+  return <span className="text-stone-500 dark:text-stone-400">—</span>;
 }

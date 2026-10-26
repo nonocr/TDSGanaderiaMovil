@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { hoyLocalISO, formatearFecha } from "@/lib/fechas";
 import { llamarApi } from "@/lib/api-cliente";
 import { etiquetaArete, terminoBusqueda } from "@/lib/tipos";
-import { claseCampo, claseEtiqueta, claseBotonPrimario } from "@/components/ui";
+import { claseCampo, claseEtiqueta, claseBotonPrimario, AvisoError, AvisoExito } from "@/components/ui";
 
 type Opcion = { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 
@@ -14,32 +14,56 @@ const etiqueta = claseEtiqueta;
 // Área táctil ≥44px (min-h-11), ancho completo en móvil.
 const boton = `${claseBotonPrimario} w-full sm:w-auto`;
 
+type Resultado = { tipo: "error" | "ok"; texto: string } | null;
+
 function useEnviar() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const [resultado, setResultado] = useState<Resultado>(null);
   const [cargando, setCargando] = useState(false);
 
+  // La confirmación de guardado se quita sola a los pocos segundos; el error se queda.
+  useEffect(() => {
+    if (resultado?.tipo !== "ok") return;
+    const t = setTimeout(() => setResultado(null), 5000);
+    return () => clearTimeout(t);
+  }, [resultado]);
+
   async function enviar(url: string, payload: unknown, onOk?: () => void) {
-    setError(null);
+    setResultado(null);
     setCargando(true);
     const r = await llamarApi(url, { method: "POST", body: payload });
     setCargando(false);
     if (!r.ok) {
-      setError(r.error);
+      setResultado({ tipo: "error", texto: r.error });
       return;
     }
+    // Sin confirmación, el formulario se vaciaba sin decir nada y no se sabía si se guardó.
+    setResultado({
+      tipo: "ok",
+      texto: r.encolado ? "Guardado en el teléfono. Se enviará al volver la señal." : "Guardado.",
+    });
     onOk?.();
     router.refresh();
   }
 
-  return { error, cargando, enviar };
+  return { resultado, cargando, enviar };
 }
 
-function Aviso({ error }: { error: string | null }) {
-  if (!error) return null;
+function Aviso({ resultado }: { resultado: Resultado }) {
+  const ref = useRef<HTMLDivElement>(null);
+  // El aviso va arriba del formulario: en el celular, tras tocar "Guardar" al final de un
+  // formulario largo (parto), quedaba fuera de la pantalla.
+  useEffect(() => {
+    if (resultado) ref.current?.scrollIntoView({ block: "nearest" });
+  }, [resultado]);
+  if (!resultado) return null;
   return (
-    <div className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-      {error}
+    <div ref={ref} className="scroll-mt-20 scroll-mb-24">
+      {resultado.tipo === "error" ? (
+        <AvisoError>{resultado.texto}</AvisoError>
+      ) : (
+        <AvisoExito>{resultado.texto}</AvisoExito>
+      )}
     </div>
   );
 }
@@ -55,7 +79,7 @@ function useHoy() {
 
 // --- Peso: aplica a cualquier animal ---
 export function FormPeso({ animalId }: { animalId: string }) {
-  const { error, cargando, enviar } = useEnviar();
+  const { resultado, cargando, enviar } = useEnviar();
   const hoy = useHoy();
   return (
     <form
@@ -71,7 +95,7 @@ export function FormPeso({ animalId }: { animalId: string }) {
         );
       }}
     >
-      <Aviso error={error} />
+      <Aviso resultado={resultado} />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-2">
         <div>
           <label htmlFor="peso-fecha" className={etiqueta}>Fecha</label>
@@ -90,7 +114,7 @@ export function FormPeso({ animalId }: { animalId: string }) {
 
 // --- Leche: solo vacas. Cada registro es UN ordeño (mañana o tarde). ---
 export function FormLeche({ vacaId }: { vacaId: string }) {
-  const { error, cargando, enviar } = useEnviar();
+  const { resultado, cargando, enviar } = useEnviar();
   const hoy = useHoy();
   return (
     <form
@@ -112,7 +136,7 @@ export function FormLeche({ vacaId }: { vacaId: string }) {
         );
       }}
     >
-      <Aviso error={error} />
+      <Aviso resultado={resultado} />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-2">
         <div>
           <label htmlFor="leche-fecha" className={etiqueta}>Fecha</label>
@@ -142,7 +166,7 @@ export function FormLeche({ vacaId }: { vacaId: string }) {
 
 // --- Monta: solo vacas; requiere elegir toro ---
 export function FormMonta({ vacaId, toros }: { vacaId: string; toros: Opcion[] }) {
-  const { error, cargando, enviar } = useEnviar();
+  const { resultado, cargando, enviar } = useEnviar();
   const hoy = useHoy();
   return (
     <form
@@ -164,7 +188,7 @@ export function FormMonta({ vacaId, toros }: { vacaId: string; toros: Opcion[] }
         );
       }}
     >
-      <Aviso error={error} />
+      <Aviso resultado={resultado} />
       <div>
         <label htmlFor="monta-toro" className={etiqueta}>Toro</label>
         <select id="monta-toro" name="toroId" required className={campo} defaultValue="">
@@ -198,7 +222,7 @@ export function FormMonta({ vacaId, toros }: { vacaId: string; toros: Opcion[] }
 
 // --- Monta desde el toro: el toro es fijo (animal actual); se elige la vaca ---
 export function FormMontaDesdeToro({ toroId, vacas }: { toroId: string; vacas: Opcion[] }) {
-  const { error, cargando, enviar } = useEnviar();
+  const { resultado, cargando, enviar } = useEnviar();
   const hoy = useHoy();
   return (
     <form
@@ -220,7 +244,7 @@ export function FormMontaDesdeToro({ toroId, vacas }: { toroId: string; vacas: O
         );
       }}
     >
-      <Aviso error={error} />
+      <Aviso resultado={resultado} />
       <div>
         <label htmlFor="montatoro-vaca" className={etiqueta}>Vaca</label>
         <select id="montatoro-vaca" name="vacaId" required className={campo} defaultValue="">
@@ -260,7 +284,7 @@ export function FormParto({
   posiblesCrias: (Opcion & { fechaNacimiento?: string | null; padreId?: string | null })[];
   criasSugeridas?: string[]; // ids de los hijos de esta vaca aún sin parto: se muestran primero
 }) {
-  const { error, cargando, enviar } = useEnviar();
+  const { resultado, cargando, enviar } = useEnviar();
   const hoy = useHoy();
   const [crias, setCrias] = useState<string[]>([]);
   // Crías que no están registradas: se crean como animales nuevos al guardar el parto.
@@ -357,7 +381,7 @@ export function FormParto({
         );
       }}
     >
-      <Aviso error={error} />
+      <Aviso resultado={resultado} />
       <div>
         <label htmlFor="parto-fecha" className={etiqueta}>Fecha del parto</label>
         <input
@@ -463,7 +487,7 @@ export function FormParto({
                     />
                     <div className="max-h-48 overflow-y-auto">
                       {otrosVisibles.length === 0 ? (
-                        <p className="px-1 py-2 text-stone-400">Ningún animal coincide.</p>
+                        <p className="px-1 py-2 text-stone-500 dark:text-stone-400">Ningún animal coincide.</p>
                       ) : (
                         otrosVisibles.map(casilla)
                       )}
@@ -644,7 +668,7 @@ export function FormPalpacion({
   vacaId: string;
   previas: { fechaISO: string; notas: string | null; enMonta: boolean }[];
 }) {
-  const { error, cargando, enviar } = useEnviar();
+  const { resultado, cargando, enviar } = useEnviar();
   const hoy = useHoy();
   return (
     <div className="space-y-4">
@@ -657,7 +681,7 @@ export function FormPalpacion({
           enviar("/api/palpaciones", { vacaId, fecha: fd.get("fecha"), notas: fd.get("notas") }, () => form.reset());
         }}
       >
-        <Aviso error={error} />
+        <Aviso resultado={resultado} />
         <div>
           <label htmlFor="palpacion-fecha" className={etiqueta}>Fecha de la palpación</label>
           <input id="palpacion-fecha" type="date" name="fecha" required key={hoy} defaultValue={hoy} className={campo} />
@@ -679,21 +703,21 @@ export function FormPalpacion({
       <div>
         <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Palpaciones anteriores</p>
         {previas.length === 0 ? (
-          <p className="mt-1 text-sm text-stone-400 dark:text-stone-500">Sin palpaciones registradas.</p>
+          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">Sin palpaciones registradas.</p>
         ) : (
           <ul className="mt-1 divide-y divide-stone-100 text-sm dark:divide-stone-800">
             {previas.map((p, i) => (
               <li key={i} className="py-1.5">
                 <span className="font-medium text-stone-700 dark:text-stone-200">{formatearFecha(p.fechaISO)}</span>
                 {p.enMonta && (
-                  <span className="ml-2 text-xs text-stone-400 dark:text-stone-500">(anotada en la monta)</span>
+                  <span className="ml-2 text-xs text-stone-500 dark:text-stone-400">(anotada en la monta)</span>
                 )}
                 {p.notas && <p className="text-xs text-stone-500 dark:text-stone-400">{p.notas}</p>}
               </li>
             ))}
           </ul>
         )}
-        <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">Se editan o eliminan desde el Historial.</p>
+        <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">Se editan o eliminan desde el Historial.</p>
       </div>
     </div>
   );

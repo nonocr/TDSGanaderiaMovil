@@ -88,6 +88,26 @@ Content-Security-Policy (solo recursos propios), `X-Frame-Options: DENY`,
   React escapa todo el texto y no hay HTML de usuario, así que el riesgo es bajo.
 - Una sola contraseña compartida: no hay roles ni usuarios separados (todos pueden todo).
 
+## Revisión 2026-10-26 (Claude Code)
+
+- **Bloqueo de login evitable en la red local (corregido)**: el contador de intentos usaba
+  `x-real-ip` / `x-forwarded-for`. En Vercel esa cabecera la fija la plataforma, pero en
+  `npm run prod` (sin proxy delante) la escribe el cliente: cambiándola en cada intento nunca se
+  llegaba a 10 fallos. Ahora solo se confía en `x-real-ip` cuando `VERCEL` está definido; fuera de
+  Vercel todos los intentos cuentan en un único contador (`local`). Efecto: en la red local, 10
+  fallos de cualquiera bloquean el login 15 min para todos.
+- `npm run seguridad` suma 2 pruebas (cerrar sesión borra la cookie; cerrar sesión desde otro sitio
+  → 403): 27/27. No se agregó una prueba del bloqueo porque escribiría en `IntentoLogin` de la base
+  de producción.
+- `npm audit --omit=dev`: 0. `npm audit` completo: 1 moderada en `postcss-selector-parser`
+  (dependencia de Tailwind 3, solo al compilar el CSS propio; no llega al servidor).
+- Revisado sin cambios: sesión firmada y cookies, CSRF, validación de todas las rutas (todas usan
+  `ruta()`), SQL parametrizado (único `$executeRaw` con parámetros), fotos re-codificadas con
+  límite de píxeles, CSV contra fórmulas, cabeceras, service worker (no guarda `/login` ni
+  `/respaldo`; borra la caché al cerrar sesión).
+- **Pendiente (informativo)**: si la sesión vence sin "Cerrar sesión", las páginas guardadas por el
+  service worker siguen en el teléfono hasta el próximo cierre de sesión.
+
 ## Recomendaciones fuera del código
 
 1. **Cuenta de Supabase**: activar verificación en dos pasos (MFA).

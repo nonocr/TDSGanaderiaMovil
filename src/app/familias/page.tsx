@@ -74,7 +74,7 @@ export default async function FamiliasPage() {
                         <span className="flex-1">
                           {h.nombre ?? etiquetaArete(h)}
                           {h.nombre && (
-                            <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">{etiquetaArete(h)}</span>
+                            <span className="ml-1 font-normal text-stone-500 dark:text-stone-400">{etiquetaArete(h)}</span>
                           )}
                         </span>
                         <IconoFlecha className="h-4 w-4 text-stone-300 dark:text-stone-600" />

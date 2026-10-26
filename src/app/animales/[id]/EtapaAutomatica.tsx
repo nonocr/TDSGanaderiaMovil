@@ -36,7 +36,7 @@ export function EtapaAutomatica({
               }
             >
               <span className="block font-medium">{ETAPA_LABEL[et]}</span>
-              <span className={"block text-xs " + (activa ? "text-marca-50" : "text-stone-400 dark:text-stone-500")}>
+              <span className={"block text-xs " + (activa ? "text-marca-50" : "text-stone-500 dark:text-stone-400")}>
                 desde {formatearFecha(inicios[et])}
               </span>
             </li>

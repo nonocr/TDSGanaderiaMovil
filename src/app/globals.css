@@ -25,6 +25,19 @@ textarea {
   @apply transition-colors duration-150;
 }
 
+/* Movimiento reducido (preferencia del sistema): sin animaciones ni desplazamientos suaves.
+   Los indicadores (punto de "sin señal", spinner) siguen visibles, solo quietos. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Mobile-first: en pantallas táctiles los inputs usan 16px para que iOS NO haga
    zoom automático al enfocarlos. En escritorio se mantienen compactos (14px). */
 @media (max-width: 640px) {

@@ -60,8 +60,8 @@ type EventoFila = {
 
 function TextoProgenitor({ p }: { p: Progenitor }) {
   if (p.tipo === "registrado") return <AnimalLink animal={p.animal} />;
-  if (p.tipo === "externo") return <span className="text-stone-600 dark:text-stone-300">{p.texto} <span className="text-xs text-stone-400 dark:text-stone-500">(externo)</span></span>;
-  return <span className="text-stone-400 dark:text-stone-500">—</span>;
+  if (p.tipo === "externo") return <span className="text-stone-600 dark:text-stone-300">{p.texto} <span className="text-xs text-stone-500 dark:text-stone-400">(externo)</span></span>;
+  return <span className="text-stone-500 dark:text-stone-400">—</span>;
 }
 
 export default async function AnimalDetallePage({
@@ -375,7 +375,7 @@ export default async function AnimalDetallePage({
             <div className="min-w-0">
               <h1 className="text-2xl font-bold leading-tight tracking-tight text-stone-800 dark:text-stone-100">
                 {animal.nombre ? `${animal.nombre} ` : ""}
-                <span className="text-stone-400 dark:text-stone-500">{identAnimal}</span>
+                <span className="text-stone-500 dark:text-stone-400">{identAnimal}</span>
               </h1>
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                 <SexoBadge sexo={animal.sexo} />
@@ -501,7 +501,7 @@ export default async function AnimalDetallePage({
                 <ListaParientes animales={hijos} />
                 <p className="mt-3 text-stone-500 dark:text-stone-400">Hermanos ({hermanos.length})</p>
                 <ListaParientes animales={hermanos} />
-                <p className="mt-2 text-xs text-stone-400 dark:text-stone-500">
+                <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
                   Se consideran hermanos si comparten el mismo padre o la misma madre.
                 </p>
               </div>
@@ -575,7 +575,7 @@ export default async function AnimalDetallePage({
                 <EtapaAutomatica etapaActual={etapaActual} inicios={iniciosEtapas} />
                 {etapasOrdenadas.length > 0 && (
                   <>
-                  <p className="mb-2 mt-5 text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
+                  <p className="mb-2 mt-5 text-xs font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400">
                     Etapas registradas a mano (historial)
                   </p>
                   <ol className="space-y-3">
@@ -603,7 +603,7 @@ export default async function AnimalDetallePage({
                             {" · "}
                             Fin: {et.fechaFin ? formatearFecha(et.fechaFin) : "—"}
                           </div>
-                          {et.notas && <div className="text-xs text-stone-400 dark:text-stone-500">{et.notas}</div>}
+                          {et.notas && <div className="text-xs text-stone-500 dark:text-stone-400">{et.notas}</div>}
                         </li>
                       );
                     })}
@@ -641,7 +641,7 @@ function ListaParientes({
 }: {
   animales: { id: string; arete: string; nombre: string | null; sinArete?: boolean; areteCenasa?: string | null }[];
 }) {
-  if (animales.length === 0) return <p className="py-1 text-stone-400 dark:text-stone-500">—</p>;
+  if (animales.length === 0) return <p className="py-1 text-stone-500 dark:text-stone-400">—</p>;
   return (
     <ul className="-mx-2 mt-1">
       {animales.map((h) => (
@@ -652,7 +652,7 @@ function ListaParientes({
           >
             <span>
               {h.nombre ?? etiquetaArete(h)}
-              {h.nombre && <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">{etiquetaArete(h)}</span>}
+              {h.nombre && <span className="ml-1 font-normal text-stone-500 dark:text-stone-400">{etiquetaArete(h)}</span>}
             </span>
             <IconoFlecha className="no-print h-4 w-4 text-stone-300 dark:text-stone-600" />
           </Link>

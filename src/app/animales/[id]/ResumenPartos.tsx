@@ -76,7 +76,7 @@ export function ResumenPartos({ partos }: { partos: PartoResumen[] }) {
                     {p.toro && <span className="text-xs text-stone-500 dark:text-stone-400">padre: {p.toro}</span>}
                   </div>
                   {p.crias.length === 0 ? (
-                    <p className="mt-1 text-xs text-stone-400 dark:text-stone-500">Sin cría registrada</p>
+                    <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">Sin cría registrada</p>
                   ) : (
                     <div className="mt-1.5 flex flex-wrap gap-2">
                       {p.crias.map((c) => (

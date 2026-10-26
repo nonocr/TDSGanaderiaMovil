@@ -105,7 +105,7 @@ export function BusquedaGlobal({
               inputRef.current?.focus();
             }}
             aria-label="Limpiar búsqueda"
-            className="absolute right-1 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-stone-400 hover:bg-stone-100 hover:text-stone-600 dark:text-stone-500 dark:hover:bg-stone-700 dark:hover:text-stone-300"
+            className="absolute right-1 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-700 dark:text-stone-400 dark:hover:bg-stone-700 dark:hover:text-stone-300"
           >
             <IconoCerrar className="h-4 w-4" />
           </button>
@@ -116,7 +116,7 @@ export function BusquedaGlobal({
       {q.length >= 1 && (
         <ul className="mt-2 max-h-[60vh] overflow-y-auto rounded-xl border border-stone-200 bg-white shadow-card dark:border-stone-800 dark:bg-stone-900">
           {cargando && resultados.length === 0 && (
-            <li className="px-3 py-3 text-sm text-stone-400 dark:text-stone-500">Buscando…</li>
+            <li className="px-3 py-3 text-sm text-stone-500 dark:text-stone-400">Buscando…</li>
           )}
           {sinResultados && (
             <li className="px-3 py-3 text-sm text-stone-500 dark:text-stone-400">
@@ -141,9 +141,9 @@ export function BusquedaGlobal({
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium text-stone-800 dark:text-stone-100">
                     {a.nombre ? a.nombre : etiquetaArete(a)}
-                    {a.nombre && <span className="ml-1 font-normal text-stone-400 dark:text-stone-500">{etiquetaArete(a)}</span>}
+                    {a.nombre && <span className="ml-1 font-normal text-stone-500 dark:text-stone-400">{etiquetaArete(a)}</span>}
                   </span>
-                  <span className="block truncate text-xs text-stone-400 dark:text-stone-500">
+                  <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
                     {MODULO_LABEL[a.modulo] ?? a.modulo}
                     {a.estado !== "ACTIVO" ? " · dado de baja" : ""}
                   </span>

@@ -102,7 +102,7 @@ export function GraficaPeso({ puntos }: { puntos: PuntoPeso[] }) {
               {variacion} kg
             </span>
           </span>
-          <span className="text-stone-400 dark:text-stone-500">({datos.length} pesajes)</span>
+          <span className="text-stone-500 dark:text-stone-400">({datos.length} pesajes)</span>
         </div>
       )}
 

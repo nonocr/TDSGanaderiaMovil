@@ -78,7 +78,7 @@ export default async function CalendarioPage() {
                           {e.nombre ? `${e.nombre} (${etiquetaArete(e)})` : etiquetaArete(e)}
                         </span>
                       </div>
-                      <span className="shrink-0 whitespace-nowrap text-xs text-stone-400 dark:text-stone-500">
+                      <span className="shrink-0 whitespace-nowrap text-xs text-stone-500 dark:text-stone-400">
                         {formatearFecha(e.fecha)}
                       </span>
                     </Link>
@@ -90,7 +90,7 @@ export default async function CalendarioPage() {
         </div>
       )}
 
-      <p className="mt-6 text-xs text-stone-400 dark:text-stone-500">
+      <p className="mt-6 text-xs text-stone-500 dark:text-stone-400">
         Fechas estimadas del ciclo: secado ~7 meses tras la monta, parto ~9 meses, y
         &quot;lista para montar&quot; ~40 días después del parto. Solo se muestran hembras activas.
       </p>

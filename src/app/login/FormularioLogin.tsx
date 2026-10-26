@@ -74,7 +74,7 @@ export function FormularioLogin({ destino }: { destino: string }) {
         />
         Mantener la sesión iniciada en este dispositivo
       </label>
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <button
         type="submit"
         disabled={cargando}

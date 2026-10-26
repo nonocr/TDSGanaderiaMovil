@@ -445,3 +445,24 @@ dependencias al último parche.
 
 **Verificación:** `tsc`, `prod:build`, `npm run seguridad` (25/25) y las páginas principales con sesión
 responden 200.
+
+---
+
+## 2026-10-26 · Fuente: dueño — auditoría de diseño, accesibilidad y seguridad (Claude Code)
+
+- **Formularios de eventos** (peso, ordeño, monta, parto, palpación): al guardar muestran
+  "Guardado." o, sin señal, "Guardado en el teléfono. Se enviará al volver la señal." (antes el
+  formulario se vaciaba sin avisar). El aviso de error/éxito se lleva a la vista en formularios largos
+  (parto, alta de animal), porque en el celular quedaba arriba, fuera de la pantalla.
+- **Avisos accesibles**: `AvisoError` / `AvisoExito` en `src/components/ui.tsx` (`role="alert"` /
+  `"status"`); los demás errores de la app también se anuncian al lector de pantalla.
+- **Navegación móvil**: la hoja "Más" y el buscador usan `useModalAccesible` (foco atrapado, Escape,
+  el foco vuelve al botón que los abrió).
+- **Contraste**: el texto secundario (fechas, aretes, notas, placeholders) pasa de stone-400 a
+  stone-500 en claro y de stone-500 a stone-400 en oscuro (de ~2,5:1 y ~3,6:1 a ≥4,5:1, WCAG AA).
+- **`/leche`**: la tabla "Por vaca" ya no se corta ni desplaza de lado a 360 px.
+- **Movimiento reducido**: se respetan las preferencias del sistema (`globals.css`).
+- **Seguridad**: bloqueo de login no evitable fuera de Vercel (ver `docs/11-seguridad.md`).
+
+**Verificación:** `tsc`, `next build`, `npm run seguridad` (27/27), capturas a 360/768/1366 px
+(sin desbordamiento horizontal, claro y oscuro) y prueba de teclado de la hoja "Más" y el buscador.

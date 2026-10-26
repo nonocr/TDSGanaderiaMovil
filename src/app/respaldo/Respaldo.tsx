@@ -88,6 +88,7 @@ export function Respaldo() {
     <div className="space-y-6">
       {mensaje && (
         <div
+          role={mensaje.tipo === "ok" ? "status" : "alert"}
           className={
             "rounded-lg border px-4 py-3 text-sm " +
             (mensaje.tipo === "ok"

@@ -50,6 +50,16 @@ function cookieFirmada(secreto, expiraMs) {
   ok(o.status === 403, "Login desde otro origen -> 403", o.status);
   const n = await pedir("/api/animales", { method: "DELETE" });
   ok(n.status === 403, "Modificación sin Origin ni Sec-Fetch-Site -> 403", n.status);
+  const fuera = await pedir("/api/sesion", { method: "DELETE", headers: { "sec-fetch-site": "cross-site" } });
+  ok(fuera.status === 403, "Cerrar sesión desde otro sitio -> 403", fuera.status);
+}
+
+// --- Cerrar sesión: la cookie se borra (no escribe en la base) -------------------
+{
+  const r = await pedir("/api/sesion", { method: "DELETE", headers: { "sec-fetch-site": "same-origin" } });
+  const c = r.headers.get("set-cookie") || "";
+  ok(r.status === 200 && c.includes(`${COOKIE}=;`) && /expires=Thu, 01 Jan 1970|max-age=0/i.test(c),
+    "Cerrar sesión borra la cookie", `${r.status} ${c}`);
 }
 
 // --- Cabeceras ---------------------------------------------------------------

@@ -3,10 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ToggleTema } from "@/components/ToggleTema";
 import { BusquedaGlobal } from "@/components/BusquedaGlobal";
 import { llamarApi } from "@/lib/api-cliente";
+import { useModalAccesible } from "@/lib/usar-modal";
 import {
   IconoInicio,
   IconoLista,
@@ -175,26 +176,14 @@ export function Navegacion() {
     setBuscarAbierto(false);
   }, [pathname]);
 
-  // Cerrar la hoja "Más" con Escape.
-  useEffect(() => {
-    if (!masAbierto) return;
-    const alTeclear = (e: KeyboardEvent) => e.key === "Escape" && setMasAbierto(false);
-    document.addEventListener("keydown", alTeclear);
-    return () => document.removeEventListener("keydown", alTeclear);
-  }, [masAbierto]);
-
-  // Cerrar el buscador (móvil) con Escape y bloquear el scroll del fondo.
-  useEffect(() => {
-    if (!buscarAbierto) return;
-    const alTeclear = (e: KeyboardEvent) => e.key === "Escape" && setBuscarAbierto(false);
-    document.addEventListener("keydown", alTeclear);
-    const overflowPrevio = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", alTeclear);
-      document.body.style.overflow = overflowPrevio;
-    };
-  }, [buscarAbierto]);
+  // Hoja "Más" y buscador (móvil): foco atrapado dentro, Escape cierra, fondo sin scroll y, al
+  // cerrar, el foco vuelve al botón que los abrió.
+  const panelMas = useRef<HTMLDivElement>(null);
+  const panelBuscar = useRef<HTMLDivElement>(null);
+  const cerrarMas = useCallback(() => setMasAbierto(false), []);
+  const cerrarBuscar = useCallback(() => setBuscarAbierto(false), []);
+  useModalAccesible(masAbierto, panelMas, cerrarMas);
+  useModalAccesible(buscarAbierto, panelBuscar, cerrarBuscar);
 
   // Ocultar la barra inferior mientras se escribe, para que no tape el teclado en Android.
   useEffect(() => {
@@ -243,9 +232,11 @@ export function Navegacion() {
       {/* Buscador a pantalla completa (solo móvil): se abre con la lupa de la barra superior. */}
       {buscarAbierto && (
         <div className="fixed inset-0 z-50 flex flex-col bg-white lg:hidden dark:bg-stone-950" role="dialog" aria-modal="true" aria-label="Buscar animal">
-          <div className="flex items-center gap-2 border-b border-stone-200 px-3 py-2 pt-[calc(env(safe-area-inset-top)+0.5rem)] dark:border-stone-800">
+          <div ref={panelBuscar} className="flex items-center gap-2 border-b border-stone-200 px-3 py-2 pt-[calc(env(safe-area-inset-top)+0.5rem)] dark:border-stone-800">
             <div className="flex-1">
-              <BusquedaGlobal autoFocus onNavegar={() => setBuscarAbierto(false)} />
+              {/* Sin autoFocus: el campo lo enfoca useModalAccesible; con autoFocus se enfocaba
+                  antes y el hook ya no sabía que debía devolver el foco a la lupa al cerrar. */}
+              <BusquedaGlobal onNavegar={() => setBuscarAbierto(false)} />
             </div>
             <button
               type="button"
@@ -296,7 +287,7 @@ export function Navegacion() {
       {masAbierto && (
         <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Más opciones">
           <div className="absolute inset-0 bg-black/40" onClick={() => setMasAbierto(false)} />
-          <div className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-white pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-xl dark:bg-stone-900">
+          <div ref={panelMas} className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-white pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-xl dark:bg-stone-900">
             <div className="mx-auto mb-1 mt-2.5 h-1.5 w-10 rounded-full bg-stone-300 dark:bg-stone-700" />
             <ul className="px-3 py-2">
               {NAV.filter((n) => EN_MAS.includes(n.href)).map((n) => {
