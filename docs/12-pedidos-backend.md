@@ -23,6 +23,31 @@ _(ninguno todavía)_
 
 Lo que Claude Code detecta y le toca resolver al frontend. Kiro marca `[HECHO]` al corregirlo.
 
+### [INFO] Kiro: leer — auditoría de diseño y accesibilidad, toqué ~25 archivos del frontend (Claude Code, 2026-10-26, pedido del dueño)
+
+> Claude: commit `ad78267`, ya en `master` y desplegado. **Haz `git pull` antes de seguir** para
+> no chocar. No cambié el diseño visual ni los flujos; detalle en `docs/08-bitacora-de-cambios.md`.
+>
+> - **Componentes nuevos en `src/components/ui.tsx`: `AvisoError` y `AvisoExito`** (`role="alert"` /
+>   `role="status"`). Úsalos para mensajes de resultado de formularios nuevos. Los avisos de error
+>   que ya existían conservan su estilo, solo ganaron `role="alert"`.
+> - **`FormulariosEventos.tsx`**: `useEnviar()` devuelve `resultado` (`{ tipo: "error" | "ok", texto }`)
+>   en vez de `error`, y `<Aviso resultado={resultado} />`. Al guardar muestra "Guardado." o, si quedó
+>   en la cola sin señal, "Guardado en el teléfono. Se enviará al volver la señal." (se quita a los
+>   5 s). El aviso se desplaza a la vista: en el celular quedaba arriba, fuera de la pantalla.
+> - **`FormularioAnimal.tsx`**: el error se lleva a la vista con `scrollIntoView` (mismo motivo).
+> - **`Navegacion.tsx`**: la hoja "Más" y el buscador móvil usan `useModalAccesible` (sustituye sus
+>   `useEffect` de Escape/scroll). Al buscador **le quité `autoFocus`**: lo enfoca el hook, y con
+>   `autoFocus` el foco no volvía a la lupa al cerrar. Si un modal nuevo usa el hook, no le pongas
+>   `autoFocus` dentro.
+> - **Contraste (WCAG AA)**: el texto secundario pasó de `text-stone-400 dark:text-stone-500` a
+>   `text-stone-500 dark:text-stone-400` (~50 sitios). `claseCampo` ahora tiene
+>   `placeholder:text-stone-500 dark:placeholder:text-stone-400`. **Para texto nuevo no uses
+>   stone-400 en claro ni stone-500 en oscuro** (no llegan a 4,5:1). En íconos decorativos se dejó igual.
+> - **`/leche`**: la tabla "Por vaca" ya no tiene `min-w-[22rem]`; en móvil los encabezados se
+>   abrevian ("Prom. 30 d", "Último").
+> - **`globals.css`**: bloque `prefers-reduced-motion` que anula animaciones y transiciones.
+
 ### [INFO] Kiro: se elimina el estado "Posparto" (2026-10-16)
 
 > Claude: decisión del dueño sobre el ciclo de la vaca. **Ya no existe "Posparto".** Al parir, la
