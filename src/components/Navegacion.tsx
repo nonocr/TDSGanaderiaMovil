@@ -207,7 +207,7 @@ export function Navegacion() {
   return (
     <>
       {/* Barra superior (solo móvil): identidad + tema */}
-      <header className="no-print sticky top-0 z-30 border-b border-stone-200/80 bg-white/90 pt-[env(safe-area-inset-top)] backdrop-blur lg:hidden dark:border-stone-800 dark:bg-stone-900/90">
+      <header className="no-print sticky top-0 z-30 border-b border-stone-200/80 bg-white pt-[env(safe-area-inset-top)] lg:hidden dark:border-stone-800 dark:bg-stone-900">
         <div className="flex h-14 items-center justify-between gap-3 px-4">
           <Link href="/" className="flex min-w-0 items-center gap-2">
             <Image src="/logo.png" alt="" width={32} height={32} className="h-8 w-8 shrink-0 rounded-full bg-white object-contain ring-1 ring-stone-200 dark:ring-stone-700" />
@@ -259,7 +259,7 @@ export function Navegacion() {
       <nav
         aria-label="Navegación principal"
         className={
-          "no-print fixed inset-x-0 bottom-0 z-30 border-t border-stone-200/80 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur transition-transform duration-200 lg:hidden dark:border-stone-800 dark:bg-stone-900/95 " +
+          "no-print fixed inset-x-0 bottom-0 z-30 border-t border-stone-200/80 bg-white pb-[env(safe-area-inset-bottom)] transition-transform duration-200 lg:hidden dark:border-stone-800 dark:bg-stone-900 " +
           (escribiendo ? "translate-y-full" : "")
         }
       >

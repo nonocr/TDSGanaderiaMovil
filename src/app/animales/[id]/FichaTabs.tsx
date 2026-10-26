@@ -75,7 +75,7 @@ export function FichaTabs({
       {/* Barra de pestañas: en móvil las 5 caben a lo ancho (icono + texto); no se imprime. */}
       <div
         id="pestanas-ficha"
-        className="no-print sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 mb-4 scroll-mt-[calc(3.5rem+env(safe-area-inset-top))] border-b border-stone-200 bg-stone-100/95 px-2 backdrop-blur sm:mx-0 sm:rounded-xl sm:border sm:bg-white sm:shadow-card lg:top-0 lg:scroll-mt-0 dark:border-stone-800 dark:bg-stone-950/95 sm:dark:bg-stone-900"
+        className="no-print sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 mb-4 scroll-mt-[calc(3.5rem+env(safe-area-inset-top))] border-b border-stone-200 bg-stone-100 px-2 sm:mx-0 sm:rounded-xl sm:border sm:bg-white sm:shadow-card lg:top-0 lg:scroll-mt-0 dark:border-stone-800 dark:bg-stone-950 sm:dark:bg-stone-900"
       >
         <div role="tablist" aria-label="Secciones del animal" onKeyDown={onTeclaTab} className={`grid gap-1 py-1.5 sm:flex ${tabsVisibles.length === 5 ? "grid-cols-5" : "grid-cols-4"}`}>
           {tabsVisibles.map((t) => {

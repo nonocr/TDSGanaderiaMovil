@@ -8,9 +8,11 @@ import {
   ANIMAL_SIN_FOTO, mensajeAreteRepetido,
 } from "@/lib/validar";
 
-// GET /api/animales?sexo=MACHO&estado=ACTIVO&modulo=ENGORDE&q=texto
+// GET /api/animales?sexo=MACHO&estado=ACTIVO&modulo=ENGORDE&q=texto&limite=20
 export const GET = ruta(async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
+  // Tope opcional de resultados (la búsqueda global solo muestra 20): no se leen ni envían los demás.
+  const limite = Number(searchParams.get("limite")) || undefined;
   const sexo = searchParams.get("sexo") ? opcion(searchParams.get("sexo"), SEXOS, "Sexo") : null;
   const estado = searchParams.get("estado") ? opcion(searchParams.get("estado"), ESTADOS, "Estado") : null;
   const modulo = searchParams.get("modulo") ? opcion(searchParams.get("modulo"), MODULOS, "Módulo") : null;
@@ -39,6 +41,7 @@ export const GET = ruta(async (req: NextRequest) => {
     },
     orderBy: { arete: "asc" },
     select: ANIMAL_SIN_FOTO,
+    ...(limite ? { take: Math.min(Math.max(limite, 1), 200) } : {}),
   });
   return NextResponse.json(animales);
 });

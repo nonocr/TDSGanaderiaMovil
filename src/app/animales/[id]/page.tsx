@@ -82,7 +82,7 @@ export default async function AnimalDetallePage({
     base,
     montas,
     partos,
-    crias,
+    todasLasCrias,
     registrosLeche,
     registrosPeso,
     etapas,
@@ -92,7 +92,6 @@ export default async function AnimalDetallePage({
     arbol,
     todos,
     datosDeCrias,
-    criasEnPartos,
     palpaciones,
     cambiosEstado,
     fotosCrias,
@@ -100,7 +99,9 @@ export default async function AnimalDetallePage({
     prisma.animal.findUnique({ where: { id }, select: ANIMAL_SIN_FOTO }),
     prisma.monta.findMany({ where: { OR: [{ vacaId: id }, { toroId: id }] }, orderBy: { fecha: "desc" } }),
     prisma.parto.findMany({ where: { OR: [{ vacaId: id }, { toroId: id }] }, orderBy: { fecha: "desc" } }),
-    prisma.cria.findMany({ where: { parto: { vacaId: id } }, select: { id: true, partoId: true, criaId: true } }),
+    // Todas las crías vinculadas a algún parto (una sola lectura): de aquí salen las de esta vaca y
+    // las que ya no se pueden ofrecer como cría de otro parto.
+    prisma.cria.findMany({ select: { id: true, partoId: true, criaId: true } }),
     prisma.registroLeche.findMany({ where: { vacaId: id }, orderBy: { fecha: "desc" } }),
     prisma.registroPeso.findMany({ where: { animalId: id }, orderBy: { fecha: "desc" } }),
     prisma.etapaTernero.findMany({ where: { animalId: id }, orderBy: { fechaInicio: "desc" } }),
@@ -110,7 +111,6 @@ export default async function AnimalDetallePage({
     obtenerArbol(id),
     listarAnimales(), // nombres de relacionados + selectores de toro, vaca y crías
     datosCrias(), // misma lectura (cache): fecha y toro propuestos del parto al marcar una cría
-    prisma.cria.findMany({ select: { criaId: true } }), // crías ya vinculadas a cualquier parto
     prisma.palpacion.findMany({ where: { vacaId: id }, orderBy: { fecha: "desc" } }),
     prisma.cambioEstadoReproductivo.findMany({ where: { vacaId: id }, orderBy: { fecha: "desc" } }),
     // Miniaturas y sexo de las crías de sus partos (para el historial de partos).
@@ -121,6 +121,9 @@ export default async function AnimalDetallePage({
   ]);
 
   if (!base) notFound();
+
+  const partosDeLaVaca = new Set(partos.filter((p) => p.vacaId === id).map((p) => p.id));
+  const crias = todasLasCrias.filter((c) => partosDeLaVaca.has(c.partoId));
 
   const porId = new Map(todos.map((a) => [a.id, a]));
   const desconocido = { id: "", arete: "?", nombre: null as string | null, sexo: "" };
@@ -157,7 +160,7 @@ export default async function AnimalDetallePage({
   const vacas = todos.filter((a) => a.sexo === "HEMBRA").map(sinSexo);
   // Una cría tiene una sola madre: no se ofrecen los animales que ya están en algún parto ni los
   // que tienen otra madre (registrada o externa). La API lo valida igual (409).
-  const enAlgunParto = new Set(criasEnPartos.map((c) => c.criaId));
+  const enAlgunParto = new Set(todasLasCrias.map((c) => c.criaId));
   const posiblesCrias = todos
     .filter((a) => {
       if (a.id === id || enAlgunParto.has(a.id)) return false;

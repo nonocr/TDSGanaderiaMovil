@@ -53,10 +53,10 @@ export function BusquedaGlobal({
     const ctrl = new AbortController();
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/animales?q=${encodeURIComponent(q)}`, { signal: ctrl.signal });
+        const res = await fetch(`/api/animales?q=${encodeURIComponent(q)}&limite=20`, { signal: ctrl.signal });
         if (!res.ok) throw new Error();
         const datos: Resultado[] = await res.json();
-        setResultados(datos.slice(0, 20)); // tope visual
+        setResultados(datos);
         setAbierto(true);
       } catch {
         // Petición cancelada o error de red: no rompemos la UI.
