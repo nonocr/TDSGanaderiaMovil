@@ -2,14 +2,18 @@
 // (Registrar sin señal lo hace la cola de src/lib/cola-offline.ts, no este archivo.)
 //
 // - Páginas (HTML): primero la red; si no hay señal, la última copia guardada.
-// - Archivos de Next (/_next/static/, con hash en el nombre): de la copia guardada.
+// - Archivos de Next con hash en el nombre (/_next/static/…-a1b2c3d4e5f6.js): de la copia guardada.
+//   Son inmutables: si el archivo cambia, cambia su nombre. Los que NO llevan hash (los chunks de
+//   `npm run dev`, p. ej. /_next/static/chunks/app/layout.js) no se guardan nunca: con "primero la
+//   copia guardada" el navegador recibía un layout viejo y fallaba ("reading 'call'"). (v2)
 // - Al navegar dentro de la app, Next pide la página en formato RSC (no HTML): si va bien, aquí se
 //   baja también su HTML en segundo plano para tenerlo guardado (máx. una vez cada 15 s por página).
 // - Al cerrar sesión se borran las páginas guardadas (tienen datos de la finca).
 //
 // Al cambiar este archivo, subir VERSION: así se borran las copias de la versión anterior.
 
-const VERSION = "v1";
+// v2: no guarda archivos de /_next/static/ sin hash (ver arriba). Al activarse borra las copias v1.
+const VERSION = "v2";
 const PAGINAS = "tds-paginas-" + VERSION;
 const ESTATICOS = "tds-estaticos-" + VERSION;
 const REFRESCO_MS = 15000;
@@ -20,8 +24,12 @@ self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     (async () => {
-      for (const k of await caches.keys()) {
-        if (k.startsWith("tds-") && !k.endsWith(VERSION)) await caches.delete(k);
+      try {
+        for (const k of await caches.keys()) {
+          if (k.startsWith("tds-") && !k.endsWith(VERSION)) await caches.delete(k);
+        }
+      } catch {
+        // Sin acceso a las cachés: no hay copias viejas que borrar.
       }
       await self.clients.claim();
     })()
@@ -36,7 +44,8 @@ self.addEventListener("fetch", (e) => {
   if (url.pathname === "/api/sesion" && req.method === "DELETE") {
     e.respondWith(
       fetch(req).then(async (res) => {
-        if (res.ok) await caches.delete(PAGINAS);
+        // Si no se pueden borrar las copias, la sesión se cierra igual.
+        if (res.ok) await caches.delete(PAGINAS).catch(() => {});
         return res;
       })
     );
@@ -46,7 +55,8 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
 
   if (url.pathname.startsWith("/_next/static/")) {
-    e.respondWith(primeroGuardado(req));
+    // Sin hash en el nombre: lo maneja el navegador (red), sin copia guardada.
+    if (conHash(url.pathname)) e.respondWith(primeroGuardado(req));
     return;
   }
 
@@ -61,32 +71,54 @@ self.addEventListener("fetch", (e) => {
   }
 });
 
+// ¿El nombre del archivo lleva un hash de contenido? En producción Next nombra los archivos así:
+// "1255-d086140ba3334809.js", "css/2b4f6a8c9d0e1f23.css", "media/a1b2c3d4e5f6.woff2". En
+// desarrollo no ("layout.js", "webpack.js"). Basta con 8 o más caracteres hexadecimales seguidos.
+function conHash(ruta) {
+  const archivo = ruta.slice(ruta.lastIndexOf("/") + 1);
+  return /[0-9a-f]{8,}/i.test(archivo);
+}
+
+// Las copias guardadas son una ayuda, nunca un requisito: si el almacenamiento de cachés falla
+// (memoria llena, modo privado, perfil dañado), se sigue con la red. Antes un fallo de
+// `caches.open` dejaba la página y sus archivos en ERR_FAILED y la app no abría. (v2)
+async function abrirCache(nombre) {
+  try {
+    return await caches.open(nombre);
+  } catch {
+    return null;
+  }
+}
+
 async function primeroGuardado(req) {
-  const cache = await caches.open(ESTATICOS);
-  const guardado = await cache.match(req);
+  const cache = await abrirCache(ESTATICOS);
+  const guardado = cache ? await cache.match(req).catch(() => undefined) : undefined;
   if (guardado) return guardado;
   const res = await fetch(req);
-  if (res.ok) await cache.put(req, res.clone());
+  if (res.ok && cache) await cache.put(req, res.clone()).catch(() => {});
   return res;
 }
 
 async function primeroRed(req) {
+  let res;
   try {
-    const res = await fetch(req);
-    await guardarSiSirve(req.url, res.clone());
-    return res;
+    res = await fetch(req);
   } catch {
-    const cache = await caches.open(PAGINAS);
-    return (
-      (await cache.match(req.url)) ||
-      (await cache.match(req.url, { ignoreSearch: true })) ||
-      paginaSinConexion()
-    );
+    const cache = await abrirCache(PAGINAS);
+    const copia = cache
+      ? (await cache.match(req.url).catch(() => undefined)) ||
+        (await cache.match(req.url, { ignoreSearch: true }).catch(() => undefined))
+      : undefined;
+    return copia || paginaSinConexion();
   }
+  // Guardar la copia no debe impedir mostrar la página que ya llegó.
+  await guardarSiSirve(req.url, res.clone()).catch(() => {});
+  return res;
 }
 
 async function guardarHtml(url) {
-  const cache = await caches.open(PAGINAS);
+  const cache = await abrirCache(PAGINAS);
+  if (!cache) return;
   const previa = await cache.match(url);
   const cuando = Number(previa?.headers.get("x-tds-guardado") ?? 0);
   if (Date.now() - cuando < REFRESCO_MS) return;
@@ -103,8 +135,8 @@ async function guardarSiSirve(url, res) {
   const headers = new Headers(res.headers);
   headers.set("x-tds-guardado", String(Date.now()));
   const copia = new Response(await res.blob(), { status: res.status, statusText: res.statusText, headers });
-  const cache = await caches.open(PAGINAS);
-  await cache.put(url, copia);
+  const cache = await abrirCache(PAGINAS);
+  if (cache) await cache.put(url, copia);
 }
 
 function paginaSinConexion() {

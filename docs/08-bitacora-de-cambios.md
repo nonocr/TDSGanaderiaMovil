@@ -466,3 +466,45 @@ responden 200.
 
 **Verificación:** `tsc`, `next build`, `npm run seguridad` (27/27), capturas a 360/768/1366 px
 (sin desbordamiento horizontal, claro y oscuro) y prueba de teclado de la hoja "Más" y el buscador.
+
+---
+
+## 2026-11-04 · Fuente: dueño — rediseño "diseño V2" (Claude Code)
+
+**Qué llegó:** el dueño pidió mejorar al máximo el diseño y la experiencia, como **evolución** de la
+identidad actual (logo, verde de marca y navegación se conservan). Rama **`diseñoV2`**, sin mezclar a
+`master` hasta su aprobación. Versión del proyecto: **1.0.8 → 1.1.0**. Solo diseño: no cambian flujos,
+reglas de negocio, API ni datos.
+
+**Qué se cambió:**
+- **Sistema visual** (`DESIGN.md` nuevo, `PRODUCT.md` nuevo): color con un solo significado (verde listo,
+  azul en curso, ámbar se acerca, rojo vencido/borrar, neutral dato; sexo y módulo sin color), superficies
+  con sombra suave y filo de 1px en lugar de bordes, botones con variantes y respuesta al toque, títulos
+  de sección en minúscula normal, cifras tabulares, foco visible con teclado, selección/cursor/scroll con
+  los colores de la marca. Todo en `src/components/ui.tsx`, `globals.css` y `tailwind.config.ts`.
+- **Confirmaciones y avisos propios** (`src/components/Dialogos.tsx`): se quitaron los `confirm()` /
+  `alert()` del navegador (borrar animal, evento, etapa, foto, restaurar respaldo, errores). Los
+  formularios muestran "Guardando…" con indicador; al guardar/borrar aparece un aviso flotante.
+- **Pantallas:** Inicio con los pendientes del mes primero (los partos atrasados en rojo) y en escritorio
+  en dos columnas; módulos con el título arriba y sin tarjetas que repetían el total; ficha con la
+  cabecera ordenada (datos en texto, estados como etiquetas); calendario con bloque de fecha; tabla de
+  escritorio sin el nombre repetido; formularios con opciones táctiles de 44 px. En móvil las listas de
+  animales son un solo bloque con divisores (caben casi el doble por pantalla) y "Eliminar" en la ficha
+  queda como icono aparte, para no tocarlo por error.
+- **Textos de pendientes** (`src/lib/alertas.ts`, solo redacción): "1 día" / "15 días" en vez de
+  "día(s)", y el día cero dice "para hoy" en vez de "vencido hace 0 día(s)". Ningún cálculo cambia.
+- **Revisión independiente** (revisor de impeccable): se corrigieron los 8 puntos que marcó (tono del
+  secado ya iniciado, día cero, plurales, tarjetas anidadas en el desglose, aviso de bajas en Inicio,
+  tabla vacía en leche, jerarquía de Editar/Eliminar y foto vacía en neutro).
+- **Movimiento** (escala de tokens en `globals.css`, hook `src/lib/usar-presencia.ts`): hoja "Más",
+  buscador móvil, diálogos y avisos entran y salen con transición (cerrar más rápido que abrir); la
+  pestaña activa de la ficha se desliza. Con movimiento reducido no hay animaciones.
+- **Service worker** (`public/sw.js` v1 → v2): ya no guarda chunks sin hash (en `npm run dev` servía un
+  layout viejo y fallaba con "reading 'call'"); en desarrollo se anula su registro y se borran sus copias;
+  `sw.js` se sirve sin caché; y si el almacenamiento de cachés falla, sigue con la red en vez de dejar la
+  app sin abrir.
+
+**Verificación:** `tsc --noEmit`, `npm run prod:build` (17/17 páginas), detector de diseño de
+impeccable sin hallazgos, capturas en Chrome a 390/768/1280 px en claro y oscuro (sin desbordamiento
+horizontal ni errores de consola, con el service worker activo) y `npm run dev` con el SW de producción
+ya registrado (se anula y la app abre sin errores). Las pruebas solo leyeron datos.

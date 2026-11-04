@@ -3,7 +3,18 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Badge } from "@/components/ui";
+import {
+  AvisoError,
+  Badge,
+  BotonEnviar,
+  Spinner,
+  claseBoton,
+  claseBotonIcono,
+  claseCampo,
+  claseEtiqueta,
+  claseSuperficie,
+} from "@/components/ui";
+import { avisar, confirmar } from "@/components/Dialogos";
 import { formatearFecha } from "@/lib/fechas";
 import { llamarApi } from "@/lib/api-cliente";
 import {
@@ -52,9 +63,9 @@ export type DatosFila = {
   href?: string;
 };
 
-const campo =
-  "w-full rounded-lg border border-stone-300 px-2 py-1 text-sm outline-none focus:border-marca-500 focus:ring-2 focus:ring-marca-200 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100";
-const etiqueta = "block text-xs font-medium text-stone-600 dark:text-stone-400";
+// Mismos campos que el resto de formularios (alto táctil de 44 px en móvil).
+const campo = claseCampo;
+const etiqueta = claseEtiqueta;
 
 // Icono y color de acento por tipo de evento (para la variante ampliada).
 const ESTILO_TIPO: Record<string, { Icono: (p: IconoProps) => React.JSX.Element; acento: string }> = {
@@ -65,7 +76,7 @@ const ESTILO_TIPO: Record<string, { Icono: (p: IconoProps) => React.JSX.Element;
   Peso: { Icono: IconoPeso, acento: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" },
   Etapa: { Icono: IconoPin, acento: "bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300" },
   "Palpación": { Icono: IconoCheck, acento: "bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300" },
-  Estado: { Icono: IconoReloj, acento: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" },
+  Estado: { Icono: IconoReloj, acento: "bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300" },
 };
 
 export function FilaEvento({
@@ -136,20 +147,21 @@ export function FilaEvento({
   async function eliminar() {
     const cuando = formatearFecha(datos.fechaISO);
     const resumen = datos.detalle ? ` “${datos.detalle}”` : "";
-    if (
-      !confirm(
-        `¿Eliminar este registro de ${datos.tipo}${resumen} del ${cuando}?\n\n` +
-          `Se borrará de forma permanente y no se puede deshacer.`
-      )
-    )
-      return;
+    const si = await confirmar({
+      titulo: `¿Eliminar este registro de ${datos.tipo}?`,
+      mensaje: `${datos.tipo}${resumen} del ${cuando}.\nSe borrará de forma permanente y no se puede deshacer.`,
+      accion: "Eliminar",
+      peligro: true,
+    });
+    if (!si) return;
     setBorrando(true);
     const r = await llamarApi(`${base}/${datos.id}`, { method: "DELETE" });
     setBorrando(false);
     if (!r.ok) {
-      alert(r.error);
+      avisar(r.error);
       return;
     }
+    avisar(`Registro de ${datos.tipo.toLowerCase()} eliminado.`, "ok");
     router.refresh();
   }
 
@@ -160,7 +172,7 @@ export function FilaEvento({
   if (variante === "ampliada") {
     return (
       <li className="py-2">
-        <div className="flex items-start gap-3 rounded-xl border border-stone-200/70 bg-white p-3 transition-colors hover:border-stone-300 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-700">
+        <div className={`${claseSuperficie} flex items-start gap-3 p-3`}>
           <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${estilo.acento}`}>
             <IconoTipo className="h-5 w-5" />
           </div>
@@ -184,21 +196,19 @@ export function FilaEvento({
             )}
 
             {gestionable && !editando && (
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2.5 flex gap-2">
                 {datos.editable && (
-                  <button
-                    onClick={abrirEdicion}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:border-marca-300 hover:text-marca-700 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:border-marca-700 dark:hover:text-marca-300"
-                  >
-                    <IconoEditar className="h-3.5 w-3.5" /> Editar
+                  <button onClick={abrirEdicion} className={claseBoton("secundario")}>
+                    <IconoEditar className="h-4 w-4" /> Editar
                   </button>
                 )}
                 <button
                   onClick={eliminar}
                   disabled={borrando}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-900/60 dark:bg-stone-800 dark:text-red-400 dark:hover:bg-red-950/40"
+                  aria-busy={borrando || undefined}
+                  className={claseBoton("peligroSuave")}
                 >
-                  <IconoBasura className="h-3.5 w-3.5" /> {borrando ? "Eliminando…" : "Eliminar"}
+                  {borrando ? <Spinner /> : <IconoBasura className="h-4 w-4" />} {borrando ? "Eliminando…" : "Eliminar"}
                 </button>
               </div>
             )}
@@ -235,9 +245,9 @@ export function FilaEvento({
             {datos.editable && (
               <button
                 onClick={abrirEdicion}
-                aria-label="Editar evento"
+                aria-label={`Editar ${datos.tipo.toLowerCase()} del ${formatearFecha(datos.fechaISO)}`}
                 title="Editar"
-                className="grid h-11 w-11 place-items-center rounded-lg text-marca-700 transition-colors hover:bg-marca-50 active:bg-marca-100 dark:text-marca-400 dark:hover:bg-stone-800"
+                className={claseBotonIcono("marcaDiscreto")}
               >
                 <IconoEditar className="h-4 w-4" />
               </button>
@@ -245,11 +255,12 @@ export function FilaEvento({
             <button
               onClick={eliminar}
               disabled={borrando}
-              aria-label="Eliminar evento"
+              aria-busy={borrando || undefined}
+              aria-label={`Eliminar ${datos.tipo.toLowerCase()} del ${formatearFecha(datos.fechaISO)}`}
               title="Eliminar"
-              className="grid h-11 w-11 place-items-center rounded-lg text-red-600 transition-colors hover:bg-red-50 active:bg-red-100 disabled:opacity-50 dark:text-red-400 dark:hover:bg-stone-800"
+              className={claseBotonIcono("peligroDiscreto")}
             >
-              {borrando ? <span className="text-xs">…</span> : <IconoBasura className="h-4 w-4" />}
+              {borrando ? <Spinner /> : <IconoBasura className="h-4 w-4" />}
             </button>
           </div>
         )}
@@ -264,13 +275,9 @@ export function FilaEvento({
   // y se perdería lo escrito (p. ej. al mostrar un error de guardado).
   function formEdicion() {
     return (
-        <form onSubmit={guardar} className="mt-2 space-y-2 rounded-lg bg-stone-50 p-3 dark:bg-stone-800/60">
-          {error && (
-            <div role="alert" className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-              {error}
-            </div>
-          )}
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <form onSubmit={guardar} className="mt-2 space-y-3 rounded-xl bg-stone-50 p-3 ring-1 ring-inset ring-stone-900/5 dark:bg-stone-800/60 dark:ring-white/5">
+          {error && <AvisoError>{error}</AvisoError>}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor={`ev-fecha-${datos.id}`} className={etiqueta}>Fecha</label>
               <input id={`ev-fecha-${datos.id}`} type="date" name="fecha" required defaultValue={fechaInput} className={campo} />
@@ -325,18 +332,8 @@ export function FilaEvento({
             </div>
           )}
           <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={guardando}
-              className="rounded-lg bg-marca-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-marca-700 disabled:opacity-50"
-            >
-              {guardando ? "Guardando…" : "Guardar"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditando(false)}
-              className="rounded-lg border border-stone-300 px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-100 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-700"
-            >
+            <BotonEnviar cargando={guardando}>Guardar</BotonEnviar>
+            <button type="button" onClick={() => setEditando(false)} className={claseBoton("secundario")}>
               Cancelar
             </button>
           </div>
@@ -371,7 +368,7 @@ export function FilaEvento({
     );
     return (
       <div>
-        <span className={etiqueta}>Cría(s) que nacieron</span>
+        <span className={etiqueta}>Crías que nacieron</span>
         {actuales.map(casilla)}
         {otros.length > 0 && (
           <>

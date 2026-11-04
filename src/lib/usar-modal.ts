@@ -2,6 +2,10 @@
 
 import { useEffect, type RefObject } from "react";
 
+// Pila de modales abiertos: si se abre uno encima de otro (p. ej. la confirmación de borrar
+// sobre el historial completo), solo el de arriba atiende Escape y Tab.
+const pila: object[] = [];
+
 // Accesibilidad de un modal/overlay abierto: atrapa el foco dentro del panel (Tab/Shift+Tab no se
 // escapan al fondo), cierra con Escape, bloquea el scroll del fondo y devuelve el foco al elemento
 // que tenía antes de abrir. Pensado para los diálogos con `role="dialog" aria-modal="true"`.
@@ -21,6 +25,8 @@ export function useModalAccesible(
 
     const panel = panelRef.current;
     const focoPrevio = document.activeElement as HTMLElement | null;
+    const yo = {};
+    pila.push(yo);
 
     // Selector de elementos enfocables dentro del panel.
     const SELECTOR =
@@ -34,6 +40,7 @@ export function useModalAccesible(
     else panel?.focus();
 
     function onKey(e: KeyboardEvent) {
+      if (pila[pila.length - 1] !== yo) return; // hay otro modal encima
       if (e.key === "Escape") {
         e.preventDefault();
         alCerrar();
@@ -65,6 +72,8 @@ export function useModalAccesible(
 
     return () => {
       window.removeEventListener("keydown", onKey);
+      const i = pila.indexOf(yo);
+      if (i >= 0) pila.splice(i, 1);
       document.body.style.overflow = overflowPrevio;
       // Devolver el foco a quien lo tenía antes de abrir (si sigue en el documento).
       if (focoPrevio && document.contains(focoPrevio)) focoPrevio.focus();

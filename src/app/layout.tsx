@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Navegacion } from "@/components/Navegacion";
 import { EstadoConexion } from "@/components/EstadoConexion";
+import { Dialogos } from "@/components/Dialogos";
 
 export const metadata: Metadata = {
   title: "TDS Ganadería",
@@ -57,14 +58,16 @@ export default function RootLayout({
         <Navegacion />
         <div className="flex min-h-screen flex-col lg:pl-60">
           {/* En móvil se deja espacio abajo para la barra de navegación inferior. */}
-          <main className="print-main mx-auto w-full max-w-6xl flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pt-8 lg:pb-8">
+          {/* Ancho máximo 72rem: en pantallas grandes el contenido no se estira de lado a lado. */}
+          <main className="print-main mx-auto w-full max-w-6xl flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pt-8 lg:px-8 lg:pb-10">
             <EstadoConexion />
             {children}
           </main>
-          <footer className="no-print hidden border-t border-stone-200/70 py-5 text-center text-xs text-stone-500 lg:block dark:border-stone-800 dark:text-stone-400">
+          <footer className="no-print hidden py-6 text-center text-xs text-stone-500 lg:block dark:text-stone-400">
             TDS Ganadería · Finca Tierra de Sueños
           </footer>
         </div>
+        <Dialogos />
       </body>
     </html>
   );

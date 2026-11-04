@@ -4,6 +4,8 @@ import { llamarApi } from "@/lib/api-cliente";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { IconoCamara, IconoBasura, IconoAnimal } from "@/components/iconos";
+import { Spinner } from "@/components/ui";
+import { avisar, confirmar } from "@/components/Dialogos";
 
 // Redimensiona una imagen en el navegador a un maximo de LADO px y la devuelve
 // como data URL JPEG (comprimida), para no guardar archivos enormes.
@@ -60,9 +62,10 @@ export function FotoAnimal({
     const r = await llamarApi(`/api/animales/${animalId}`, { method: "PATCH", body: { fotoUrl: foto } });
     setSubiendo(false);
     if (!r.ok) {
-      alert(r.error);
+      avisar(r.error);
       return;
     }
+    avisar(foto ? "Foto actualizada." : "Foto quitada.", "ok");
     router.refresh();
   }
 
@@ -72,14 +75,20 @@ export function FotoAnimal({
     try {
       await guardar(await redimensionar(file));
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al procesar la imagen.");
+      avisar(err instanceof Error ? err.message : "Error al procesar la imagen.");
     } finally {
       if (inputRef.current) inputRef.current.value = "";
     }
   }
 
-  function quitar() {
-    if (confirm("¿Quitar la foto de este animal?")) guardar(null);
+  async function quitar() {
+    const si = await confirmar({
+      titulo: "¿Quitar la foto de este animal?",
+      mensaje: "Podrás agregar otra cuando quieras tocando la imagen.",
+      accion: "Quitar foto",
+      peligro: true,
+    });
+    if (si) guardar(null);
   }
 
   const idInput = `foto-${animalId}`;
@@ -89,19 +98,24 @@ export function FotoAnimal({
       <label
         htmlFor={idInput}
         aria-label={fotoUrl ? "Cambiar foto" : "Agregar foto"}
-        className="block h-full w-full cursor-pointer overflow-hidden rounded-2xl ring-1 ring-stone-200 dark:ring-stone-700"
+        className="relative block h-full w-full cursor-pointer overflow-hidden rounded-2xl"
       >
         {fotoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={fotoUrl} alt={alt} className="h-full w-full object-cover" />
         ) : (
-          <span className="grid h-full w-full place-items-center bg-marca-100 text-marca-700 dark:bg-marca-950 dark:text-marca-300">
+          <span className="grid h-full w-full place-items-center bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400">
             <IconoAnimal sexo={sexo} className="h-12 w-12" />
           </span>
         )}
+        {/* Filo de 1px negro/blanco translúcido: da borde a la foto sin ensuciarla. */}
+        <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-black/10 dark:ring-white/10" />
         {subiendo && (
-          <span className="absolute inset-0 grid place-items-center rounded-2xl bg-black/45 text-xs font-medium text-white">
-            Guardando…
+          <span className="absolute inset-0 grid place-items-center gap-1 rounded-2xl bg-black/50 text-xs font-medium text-white">
+            <span className="flex flex-col items-center gap-1.5">
+              <Spinner className="h-5 w-5" />
+              Guardando…
+            </span>
           </span>
         )}
       </label>

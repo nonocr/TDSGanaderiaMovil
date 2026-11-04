@@ -5,14 +5,13 @@ import { useEffect, useRef, useState } from "react";
 import { hoyLocalISO, formatearFecha } from "@/lib/fechas";
 import { llamarApi } from "@/lib/api-cliente";
 import { etiquetaArete, terminoBusqueda } from "@/lib/tipos";
-import { claseCampo, claseEtiqueta, claseBotonPrimario, AvisoError, AvisoExito } from "@/components/ui";
+import { claseCampo, claseEtiqueta, BotonEnviar, AvisoError, AvisoExito } from "@/components/ui";
+import { IconoMas } from "@/components/iconos";
 
 type Opcion = { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 
 const campo = claseCampo;
 const etiqueta = claseEtiqueta;
-// Área táctil ≥44px (min-h-11), ancho completo en móvil.
-const boton = `${claseBotonPrimario} w-full sm:w-auto`;
 
 type Resultado = { tipo: "error" | "ok"; texto: string } | null;
 
@@ -83,7 +82,7 @@ export function FormPeso({ animalId }: { animalId: string }) {
   const hoy = useHoy();
   return (
     <form
-      className="space-y-2"
+      className="space-y-3"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -107,7 +106,7 @@ export function FormPeso({ animalId }: { animalId: string }) {
         </div>
       </div>
       <input name="notas" aria-label="Notas (opcional)" placeholder="Notas (opcional)" maxLength={2000} className={campo} />
-      <button className={boton} disabled={cargando}>Guardar peso</button>
+      <BotonEnviar cargando={cargando} className="w-full sm:w-auto">Guardar peso</BotonEnviar>
     </form>
   );
 }
@@ -118,7 +117,7 @@ export function FormLeche({ vacaId }: { vacaId: string }) {
   const hoy = useHoy();
   return (
     <form
-      className="space-y-2"
+      className="space-y-3"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -159,7 +158,7 @@ export function FormLeche({ vacaId }: { vacaId: string }) {
         la app suma el total del día.
       </p>
       <input name="notas" aria-label="Notas (opcional)" placeholder="Notas (opcional)" maxLength={2000} className={campo} />
-      <button className={boton} disabled={cargando}>Guardar ordeño</button>
+      <BotonEnviar cargando={cargando} className="w-full sm:w-auto">Guardar ordeño</BotonEnviar>
     </form>
   );
 }
@@ -170,7 +169,7 @@ export function FormMonta({ vacaId, toros }: { vacaId: string; toros: Opcion[] }
   const hoy = useHoy();
   return (
     <form
-      className="space-y-2"
+      className="space-y-3"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -215,7 +214,7 @@ export function FormMonta({ vacaId, toros }: { vacaId: string; toros: Opcion[] }
       <p className="text-xs text-stone-500 dark:text-stone-400">
         Esto solo registra la monta. La palpación y el parto se anotan aparte, en sus pestañas.
       </p>
-      <button className={boton} disabled={cargando}>Guardar monta</button>
+      <BotonEnviar cargando={cargando} className="w-full sm:w-auto">Guardar monta</BotonEnviar>
     </form>
   );
 }
@@ -226,7 +225,7 @@ export function FormMontaDesdeToro({ toroId, vacas }: { toroId: string; vacas: O
   const hoy = useHoy();
   return (
     <form
-      className="space-y-2"
+      className="space-y-3"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -266,7 +265,7 @@ export function FormMontaDesdeToro({ toroId, vacas }: { toroId: string; vacas: O
       </label>
       <input name="notas" aria-label="Notas (opcional)" placeholder="Notas (opcional)" maxLength={2000} className={campo} />
       <p className="text-xs text-stone-500 dark:text-stone-400">Esto solo registra la monta. El parto se anota aparte cuando ocurra.</p>
-      <button className={boton} disabled={cargando}>Guardar monta</button>
+      <BotonEnviar cargando={cargando} className="w-full sm:w-auto">Guardar monta</BotonEnviar>
     </form>
   );
 }
@@ -349,7 +348,7 @@ export function FormParto({
 
   return (
     <form
-      className="space-y-2"
+      className="space-y-3"
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -455,7 +454,7 @@ export function FormParto({
         <input id="parto-desc" name="descripcion" maxLength={2000} className={campo} placeholder="Ej. parto sin complicaciones" />
       </div>
       <div>
-        <span className={etiqueta}>Cría(s) que nacieron</span>
+        <span className={etiqueta}>Crías que nacieron</span>
         <p className="text-xs text-stone-500 dark:text-stone-400 mb-1">
           Registra la cría aquí mismo con &quot;Registrar cría nueva&quot;, o márcala si ya la agregaste como
           animal. Si fueron gemelos, agrega o marca cada una.
@@ -465,7 +464,7 @@ export function FormParto({
           <div className="mt-2 space-y-2 text-sm">
             {/* Hijos registrados de esta vaca que aún no están en un parto: lo más probable. */}
             {sugeridas.length > 0 && (
-              <div className="rounded border border-marca-200 bg-marca-50/50 p-2 dark:border-marca-900 dark:bg-marca-950/30">
+              <div className="rounded-xl bg-marca-50/70 p-2 ring-1 ring-inset ring-marca-200 dark:bg-marca-950/30 dark:ring-marca-900">
                 <p className="px-1 pb-1 text-xs font-medium text-marca-700 dark:text-marca-300">
                   Hijos de esta vaca sin parto registrado
                 </p>
@@ -474,7 +473,7 @@ export function FormParto({
             )}
 
             {otros.length > 0 && (
-              <div className="rounded border border-stone-200 p-2 dark:border-stone-700">
+              <div className="rounded-xl p-2 ring-1 ring-inset ring-stone-200 dark:ring-stone-700">
                 {otrosAbiertos ? (
                   <>
                     <input
@@ -510,7 +509,7 @@ export function FormParto({
           </div>
         )}
       </div>
-      <button className={boton} disabled={cargando}>Guardar parto</button>
+      <BotonEnviar cargando={cargando} className="w-full sm:w-auto">Guardar parto</BotonEnviar>
     </form>
   );
 }
@@ -564,9 +563,9 @@ export function EditorCriasNuevas({
         return (
           <fieldset
             key={c.clave}
-            className="rounded-lg border border-marca-200 bg-marca-50/40 p-3 dark:border-marca-900 dark:bg-marca-950/20"
+            className="rounded-2xl bg-marca-50/60 p-3 ring-1 ring-inset ring-marca-200 dark:bg-marca-950/25 dark:ring-marca-900"
           >
-            <legend className="px-1 text-xs font-semibold text-marca-700 dark:text-marca-300">
+            <legend className="-ml-1 px-1 text-sm font-semibold text-marca-800 dark:text-marca-300">
               Cría nueva{crias.length > 1 ? ` ${i + 1}` : ""}
             </legend>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -627,14 +626,14 @@ export function EditorCriasNuevas({
                   type="checkbox"
                   checked={c.sinArete}
                   onChange={(e) => cambiar(c.clave, { sinArete: e.target.checked })}
-                  className="h-4 w-4 accent-marca-600"
+                  className="h-5 w-5 shrink-0 accent-marca-600"
                 />
                 No tiene arete todavía (aparece como &quot;Sin arete&quot;)
               </label>
               <button
                 type="button"
                 onClick={() => onChange(crias.filter((x) => x.clave !== c.clave))}
-                className="min-h-11 rounded-lg px-3 text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-stone-800"
+                className="min-h-11 rounded-xl px-3 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 active:bg-red-100 dark:text-red-400 dark:hover:bg-red-950/50"
               >
                 Quitar
               </button>
@@ -645,9 +644,10 @@ export function EditorCriasNuevas({
       <button
         type="button"
         onClick={agregar}
-        className="min-h-11 w-full rounded-lg border border-dashed border-marca-300 px-3 text-sm font-medium text-marca-700 hover:bg-marca-50 dark:border-marca-800 dark:text-marca-400 dark:hover:bg-stone-800/50"
+        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-marca-300 px-3 text-sm font-medium text-marca-700 transition-colors hover:bg-marca-50 active:bg-marca-100 dark:border-marca-800 dark:text-marca-400 dark:hover:bg-marca-950/50"
       >
-        + Registrar cría nueva
+        <IconoMas className="h-4 w-4" strokeWidth={2.2} />
+        Registrar cría nueva
       </button>
       {crias.length > 0 && (
         <p className="text-xs text-stone-500 dark:text-stone-400">
@@ -673,7 +673,7 @@ export function FormPalpacion({
   return (
     <div className="space-y-4">
       <form
-        className="space-y-2"
+        className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
@@ -697,11 +697,11 @@ export function FormPalpacion({
             placeholder="Ej. preñada de ~2 meses"
           />
         </div>
-        <button className={boton} disabled={cargando}>Guardar palpación</button>
+        <BotonEnviar cargando={cargando} className="w-full sm:w-auto">Guardar palpación</BotonEnviar>
       </form>
 
       <div>
-        <p className="text-sm font-medium text-stone-600 dark:text-stone-400">Palpaciones anteriores</p>
+        <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-200">Palpaciones anteriores</h3>
         {previas.length === 0 ? (
           <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">Sin palpaciones registradas.</p>
         ) : (

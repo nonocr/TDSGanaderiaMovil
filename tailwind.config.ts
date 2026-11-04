@@ -20,8 +20,13 @@ const config: Config = {
           950: "#13220f",
         },
       },
+      // Sombras con desplazamiento y desenfoque suave, tintadas del neutro piedra (stone-900).
+      // `card`: superficies en reposo. `flotante`: lo que va encima de la página (hojas, avisos,
+      // diálogos, barra inferior). `boton`: relieve mínimo del botón principal.
       boxShadow: {
-        card: "0 1px 2px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.06)",
+        card: "0 1px 2px 0 rgb(28 25 23 / 0.05), 0 2px 8px -2px rgb(28 25 23 / 0.07)",
+        flotante: "0 -1px 0 0 rgb(28 25 23 / 0.04), 0 12px 32px -8px rgb(28 25 23 / 0.28)",
+        boton: "0 1px 2px 0 rgb(28 25 23 / 0.12), inset 0 1px 0 0 rgb(255 255 255 / 0.12)",
         header: "0 1px 0 0 rgb(16 24 40 / 0.04), 0 4px 16px -8px rgb(39 63 34 / 0.35)",
       },
     },

@@ -28,19 +28,31 @@ export default async function LechePage({ searchParams }: { searchParams: Promis
       />
 
       <Card>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <SectionTitle>Litros por día del hato</SectionTitle>
-          <div role="group" aria-label="Agrupar producción por" className="flex gap-1 rounded-lg bg-stone-100 p-1 dark:bg-stone-800">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-stone-900 dark:text-stone-50">Litros por día del hato</h2>
+            {hayDatos && (
+              <p className="mt-1 flex flex-wrap items-baseline gap-x-2 text-sm text-stone-600 dark:text-stone-400">
+                <span>{vista === "semanas" ? "Esta semana" : "Este mes"}</span>
+                <span className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+                  {actual.litros}
+                  <span className="ml-1 text-sm font-medium text-stone-500 dark:text-stone-400">L/día</span>
+                </span>
+                {actual.detalle && <span className="text-stone-500 dark:text-stone-400">{actual.detalle}</span>}
+              </p>
+            )}
+          </div>
+          <div role="group" aria-label="Agrupar producción por" className="flex w-full gap-1 rounded-xl bg-stone-100 p-1 sm:w-auto dark:bg-stone-800">
             {VISTAS.map((x) => (
               <Link
                 key={x.id}
                 href={`/leche?vista=${x.id}`}
                 aria-current={vista === x.id ? "true" : undefined}
                 className={
-                  "rounded-md px-3 py-1.5 text-xs font-medium transition-colors " +
+                  "flex min-h-10 flex-1 items-center justify-center whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 sm:flex-none " +
                   (vista === x.id
-                    ? "bg-white text-stone-800 shadow-sm dark:bg-stone-700 dark:text-stone-100"
-                    : "text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200")
+                    ? "bg-white text-stone-900 shadow-card dark:bg-stone-600 dark:text-white"
+                    : "text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-white")
                 }
               >
                 {x.label}
@@ -51,11 +63,6 @@ export default async function LechePage({ searchParams }: { searchParams: Promis
 
         {hayDatos ? (
           <>
-            <p className="mb-3 text-sm text-stone-500 dark:text-stone-400">
-              {vista === "semanas" ? "Esta semana" : "Este mes"}:{" "}
-              <span className="font-semibold text-stone-800 dark:text-stone-100">{actual.litros} L/día</span>
-              {actual.detalle && <span className="text-stone-500 dark:text-stone-400"> · {actual.detalle}</span>}
-            </p>
             <GraficaLecheDiferida puntos={puntos} tipo="barras" />
             <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
               Cada barra suma el promedio diario de cada vaca medida en ese periodo. Si alguna vaca no
@@ -72,7 +79,9 @@ export default async function LechePage({ searchParams }: { searchParams: Promis
         )}
       </Card>
 
-      {filas.length > 0 && (
+      {/* La tabla por vaca solo si alguna vaca tiene registros: si no, quince filas de "Sin
+          registros" debajo del aviso de vacío no dicen nada nuevo. */}
+      {filas.some((f) => f.resumen.ultimo) && (
         <Card>
           <SectionTitle>Por vaca</SectionTitle>
           <div className="-mx-4 overflow-x-auto sm:mx-0">
@@ -80,13 +89,13 @@ export default async function LechePage({ searchParams }: { searchParams: Promis
                 cortaban la última columna: se abrevian y las celdas pueden partirse en dos líneas. */}
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-stone-200 text-left text-xs uppercase tracking-wider text-stone-500 dark:border-stone-800 dark:text-stone-400">
-                  <th className="px-4 py-2 font-medium sm:pl-0">Vaca</th>
-                  <th className="px-2 py-2 text-right font-medium">
+                <tr className="border-b border-stone-200 text-left text-xs font-medium text-stone-500 dark:border-stone-800 dark:text-stone-400">
+                  <th scope="col" className="px-4 py-2 font-medium sm:pl-0">Vaca</th>
+                  <th scope="col" className="whitespace-nowrap px-2 py-2 text-right font-medium">
                     <span className="sm:hidden">Prom. 30 d</span>
                     <span className="hidden sm:inline">Promedio 30 días</span>
                   </th>
-                  <th className="px-4 py-2 text-right font-medium sm:pr-0">
+                  <th scope="col" className="px-4 py-2 text-right font-medium sm:pr-0">
                     <span className="sm:hidden">Último</span>
                     <span className="hidden sm:inline">Último registro</span>
                   </th>
@@ -98,13 +107,13 @@ export default async function LechePage({ searchParams }: { searchParams: Promis
                     <td className="px-4 py-2.5 sm:pl-0">
                       <AnimalLink animal={f} />
                     </td>
-                    <td className="px-2 py-2.5 text-right font-semibold text-stone-800 dark:text-stone-100">
+                    <td className="px-2 py-2.5 text-right font-semibold text-stone-900 dark:text-stone-50">
                       {f.resumen.promedio30 !== null ? `${f.resumen.promedio30} L` : "—"}
                     </td>
                     <td className="px-4 py-2.5 text-right text-stone-500 sm:pr-0 dark:text-stone-400">
                       {f.resumen.ultimo
                         ? `${f.resumen.ultimo.litros} L · ${formatearFecha(f.resumen.ultimo.fecha)}`
-                        : "Sin registros"}
+                        : <span className="whitespace-nowrap">Sin registros</span>}
                     </td>
                   </tr>
                 ))}

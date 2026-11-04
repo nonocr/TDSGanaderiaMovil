@@ -5,7 +5,8 @@ import { useState } from "react";
 import { llamarApi } from "@/lib/api-cliente";
 import { ESTADOS_REPRO, ESTADO_REPRO_LABEL } from "@/lib/estado";
 import { formatearFecha } from "@/lib/fechas";
-import { claseCampo, claseBotonPrimario } from "@/components/ui";
+import { avisar } from "@/components/Dialogos";
+import { AvisoError, Badge, BotonEnviar, TONO_REPRO, claseBoton, claseCampo, claseEtiqueta } from "@/components/ui";
 
 // Estado reproductivo de una vaca de lechería: el actual (automático o manual), un formulario para
 // cambiarlo a mano con descripción opcional, y el historial de cambios manuales.
@@ -43,6 +44,7 @@ export function EstadoReproductivoManual({
       return;
     }
     setAbierto(false);
+    avisar(nuevo === "AUTOMATICO" ? "El estado vuelve al cálculo automático." : "Estado reproductivo actualizado.", "ok");
     router.refresh();
   }
 
@@ -52,17 +54,21 @@ export function EstadoReproductivoManual({
   return (
     <div className="space-y-3 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <span className="text-base font-semibold text-stone-800 dark:text-stone-100">
-            {etiqueta(estado)}
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge tono={TONO_REPRO[estado ?? ""] ?? "neutral"} punto>
+              {etiqueta(estado)}
+            </Badge>
             {/* Tras parir sigue en ordeño y, pasados 40 días, además lista para montar. */}
             {listaParaMontar && estado !== "LISTA_MONTAR" && (
-              <> · {ESTADO_REPRO_LABEL.LISTA_MONTAR}</>
+              <Badge tono="verde" punto>
+                {ESTADO_REPRO_LABEL.LISTA_MONTAR}
+              </Badge>
             )}
-          </span>
-          <span className="ml-2 text-xs text-stone-500 dark:text-stone-400">
-            {manual ? "fijado a mano" : "calculado por montas y partos"}
-          </span>
+          </div>
+          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+            {manual ? "Fijado a mano" : "Calculado por montas y partos"}
+          </p>
         </div>
         {!abierto && (
           <button
@@ -71,7 +77,7 @@ export function EstadoReproductivoManual({
               setError(null);
               setAbierto(true);
             }}
-            className="no-print min-h-11 rounded-lg border border-stone-300 px-3 font-medium text-stone-700 hover:bg-stone-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+            className={`${claseBoton("secundario")} no-print`}
           >
             Cambiar estado
           </button>
@@ -80,20 +86,16 @@ export function EstadoReproductivoManual({
 
       {abierto && (
         <form
-          className="no-print space-y-2 rounded-lg bg-stone-50 p-3 dark:bg-stone-800/60"
+          className="no-print space-y-3 rounded-xl bg-stone-50 p-3 ring-1 ring-inset ring-stone-900/5 dark:bg-stone-800/60 dark:ring-white/5"
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
             guardar(String(fd.get("estado")), String(fd.get("descripcion") ?? ""));
           }}
         >
-          {error && (
-            <div role="alert" className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-              {error}
-            </div>
-          )}
+          {error && <AvisoError>{error}</AvisoError>}
           <div>
-            <label htmlFor="estado-nuevo" className="block text-xs font-medium text-stone-600 dark:text-stone-400">
+            <label htmlFor="estado-nuevo" className={claseEtiqueta}>
               Nuevo estado
             </label>
             <select id="estado-nuevo" name="estado" required defaultValue="" className={campo}>
@@ -105,7 +107,7 @@ export function EstadoReproductivoManual({
             </select>
           </div>
           <div>
-            <label htmlFor="estado-desc" className="block text-xs font-medium text-stone-600 dark:text-stone-400">
+            <label htmlFor="estado-desc" className={claseEtiqueta}>
               Motivo / observación (opcional)
             </label>
             <input id="estado-desc" name="descripcion" maxLength={2000} className={campo} />
@@ -115,14 +117,8 @@ export function EstadoReproductivoManual({
             o un parto; entonces vuelve el cálculo automático.
           </p>
           <div className="flex gap-2">
-            <button type="submit" disabled={guardando} className={claseBotonPrimario}>
-              {guardando ? "Guardando…" : "Guardar"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setAbierto(false)}
-              className="inline-flex min-h-11 items-center rounded-lg border border-stone-300 px-4 text-sm text-stone-600 hover:bg-stone-100 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-700"
-            >
+            <BotonEnviar cargando={guardando}>Guardar</BotonEnviar>
+            <button type="button" onClick={() => setAbierto(false)} className={claseBoton("secundario")}>
               Cancelar
             </button>
           </div>
@@ -131,7 +127,7 @@ export function EstadoReproductivoManual({
 
       {cambios.length > 0 && (
         <div>
-          <p className="text-xs font-medium text-stone-500 dark:text-stone-400">Cambios manuales</p>
+          <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">Cambios manuales</h3>
           <ul className="mt-1 divide-y divide-stone-100 dark:divide-stone-800">
             {cambios.map((c) => (
               <li key={c.id} className="py-1.5">

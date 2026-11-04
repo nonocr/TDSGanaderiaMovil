@@ -1,6 +1,17 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { Card, EstadoBadge, SexoBadge, AnimalLink, PageHeader, Badge, Vacio, BotonPrimario } from "@/components/ui";
+import {
+  Card,
+  EstadoBadge,
+  SexoBadge,
+  PageHeader,
+  Badge,
+  Vacio,
+  BotonPrimario,
+  claseBoton,
+  claseSuperficie,
+  TONO_REPRO,
+} from "@/components/ui";
 import { formatearFecha, calcularEdad } from "@/lib/fechas";
 import {
   etapaDeAnimal,
@@ -45,6 +56,7 @@ export async function ListaAnimales({
   soloActivos = false,
   soloBajas = false,
   agregarModulo,
+  resumen,
 }: {
   sexo?: "MACHO" | "HEMBRA";
   modulo?: "ENGORDE" | "LECHERIA" | "REPRODUCTOR";
@@ -58,6 +70,8 @@ export async function ListaAnimales({
   soloBajas?: boolean;
   // Si viene, se muestra un botón "+ Agregar" que preselecciona ese módulo en el alta.
   agregarModulo?: "ENGORDE" | "LECHERIA" | "REPRODUCTOR";
+  // Conteos del módulo: se muestran debajo del título y antes de la barra de búsqueda.
+  resumen?: React.ReactNode;
 }) {
   // El estado reproductivo (y por tanto las montas/partos) solo se usa en LECHERÍA o en
   // una lista exclusiva de hembras. En engorde/reproductores, en "todos los animales" y en
@@ -188,7 +202,12 @@ export async function ListaAnimales({
     : base2;
 
   const n = filtradas.length;
-  const subtitulo = n === 1 ? "1 animal" : `${n} animales`;
+  const totalLista = filas.length;
+  // En lechería (hembras) y reproductores (machos) el sexo lo da el módulo: no se repite.
+  const mostrarSexo = !sexo && modulo !== "LECHERIA" && modulo !== "REPRODUCTOR";
+  const palabra = (k: number) => (k === 1 ? "animal" : "animales");
+  // Con búsqueda o filtro se dice de cuántos: "3 de 12 animales".
+  const subtitulo = n === totalLista ? `${n} ${palabra(n)}` : `${n} de ${totalLista} ${palabra(totalLista)}`;
 
   // Construir las opciones de filtro visibles segun el tipo de lista.
   // Lechería: estados reproductivos (son vacas). Engorde: etapas. Reproductores: ninguno.
@@ -209,33 +228,38 @@ export async function ListaAnimales({
   return (
     <div>
       <PageHeader titulo={titulo} subtitulo={subtitulo}>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-          <BuscadorAnimales q={q} basePath={basePath} filtro={filtro} />
-          <div className="flex gap-2">
-            <FiltroAnimales grupos={grupos} valor={filtro} basePath={basePath} q={q} />
-            <a
-              href={`/api/exportar?${new URLSearchParams({
-                ...(modulo ? { modulo } : sexo ? { sexo } : {}),
-                ...(soloActivos ? { estado: "ACTIVOS" } : soloBajas ? { estado: "BAJAS" } : {}),
-              })}`}
-              title="Exportar a Excel (CSV) los animales de esta lista"
-              className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 text-sm font-medium text-stone-700 hover:bg-stone-50 active:bg-stone-100 sm:h-10 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
-            >
-              <IconoRespaldo className="h-[18px] w-[18px]" />
-              CSV
-            </a>
-            {agregarModulo && (
-              <BotonPrimario
-                href={`/animales/nuevo?modulo=${agregarModulo}`}
-                icono={<IconoMas className="h-[18px] w-[18px]" strokeWidth={2.2} />}
-                className="h-11 shrink-0 sm:h-10"
-              >
-                Agregar
-              </BotonPrimario>
-            )}
-          </div>
-        </div>
+        {agregarModulo && (
+          <BotonPrimario
+            href={`/animales/nuevo?modulo=${agregarModulo}`}
+            icono={<IconoMas className="h-[18px] w-[18px]" strokeWidth={2.2} />}
+          >
+            Agregar
+          </BotonPrimario>
+        )}
       </PageHeader>
+
+      {/* Resumen del módulo (conteos), entre el título y la lista. */}
+      {resumen && <div className="mb-6 space-y-4">{resumen}</div>}
+
+      {/* Barra de la lista: buscar (todo el ancho en móvil), filtrar y exportar. */}
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <BuscadorAnimales q={q} basePath={basePath} filtro={filtro} />
+        <div className="flex gap-2">
+          <FiltroAnimales grupos={grupos} valor={filtro} basePath={basePath} q={q} />
+          <a
+            href={`/api/exportar?${new URLSearchParams({
+              ...(modulo ? { modulo } : sexo ? { sexo } : {}),
+              ...(soloActivos ? { estado: "ACTIVOS" } : soloBajas ? { estado: "BAJAS" } : {}),
+            })}`}
+            title="Exportar a Excel (CSV) los animales de esta lista"
+            aria-label="Exportar esta lista a CSV (Excel)"
+            className={`${claseBoton("secundario")} shrink-0 px-3.5`}
+          >
+            <IconoRespaldo className="h-[18px] w-[18px]" />
+            CSV
+          </a>
+        </div>
+      </div>
 
       {n === 0 ? (
         <Card>
@@ -251,82 +275,89 @@ export async function ListaAnimales({
               <Vacio
                 mensaje="Todavía no hay animales aquí. Empieza registrando el primero."
                 accionHref={agregarModulo ? `/animales/nuevo?modulo=${agregarModulo}` : "/animales/nuevo"}
-                accionLabel="+ Agregar animal"
+                accionLabel="Agregar animal"
               />
             )
           )}
         </Card>
       ) : (
         <>
-          {/* Vista MÓVIL: tarjetas apiladas, cómodas para tocar. */}
-          <ul className="space-y-2 sm:hidden">
+          {/* Vista MÓVIL: un solo bloque con filas separadas por líneas finas (como los pendientes de
+              Inicio). Cada fila es un enlace completo de 60+ px; caben casi el doble que con una
+              tarjeta por animal. */}
+          <ul className={`${claseSuperficie} divide-y divide-stone-100 overflow-hidden sm:hidden dark:divide-stone-800`}>
             {filtradas.map(({ a, etapa, repro, partoEstimado, listaParaMontar }) => (
               <li key={a.id}>
                 <Link
                   href={`/animales/${a.id}`}
-                  className="flex items-center gap-3 rounded-xl border border-stone-200/80 bg-white p-3 shadow-card active:bg-marca-50/40 dark:border-stone-800 dark:bg-stone-900 dark:active:bg-stone-800/60"
+                  className="flex min-h-[3.75rem] items-center gap-3 px-3 py-2.5 transition-colors hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/60 dark:active:bg-stone-800"
                 >
                   {a.fotoMiniatura ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={a.fotoMiniatura}
                       alt=""
-                      className="h-12 w-12 shrink-0 rounded-lg object-cover ring-1 ring-stone-200 dark:ring-stone-700"
+                      loading="lazy"
+                      decoding="async"
+                      className="h-11 w-11 shrink-0 rounded-xl object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                     />
                   ) : (
-                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400">
-                      <IconoAnimal sexo={a.sexo} className="h-6 w-6" />
+                    // Sin foto: marcador pequeño y discreto (no compite con las fotos reales).
+                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-stone-50 text-stone-400 dark:bg-stone-800/60 dark:text-stone-500">
+                      <IconoAnimal sexo={a.sexo} className="h-5 w-5" />
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="truncate font-semibold text-stone-800 dark:text-stone-100">
+                      <span className="truncate font-semibold text-stone-900 dark:text-stone-50">
                         {a.nombre ? a.nombre : etiquetaArete(a)}
                         {a.nombre && (
-                          <span className="ml-1 font-normal text-stone-500 dark:text-stone-400">{etiquetaArete(a)}</span>
+                          <span className="ml-1.5 font-normal text-stone-500 dark:text-stone-400">{etiquetaArete(a)}</span>
                         )}
                       </span>
                       {/* Solo se marca el estado cuando NO está activo (lo normal no necesita etiqueta). */}
                       {a.estado !== "ACTIVO" && <EstadoBadge estado={a.estado} />}
                     </div>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                      {/* En Toros/Vacas el sexo ya se sabe por la lista. */}
-                      {!sexo && <SexoBadge sexo={a.sexo} />}
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      {/* El sexo ya se sabe por la lista (por sexo) o por el módulo: en
+                          lechería todas son hembras y en reproductores todos son machos. */}
+                      {mostrarSexo && <SexoBadge sexo={a.sexo} />}
                       {a.modulo === "LECHERIA" && a.categoria && <Badge>{CATEGORIA_LABEL[a.categoria] ?? a.categoria}</Badge>}
                       <Situacion etapa={etapa} repro={repro} partoEstimado={partoEstimado} listaParaMontar={listaParaMontar} compacta />
                     </div>
                   </div>
-                  <IconoFlecha className="h-4 w-4 shrink-0 text-stone-300 dark:text-stone-600" />
+                  <IconoFlecha className="h-4 w-4 shrink-0 text-stone-400 dark:text-stone-600" />
                 </Link>
               </li>
             ))}
           </ul>
 
-          {/* Vista ESCRITORIO: tabla. */}
-          <Card className="hidden overflow-hidden p-0 sm:block">
+          {/* Vista TABLETA y ESCRITORIO: tabla. En tableta se oculta "Nacimiento" para que quepa. */}
+          <div className={`${claseSuperficie} hidden overflow-hidden sm:block`}>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="border-b border-stone-200 bg-stone-50/80 text-left text-xs uppercase tracking-wider text-stone-500 dark:border-stone-800 dark:bg-stone-800/50 dark:text-stone-400">
+                <thead className="border-b border-stone-200 bg-stone-50 text-left text-xs font-medium text-stone-500 dark:border-stone-800 dark:bg-stone-800/50 dark:text-stone-400">
                   <tr>
-                    <th className="w-14 px-4 py-3 font-semibold"></th>
-                    <th className="px-4 py-3 font-semibold">Arete</th>
-                    <th className="px-4 py-3 font-semibold">Nombre</th>
-                    <th className="px-4 py-3 font-semibold">Sexo</th>
-                    <th className="px-4 py-3 font-semibold">Situación</th>
-                    <th className="px-4 py-3 font-semibold">Nacimiento</th>
-                    <th className="px-4 py-3 font-semibold">Estado</th>
+                    <th scope="col" className="w-14 px-4 py-3 font-medium"><span className="sr-only">Foto</span></th>
+                    <th scope="col" className="px-4 py-3 font-medium">Animal</th>
+                    {mostrarSexo && <th scope="col" className="px-4 py-3 font-medium">Sexo</th>}
+                    <th scope="col" className="px-4 py-3 font-medium">Situación</th>
+                    <th scope="col" className="hidden px-4 py-3 font-medium md:table-cell">Nacimiento</th>
+                    {!soloActivos && <th scope="col" className="px-4 py-3 font-medium">Estado</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
                   {filtradas.map(({ a, etapa, repro, partoEstimado, listaParaMontar }) => (
-                    <tr key={a.id} className="transition-colors hover:bg-marca-50/40 dark:hover:bg-stone-800/40">
+                    <tr key={a.id} className="transition-colors hover:bg-stone-50 dark:hover:bg-stone-800/40">
                       <td className="py-2 pl-4">
                         {a.fotoMiniatura ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={a.fotoMiniatura}
                             alt=""
-                            className="h-9 w-9 rounded-lg object-cover ring-1 ring-stone-200 dark:ring-stone-700"
+                            loading="lazy"
+                            decoding="async"
+                            className="h-9 w-9 rounded-lg object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                           />
                         ) : (
                           <div className="grid h-9 w-9 place-items-center rounded-lg bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400">
@@ -334,15 +365,24 @@ export async function ListaAnimales({
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3 font-medium">
-                        <AnimalLink animal={a} />
+                      {/* Nombre y arete en una sola columna (antes el nombre salía dos veces). */}
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/animales/${a.id}`}
+                          className="rounded font-semibold text-stone-900 decoration-marca-300 underline-offset-[3px] hover:text-marca-700 hover:underline dark:text-stone-50 dark:hover:text-marca-400"
+                        >
+                          {a.nombre ?? etiquetaArete(a)}
+                        </Link>
+                        {a.nombre && <span className="ml-1.5 text-stone-500 dark:text-stone-400">{etiquetaArete(a)}</span>}
+                        {a.modulo === "LECHERIA" && a.categoria && (
+                          <span className="block text-xs text-stone-500 dark:text-stone-400">{CATEGORIA_LABEL[a.categoria] ?? a.categoria}</span>
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-stone-600 dark:text-stone-300">{a.nombre ?? "—"}</td>
-                      <td className="px-4 py-3"><SexoBadge sexo={a.sexo} /></td>
+                      {mostrarSexo && <td className="px-4 py-3"><SexoBadge sexo={a.sexo} /></td>}
                       <td className="px-4 py-3">
                         <Situacion etapa={etapa} repro={repro} partoEstimado={partoEstimado} listaParaMontar={listaParaMontar} />
                       </td>
-                      <td className="px-4 py-3 text-stone-600 dark:text-stone-300">
+                      <td className="hidden px-4 py-3 text-stone-600 md:table-cell dark:text-stone-300">
                         {formatearFecha(a.fechaNacimiento)}
                         {a.fechaNacimiento && (
                           <span className="block text-xs text-stone-500 dark:text-stone-400">
@@ -350,13 +390,13 @@ export async function ListaAnimales({
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3"><EstadoBadge estado={a.estado} /></td>
+                      {!soloActivos && <td className="px-4 py-3"><EstadoBadge estado={a.estado} /></td>}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </Card>
+          </div>
         </>
       )}
     </div>
@@ -379,19 +419,16 @@ function Situacion({
   // En las tarjetas móviles no se muestra el "—" de "sin situación".
   compacta?: boolean;
 }) {
-  if (etapa) return <Badge tono="azul" punto>{ETAPA_LABEL[etapa] ?? etapa}</Badge>;
+  // La etapa de engorde es un dato (depende solo de la edad): va en neutro.
+  if (etapa) return <Badge punto>{ETAPA_LABEL[etapa] ?? etapa}</Badge>;
   if (repro) {
-    const tono =
-      repro === "LISTA_MONTAR" || repro === "ORDENIO"
-        ? "verde"
-        : repro === "SECADO" || repro === "POR_PARIR"
-        ? "ambar"
-        : "neutral";
+    // Mismo color por estado en toda la app (TONO_REPRO en ui.tsx).
+    const tono = TONO_REPRO[repro] ?? "neutral";
     const tambienLista = listaParaMontar && repro !== "LISTA_MONTAR";
     return (
       <div className={compacta ? "flex flex-wrap items-center gap-x-2 gap-y-1" : "flex flex-col items-start gap-1"}>
         <div className="flex flex-wrap items-center gap-1">
-          <Badge tono={tono as any} punto>{etiquetaEstadoRepro(repro as any)}</Badge>
+          <Badge tono={tono} punto>{etiquetaEstadoRepro(repro as any)}</Badge>
           {tambienLista && <Badge tono="verde" punto>{ESTADO_REPRO_LABEL.LISTA_MONTAR}</Badge>}
         </div>
         {partoEstimado && (

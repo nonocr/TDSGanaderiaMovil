@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { IconoInfo, IconoMas, IconoHistorial, IconoPeso, IconoLeche, IconoArbol } from "@/components/iconos";
 
 type SeccionId = "info" | "arbol" | "grafica" | "historial" | "registrar";
@@ -28,6 +28,42 @@ export function FichaTabs({
   registrar: ReactNode;
 }) {
   const [activa, setActiva] = useState<SeccionId>("info");
+
+  // Pastilla que se desliza bajo la pestaña activa (patrón "tabs sliding"): JS mide la pestaña
+  // y escribe posición y ancho; CSS (.t-tabs-pill) hace la transición. La primera vez y al
+  // cambiar el tamaño de la ventana se coloca sin animar, para que no "entre" desde la izquierda.
+  const lista = useRef<HTMLDivElement>(null);
+  const pastilla = useRef<HTMLSpanElement>(null);
+  const primeraVez = useRef(true);
+  // Hasta medir (HTML del servidor, antes de hidratar) la pestaña activa lleva su propio fondo.
+  const [medida, setMedida] = useState(false);
+  useLayoutEffect(() => {
+    const mover = (animar: boolean) => {
+      const tab = lista.current?.querySelector<HTMLElement>(`#tab-${activa}`);
+      const p = pastilla.current;
+      if (!tab || !p) return;
+      const estilo = `translate(${tab.offsetLeft}px, ${tab.offsetTop}px)`;
+      if (!animar) {
+        p.style.transition = "none";
+        p.style.transform = estilo;
+        p.style.width = `${tab.offsetWidth}px`;
+        p.style.height = `${tab.offsetHeight}px`;
+        void p.offsetWidth; // fuerza el reflow antes de devolver la transición
+        p.style.transition = "";
+      } else {
+        p.style.transform = estilo;
+        p.style.width = `${tab.offsetWidth}px`;
+        p.style.height = `${tab.offsetHeight}px`;
+      }
+      p.style.opacity = "1";
+      setMedida(true);
+    };
+    mover(!primeraVez.current);
+    primeraVez.current = false;
+    const alRedimensionar = () => mover(false);
+    window.addEventListener("resize", alRedimensionar);
+    return () => window.removeEventListener("resize", alRedimensionar);
+  }, [activa]);
 
   const tabsVisibles: { id: SeccionId; label: string; Icono: IconoTab }[] = [
     { id: "info", label: "Info", Icono: IconoInfo },
@@ -75,9 +111,21 @@ export function FichaTabs({
       {/* Barra de pestañas: en móvil las 5 caben a lo ancho (icono + texto); no se imprime. */}
       <div
         id="pestanas-ficha"
-        className="no-print sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 mb-4 scroll-mt-[calc(3.5rem+env(safe-area-inset-top))] border-b border-stone-200 bg-stone-100 px-2 sm:mx-0 sm:rounded-xl sm:border sm:bg-white sm:shadow-card lg:top-0 lg:scroll-mt-0 dark:border-stone-800 dark:bg-stone-950 sm:dark:bg-stone-900"
+        className="no-print sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 mb-4 scroll-mt-[calc(3.5rem+env(safe-area-inset-top))] bg-stone-100/95 px-2 shadow-[0_1px_0_rgb(28_25_23/0.07)] backdrop-blur-md sm:mx-0 sm:rounded-2xl sm:bg-white sm:px-1.5 sm:shadow-card sm:ring-1 sm:ring-stone-900/[0.06] lg:top-0 lg:scroll-mt-0 dark:bg-stone-950/95 dark:shadow-[0_1px_0_rgb(255_255_255/0.07)] sm:dark:bg-stone-900 sm:dark:ring-white/[0.08]"
       >
-        <div role="tablist" aria-label="Secciones del animal" onKeyDown={onTeclaTab} className={`grid gap-1 py-1.5 sm:flex ${tabsVisibles.length === 5 ? "grid-cols-5" : "grid-cols-4"}`}>
+        <div
+          ref={lista}
+          role="tablist"
+          aria-label="Secciones del animal"
+          onKeyDown={onTeclaTab}
+          className={`relative grid gap-1 py-1.5 sm:flex ${tabsVisibles.length === 5 ? "grid-cols-5" : "grid-cols-4"}`}
+        >
+          {/* Pastilla de la pestaña activa (se desliza). Invisible hasta medir la primera vez. */}
+          <span
+            ref={pastilla}
+            aria-hidden="true"
+            className="t-tabs-pill pointer-events-none absolute left-0 top-0 rounded-xl bg-marca-600 opacity-0 shadow-boton"
+          />
           {tabsVisibles.map((t) => {
             const activo = activa === t.id;
             const Icono = t.Icono;
@@ -91,10 +139,12 @@ export function FichaTabs({
                 tabIndex={activo ? 0 : -1}
                 onClick={() => elegir(t.id)}
                 className={
-                  "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-2 text-[11px] font-medium transition-colors sm:min-h-0 sm:flex-row sm:gap-1.5 sm:px-3 sm:py-2 sm:text-sm " +
+                  "relative z-[1] flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-2 text-[11px] font-medium transition-colors duration-[250ms] sm:min-h-10 sm:flex-row sm:gap-1.5 sm:px-3.5 sm:py-2 sm:text-sm " +
                   (activo
-                    ? "bg-marca-600 text-white shadow-sm"
-                    : "text-stone-600 active:bg-stone-200/70 sm:hover:bg-stone-200/60 dark:text-stone-300 dark:active:bg-stone-800 sm:dark:hover:bg-stone-800")
+                    ? medida
+                      ? "text-white"
+                      : "bg-marca-600 text-white"
+                    : "text-stone-600 active:bg-stone-200/70 sm:hover:bg-stone-100 sm:hover:text-stone-900 dark:text-stone-300 dark:active:bg-stone-800 sm:dark:hover:bg-stone-800 sm:dark:hover:text-stone-100")
                 }
               >
                 <Icono className="h-5 w-5 sm:h-4 sm:w-4" />
@@ -121,7 +171,8 @@ export function FichaTabs({
               role="tabpanel"
               aria-labelledby={`tab-${t.id}`}
               className={
-                (esActiva ? "block" : "hidden") +
+                // La sección que se abre aparece con un fundido corto (sin mover el resto).
+                (esActiva ? "t-aparecer block" : "hidden") +
                 " " +
                 (seImprime
                   ? `print:block print-evitar-corte ${impr!.orderClass}`

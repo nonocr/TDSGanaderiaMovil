@@ -6,11 +6,8 @@ import { useState } from "react";
 import Link from "next/link";
 // IconoImprimir se mantiene importado para el botón de imprimir oculto (ver abajo).
 import { IconoEditar, IconoImprimir, IconoBasura } from "@/components/iconos";
-
-const BOTON =
-  "inline-flex h-10 min-w-0 items-center justify-center gap-1 rounded-xl border px-2 text-sm font-medium transition-colors disabled:opacity-50 sm:gap-1.5 sm:px-3";
-const NEUTRO =
-  "border-stone-300 bg-white text-stone-700 hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700";
+import { AvisoError, Spinner, claseBoton, claseBotonIcono } from "@/components/ui";
+import { confirmar } from "@/components/Dialogos";
 
 // Acciones de la ficha: Editar, Imprimir (o guardar en PDF) y Eliminar.
 export function AccionesAnimal({
@@ -25,12 +22,14 @@ export function AccionesAnimal({
   const [borrando, setBorrando] = useState(false);
 
   async function eliminar() {
-    if (
-      !confirm(
-        `¿Eliminar a ${etiqueta}? Se borrarán también sus eventos (montas, partos, leche, pesos, etapas) , las montas donde fue el toro y el parto en que nació (si fue su única cría). Sus crías registradas se conservan, pero quedan sin ese padre/madre. Si murió o se vendió, mejor cambia su estado. Esta acción no se puede deshacer.`
-      )
-    )
-      return;
+    const si = await confirmar({
+      titulo: `¿Eliminar a ${etiqueta}?`,
+      mensaje:
+        "Se borrarán también sus eventos (montas, partos, leche, pesos, etapas), las montas donde fue el toro y el parto en que nació (si fue su única cría). Sus crías registradas se conservan, pero quedan sin ese padre/madre.\n\nSi murió o se vendió, mejor cambia su estado en Editar. Esta acción no se puede deshacer.",
+      accion: "Eliminar animal",
+      peligro: true,
+    });
+    if (!si) return;
 
     setError(null);
     setBorrando(true);
@@ -47,15 +46,18 @@ export function AccionesAnimal({
 
   return (
     <div className="no-print flex w-full flex-col gap-2 sm:w-auto sm:items-end">
-      <div className="grid grid-cols-2 gap-2 sm:flex">
-        <Link href={`/animales/${animalId}/editar`} className={`${BOTON} ${NEUTRO}`}>
+      {/* "Editar" es la acción del día a día; "Eliminar" queda aparte y discreto (solo icono, con
+          su nombre para lectores de pantalla), para no tocarlo por error con el pulgar. Sigue
+          pidiendo confirmación. */}
+      <div className="flex items-center gap-3">
+        <Link href={`/animales/${animalId}/editar`} className={`${claseBoton("secundario")} flex-1 sm:flex-none`}>
           <IconoEditar className="h-4 w-4 shrink-0" />
           Editar
         </Link>
         {/* Botón de imprimir oculto a petición del dueño (2026-10-13). No se borra por si
             se quiere restaurar: basta con descomentar este bloque y volver la rejilla de arriba
             a `grid-cols-3`. Abre el diálogo de impresión (imprimir o guardar como PDF). */}
-        {/* <button type="button" onClick={() => window.print()} className={`${BOTON} ${NEUTRO}`}>
+        {/* <button type="button" onClick={() => window.print()} className={claseBoton("secundario")}>
           <IconoImprimir className="h-4 w-4 shrink-0" />
           Imprimir
         </button> */}
@@ -63,17 +65,15 @@ export function AccionesAnimal({
           type="button"
           onClick={eliminar}
           disabled={borrando}
-          className={`${BOTON} border-red-200 bg-white text-red-700 hover:bg-red-50 active:bg-red-100 dark:border-red-900 dark:bg-stone-800 dark:text-red-300 dark:hover:bg-stone-700`}
+          aria-busy={borrando || undefined}
+          aria-label={borrando ? "Eliminando…" : `Eliminar a ${etiqueta}`}
+          title="Eliminar animal"
+          className={claseBotonIcono("peligroDiscreto")}
         >
-          <IconoBasura className="h-4 w-4 shrink-0" />
-          {borrando ? "…" : "Eliminar"}
+          {borrando ? <Spinner /> : <IconoBasura className="h-5 w-5" />}
         </button>
       </div>
-      {error && (
-        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 sm:max-w-md dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-          {error}
-        </div>
-      )}
+      {error && <AvisoError className="sm:max-w-md">{error}</AvisoError>}
     </div>
   );
 }

@@ -6,17 +6,28 @@ import {
   type TipoEventoCalendario,
 } from "@/lib/alertas";
 import { Card, SectionTitle, Badge, PageHeader, Vacio } from "@/components/ui";
-import { IconoCalendario } from "@/components/iconos";
+import { IconoCalendario, IconoFlecha } from "@/components/iconos";
 import { formatearFecha } from "@/lib/fechas";
 import { etiquetaArete } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
-const TONO_EVENTO: Record<TipoEventoCalendario, "verde" | "ambar" | "rojo"> = {
+// Mismo significado de color que en toda la app (ui.tsx): ámbar = se acerca algo que atender,
+// verde = lista. El rojo queda para lo vencido (los partos atrasados se ven en Inicio).
+const TONO_EVENTO: Record<TipoEventoCalendario, "verde" | "ambar"> = {
   SECADO: "ambar",
-  POR_PARIR: "rojo",
+  POR_PARIR: "ambar",
   LISTA_MONTAR: "verde",
 };
+
+// Día del mes y día de la semana (en UTC, como se guardan las fechas).
+function partesFecha(iso: string) {
+  const d = new Date(iso);
+  return {
+    dia: d.getUTCDate(),
+    semana: d.toLocaleDateString("es-MX", { weekday: "short", timeZone: "UTC" }).replace(".", ""),
+  };
+}
 
 // "2026-10" -> "Octubre 2026" (capitalizado).
 function etiquetaMes(clave: string): string {
@@ -59,38 +70,53 @@ export default async function CalendarioPage() {
           />
         </Card>
       ) : (
-        <div className="space-y-6">
+        // En escritorio, los meses en dos columnas para no estirar las filas.
+        <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
           {meses.map((k) => (
             <Card key={k}>
-              <SectionTitle>{etiquetaMes(k)}</SectionTitle>
-              <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-                {grupos.get(k)!.map((e) => (
-                  <li key={`${e.tipo}-${e.animalId}-${e.fecha}`}>
-                    <Link
-                      href={`/animales/${e.animalId}`}
-                      className="-mx-2 flex items-start justify-between gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800"
-                    >
-                      <div className="flex min-w-0 items-start gap-3">
-                        <Badge tono={TONO_EVENTO[e.tipo]} punto>
-                          {EVENTO_CAL_LABEL[e.tipo]}
-                        </Badge>
-                        <span className="min-w-0 font-medium text-stone-800 dark:text-stone-100">
-                          {e.nombre ? `${e.nombre} (${etiquetaArete(e)})` : etiquetaArete(e)}
-                        </span>
-                      </div>
-                      <span className="shrink-0 whitespace-nowrap text-xs text-stone-500 dark:text-stone-400">
-                        {formatearFecha(e.fecha)}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
+              <SectionTitle conteo={grupos.get(k)!.length}>{etiquetaMes(k)}</SectionTitle>
+              <ul className="-mx-2 divide-y divide-stone-100 dark:divide-stone-800">
+                {grupos.get(k)!.map((e) => {
+                  const { dia, semana } = partesFecha(e.fecha);
+                  return (
+                    <li key={`${e.tipo}-${e.animalId}-${e.fecha}`}>
+                      <Link
+                        href={`/animales/${e.animalId}`}
+                        className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800"
+                      >
+                        <time
+                          dateTime={e.fecha.slice(0, 10)}
+                          title={formatearFecha(e.fecha)}
+                          className="grid h-12 w-12 shrink-0 place-content-center rounded-xl bg-stone-100 text-center leading-none dark:bg-stone-800"
+                        >
+                          <span className="text-lg font-bold text-stone-900 dark:text-stone-50">{dia}</span>
+                          <span className="mt-0.5 text-[11px] font-medium capitalize text-stone-500 dark:text-stone-400">{semana}</span>
+                        </time>
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate font-semibold text-stone-900 dark:text-stone-50">
+                            {e.nombre ?? etiquetaArete(e)}
+                            {e.nombre && (
+                              <span className="ml-1.5 font-normal text-stone-500 dark:text-stone-400">{etiquetaArete(e)}</span>
+                            )}
+                          </span>
+                          <span className="mt-1 block">
+                            <Badge tono={TONO_EVENTO[e.tipo]} punto>
+                              {EVENTO_CAL_LABEL[e.tipo]}
+                            </Badge>
+                          </span>
+                        </div>
+                        <IconoFlecha className="h-4 w-4 shrink-0 text-stone-400 dark:text-stone-600" />
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </Card>
           ))}
         </div>
       )}
 
-      <p className="mt-6 text-xs text-stone-500 dark:text-stone-400">
+      <p className="mt-6 max-w-prose text-xs text-stone-500 dark:text-stone-400">
         Fechas estimadas del ciclo: secado ~7 meses tras la monta, parto ~9 meses, y
         &quot;lista para montar&quot; ~40 días después del parto. Solo se muestran hembras activas.
       </p>

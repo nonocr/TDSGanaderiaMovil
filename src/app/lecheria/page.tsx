@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { ListaAnimales } from "@/components/ListaAnimales";
 import { AvisoBajas } from "@/components/AvisoBajas";
-import { TotalesPrincipales, DesgloseGrid, type Celda } from "@/components/ResumenConteos";
-import { conteosModulo, desgloseReproLecheria, type ConteosModulo } from "@/lib/modulos";
+import { DesgloseGrid, type Celda } from "@/components/ResumenConteos";
+import { ACENTO, TONO_REPRO, claseSuperficie } from "@/components/ui";
+import { conteosModulo, desgloseReproLecheria } from "@/lib/modulos";
 import { ESTADO_REPRO_LABEL } from "@/lib/estado";
 import {
   IconoLeche,
@@ -16,13 +17,14 @@ import {
 
 export const dynamic = "force-dynamic";
 
-// Desglose por estado reproductivo (igual que la Home anterior, pero solo lechería).
+// Desglose por estado reproductivo. Cada estado con el MISMO color que su etiqueta en la lista y
+// en la ficha (TONO_REPRO en ui.tsx).
 const REPRO_CELDA = [
-  { clave: "ORDENIO", etiqueta: ESTADO_REPRO_LABEL.ORDENIO, Icono: IconoLeche, acento: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300" },
-  { clave: "SECADO", etiqueta: ESTADO_REPRO_LABEL.SECADO, Icono: IconoSecado, acento: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" },
-  { clave: "POR_PARIR", etiqueta: ESTADO_REPRO_LABEL.POR_PARIR, Icono: IconoReloj, acento: "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300" },
-  { clave: "LISTA_MONTAR", etiqueta: ESTADO_REPRO_LABEL.LISTA_MONTAR, Icono: IconoCorazon, acento: "bg-marca-100 text-marca-700 dark:bg-marca-950 dark:text-marca-300" },
-  { clave: "SIN_CICLO", etiqueta: "Sin ciclo", Icono: IconoVaca, acento: "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400" },
+  { clave: "ORDENIO", etiqueta: ESTADO_REPRO_LABEL.ORDENIO, Icono: IconoLeche },
+  { clave: "SECADO", etiqueta: ESTADO_REPRO_LABEL.SECADO, Icono: IconoSecado },
+  { clave: "POR_PARIR", etiqueta: ESTADO_REPRO_LABEL.POR_PARIR, Icono: IconoReloj },
+  { clave: "LISTA_MONTAR", etiqueta: ESTADO_REPRO_LABEL.LISTA_MONTAR, Icono: IconoCorazon },
+  { clave: "SIN_CICLO", etiqueta: "Sin ciclo", Icono: IconoVaca },
 ] as const;
 
 export default async function LecheriaPage({
@@ -38,55 +40,56 @@ export default async function LecheriaPage({
 
   return (
     <div className="space-y-6">
-      <Resumen conteos={conteos} repro={repro} />
-      <Link
-        href="/leche"
-        className="flex items-center justify-between rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-medium text-sky-800 hover:bg-sky-100 dark:border-sky-900 dark:bg-sky-950 dark:text-sky-200 dark:hover:bg-sky-900"
-      >
-        <span className="flex items-center gap-2">
-          <IconoGrafica className="h-5 w-5" />
-          Ver producción de leche (gráficas)
-        </span>
-        <IconoFlecha className="h-4 w-4" />
-      </Link>
-      <ListaAnimales modulo="LECHERIA" titulo="Lechería" filtro={filtro} q={q} basePath="/lecheria" soloActivos agregarModulo="LECHERIA" />
+      <ListaAnimales
+        modulo="LECHERIA"
+        titulo="Lechería"
+        filtro={filtro}
+        q={q}
+        basePath="/lecheria"
+        soloActivos
+        agregarModulo="LECHERIA"
+        resumen={
+          <>
+            <Resumen repro={repro} />
+            <Link
+              href="/leche"
+              className={`${claseSuperficie} group flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/70`}
+            >
+              <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${ACENTO.azul}`}>
+                <IconoGrafica className="h-5 w-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-stone-900 dark:text-stone-50">Producción de leche</span>
+                <span className="block text-xs text-stone-600 dark:text-stone-400">Litros por día del hato y por vaca</span>
+              </span>
+              <IconoFlecha className="h-4 w-4 text-stone-400 transition-transform duration-150 group-hover:translate-x-0.5 dark:text-stone-500" />
+            </Link>
+          </>
+        }
+      />
       <AvisoBajas cantidad={conteos.then((c) => c.inactivos)} href="/lecheria/bajas" femenino />
     </div>
   );
 }
 
-async function Resumen({
-  conteos: conteosP,
-  repro: reproP,
-}: {
-  conteos: Promise<ConteosModulo>;
-  repro: Promise<Record<string, number>>;
-}) {
-  const [conteos, repro] = await Promise.all([conteosP, reproP]);
-
-  // Todas las de lechería son hembras: solo mostramos el total.
-  const totales: Celda[] = [
-    { clave: "total", valor: conteos.total, etiqueta: "Vacas en lechería", Icono: IconoLeche, acento: "bg-marca-100 text-marca-700 dark:bg-marca-950 dark:text-marca-300", href: "/lecheria" },
-  ];
+async function Resumen({ repro: reproP }: { repro: Promise<Record<string, number>> }) {
+  const repro = await reproP;
 
   const reproCeldas: Celda[] = REPRO_CELDA.map((e) => ({
     clave: e.clave,
     valor: repro[e.clave] ?? 0,
     etiqueta: e.etiqueta,
     Icono: e.Icono,
-    acento: e.acento,
+    acento: ACENTO[TONO_REPRO[e.clave] ?? "neutral"],
     // "Sin ciclo" no tiene filtro propio en la lista: celda estática.
     href: e.clave === "SIN_CICLO" ? undefined : `/lecheria?filtro=${e.clave}`,
   }));
 
   return (
-    <>
-      <TotalesPrincipales celdas={totales} />
-      <DesgloseGrid
-        titulo="Por estado reproductivo"
-        celdas={reproCeldas}
-        nota='Estado derivado del ciclo de cada vaca, o el fijado a mano en su ficha. "Sin ciclo" son vacas sin montas registradas.'
-      />
-    </>
+    <DesgloseGrid
+      titulo="Por estado reproductivo"
+      celdas={reproCeldas}
+      nota='Estado derivado del ciclo de cada vaca, o el fijado a mano en su ficha. "Sin ciclo" son vacas sin montas registradas.'
+    />
   );
 }

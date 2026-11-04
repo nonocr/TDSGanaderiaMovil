@@ -40,7 +40,12 @@ const nextConfig = {
     staleTimes: { dynamic: 30 },
   },
   async headers() {
-    return [{ source: "/:path*", headers: cabecerasSeguridad }];
+    return [
+      { source: "/:path*", headers: cabecerasSeguridad },
+      // El service worker se revisa en cada visita: así una versión nueva (p. ej. la que deja de
+      // guardar archivos sin hash) reemplaza a la vieja enseguida y no se queda en la caché HTTP.
+      { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }] },
+    ];
   },
   // Los navegadores piden /favicon.ico por su cuenta; se sirve el favicon.png existente.
   async rewrites() {

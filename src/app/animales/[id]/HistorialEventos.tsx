@@ -4,6 +4,8 @@ import { useCallback, useRef, useState } from "react";
 import { FilaEvento, type DatosFila } from "./FilaEvento";
 import { IconoHistorial, IconoCerrar } from "@/components/iconos";
 import { useModalAccesible } from "@/lib/usar-modal";
+import { usePresencia } from "@/lib/usar-presencia";
+import { claseBoton, claseBotonIcono } from "@/components/ui";
 
 type Opcion = { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 
@@ -27,11 +29,12 @@ export function HistorialEventos({
   // devuelve el foco a "Ver todo" al cerrar (ver src/lib/usar-modal.ts).
   const cerrar = useCallback(() => setAmpliado(false), []);
   useModalAccesible(ampliado, panel, cerrar);
+  const modal = usePresencia(ampliado, 150);
 
   if (eventos.length === 0) {
     return (
-      <p className="text-sm text-stone-500 dark:text-stone-400">
-        Sin eventos registrados todavía.
+      <p className="py-4 text-center text-sm text-stone-500 dark:text-stone-400">
+        Sin eventos registrados todavía. Se agregan desde la pestaña Registrar.
       </p>
     );
   }
@@ -67,7 +70,7 @@ export function HistorialEventos({
             ref={botonAbrir}
             type="button"
             onClick={() => setAmpliado(true)}
-            className="mt-3 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:border-marca-300 hover:text-marca-700 dark:border-stone-800 dark:bg-stone-800/50 dark:text-stone-300 dark:hover:border-marca-700 dark:hover:text-marca-300"
+            className={`${claseBoton("secundario")} mt-3 w-full`}
           >
             Ver todo el historial ({eventos.length} registros)
           </button>
@@ -78,45 +81,46 @@ export function HistorialEventos({
       <div className="hidden print:block">{lista(eventos)}</div>
 
       {/* Modal ampliado: pantalla casi completa con scroll. */}
-      {ampliado && (
+      {modal.montado && (
         <div
-          className="fixed inset-0 z-50 flex flex-col p-3 sm:p-6"
+          className="fixed inset-0 z-50 flex flex-col p-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:p-6"
           role="dialog"
           aria-modal="true"
           aria-labelledby="titulo-historial"
         >
           {/* Fondo oscuro */}
           <div
-            className="absolute inset-0 bg-black/50"
+            className="t-fondo absolute inset-0 bg-stone-950/50"
+            data-estado={modal.estado}
             onClick={() => setAmpliado(false)}
           />
           {/* Panel */}
-          <div ref={panel} className="relative z-10 mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xl dark:border-stone-800 dark:bg-stone-900">
+          <div
+            ref={panel}
+            data-estado={modal.estado}
+            className="t-modal relative z-10 mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden rounded-3xl bg-stone-50 shadow-flotante ring-1 ring-stone-900/5 dark:bg-stone-950 dark:ring-white/10"
+          >
             {/* Encabezado */}
-            <div className="flex items-center justify-between gap-3 border-b border-stone-200 bg-stone-50/80 px-5 py-4 dark:border-stone-800 dark:bg-stone-800/40">
-              <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 place-items-center rounded-xl bg-marca-100 text-marca-700 dark:bg-marca-950 dark:text-marca-300">
+            <div className="flex items-center justify-between gap-3 bg-white px-4 py-3 shadow-[0_1px_0_rgb(28_25_23/0.07)] sm:px-5 sm:py-4 dark:bg-stone-900 dark:shadow-[0_1px_0_rgb(255_255_255/0.07)]">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-marca-100 text-marca-700 dark:bg-marca-950 dark:text-marca-300">
                   <IconoHistorial className="h-5 w-5" />
                 </span>
-                <div>
-                  <h3 id="titulo-historial" className="text-base font-bold text-stone-800 dark:text-stone-100">
+                <div className="min-w-0">
+                  <h3 id="titulo-historial" className="text-base font-semibold text-stone-900 dark:text-stone-50">
                     Historial completo
                   </h3>
-                  <p className="text-xs text-stone-500 dark:text-stone-400">
+                  <p className="truncate text-xs text-stone-500 dark:text-stone-400">
                     {eventos.length} registros · del más reciente al más antiguo
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={cerrar}
-                className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
-              >
-                <IconoCerrar className="h-4 w-4" /> Cerrar
+              <button type="button" onClick={cerrar} aria-label="Cerrar historial" className={claseBotonIcono("discreto")}>
+                <IconoCerrar className="h-5 w-5" />
               </button>
             </div>
             {/* Área desplazable con todos los eventos. */}
-            <div className="min-h-0 flex-1 overflow-auto bg-stone-50/40 p-4 dark:bg-stone-950/30">
+            <div className="min-h-0 flex-1 overflow-auto overscroll-contain p-3 sm:p-4">
               {listaAmpliada(eventos)}
             </div>
           </div>

@@ -5,6 +5,8 @@ import { useState } from "react";
 import { ETAPA_LABEL } from "@/lib/tipos";
 import { llamarApi } from "@/lib/api-cliente";
 import { IconoEditar, IconoBasura } from "@/components/iconos";
+import { AvisoError, BotonEnviar, Spinner, claseBoton, claseBotonIcono, claseCampo, claseEtiqueta } from "@/components/ui";
+import { avisar, confirmar } from "@/components/Dialogos";
 
 // Acciones por etapa: editar (sobre todo para agregar/cambiar la fecha de fin) y eliminar.
 export function AccionesEtapa({
@@ -51,34 +53,31 @@ export function AccionesEtapa({
 
   async function eliminar() {
     const nombre = ETAPA_LABEL[etapaActual] ?? etapaActual;
-    if (
-      !confirm(
-        `¿Eliminar el registro de la etapa “${nombre}”?\n\n` +
-          `Se borrará de forma permanente y no se puede deshacer.`
-      )
-    )
-      return;
+    const si = await confirmar({
+      titulo: `¿Eliminar el registro de la etapa “${nombre}”?`,
+      mensaje: "Se borrará de forma permanente y no se puede deshacer.",
+      accion: "Eliminar",
+      peligro: true,
+    });
+    if (!si) return;
     setBorrando(true);
     const r = await llamarApi(`/api/etapas/${etapaId}`, { method: "DELETE" });
     setBorrando(false);
     if (!r.ok) {
-      alert(r.error);
+      avisar(r.error);
       return;
     }
+    avisar("Registro de etapa eliminado.", "ok");
     router.refresh();
   }
 
-  const campo = "mt-1 w-full rounded border border-stone-300 px-2 py-1 text-sm dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100";
-  const etiqueta = "block text-xs font-medium text-stone-600 dark:text-stone-400";
+  const campo = claseCampo;
+  const etiqueta = claseEtiqueta;
 
   if (editando) {
     return (
-      <form onSubmit={guardar} className="mt-2 space-y-2 rounded bg-stone-50 p-2 dark:bg-stone-800/60">
-        {error && (
-          <div role="alert" className="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-            {error}
-          </div>
-        )}
+      <form onSubmit={guardar} className="mt-2 space-y-3 rounded-xl bg-stone-50 p-3 ring-1 ring-inset ring-stone-900/5 dark:bg-stone-800/60 dark:ring-white/5">
+        {error && <AvisoError>{error}</AvisoError>}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-2">
           <div>
             <label htmlFor={`etapa-inicio-${etapaId}`} className={etiqueta}>Inicio</label>
@@ -91,18 +90,8 @@ export function AccionesEtapa({
         </div>
         <input name="notas" aria-label="Notas" maxLength={2000} placeholder="Notas (opcional)" defaultValue={notas ?? ""} className={campo} />
         <div className="flex gap-2">
-          <button
-            type="submit"
-            disabled={guardando}
-            className="rounded-lg bg-marca-700 px-4 py-2 text-sm font-medium text-white hover:bg-marca-800 disabled:opacity-50"
-          >
-            {guardando ? "Guardando…" : "Guardar"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setEditando(false)}
-            className="rounded-lg border border-stone-300 px-4 py-2 text-sm text-stone-600 hover:bg-stone-100 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-700"
-          >
+          <BotonEnviar cargando={guardando}>Guardar</BotonEnviar>
+          <button type="button" onClick={() => setEditando(false)} className={claseBoton("secundario")}>
             Cancelar
           </button>
         </div>
@@ -116,7 +105,7 @@ export function AccionesEtapa({
         onClick={() => setEditando(true)}
         aria-label="Editar etapa"
         title="Editar"
-        className="grid h-11 w-11 place-items-center rounded-lg text-marca-700 transition-colors hover:bg-marca-50 active:bg-marca-100 dark:text-marca-400 dark:hover:bg-stone-800"
+        className={claseBotonIcono("marcaDiscreto")}
       >
         <IconoEditar className="h-4 w-4" />
       </button>
@@ -124,10 +113,11 @@ export function AccionesEtapa({
         onClick={eliminar}
         disabled={borrando}
         aria-label="Eliminar etapa"
+        aria-busy={borrando || undefined}
         title="Eliminar"
-        className="grid h-11 w-11 place-items-center rounded-lg text-red-600 transition-colors hover:bg-red-50 active:bg-red-100 disabled:opacity-50 dark:text-red-400 dark:hover:bg-stone-800"
+        className={claseBotonIcono("peligroDiscreto")}
       >
-        {borrando ? <span className="text-xs">…</span> : <IconoBasura className="h-4 w-4" />}
+        {borrando ? <Spinner /> : <IconoBasura className="h-4 w-4" />}
       </button>
     </div>
   );

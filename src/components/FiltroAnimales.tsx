@@ -38,17 +38,18 @@ export function FiltroAnimales({
       <IconoFiltro
         className={
           "pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 " +
-          (activo ? "text-marca-600 dark:text-marca-400" : "text-stone-400")
+          (activo ? "text-marca-700 dark:text-marca-400" : "text-stone-500 dark:text-stone-400")
         }
       />
       <select
         value={valor ?? ""}
         onChange={onChange}
+        aria-label="Filtrar la lista"
         className={
-          "h-11 w-full rounded-xl border bg-white pl-10 pr-8 text-sm outline-none focus:border-marca-500 focus:ring-2 focus:ring-marca-200 sm:h-10 sm:w-48 dark:bg-stone-800 dark:text-stone-100 " +
+          "h-11 w-full rounded-xl border pl-10 pr-8 text-sm outline-none transition-[border-color,box-shadow,background-color] duration-150 focus:border-marca-500 focus:ring-[3px] focus:ring-marca-500/20 sm:h-10 sm:w-48 dark:text-stone-100 dark:focus:ring-marca-400/25 " +
           (activo
-            ? "border-marca-400 font-medium text-marca-800 dark:border-marca-700 dark:text-marca-200"
-            : "border-stone-300 dark:border-stone-700")
+            ? "border-marca-500 bg-marca-50 font-medium text-marca-900 dark:border-marca-600 dark:bg-marca-950 dark:text-marca-100"
+            : "border-stone-300 bg-white text-stone-800 hover:border-stone-400 dark:border-stone-700 dark:bg-stone-800 dark:hover:border-stone-600")
         }
       >
         <option value="">Todos</option>

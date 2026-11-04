@@ -74,6 +74,12 @@ export async function cargarVacasConCiclo(modulo?: string): Promise<VacaConCiclo
   return modulo ? todas.filter((v) => v.modulo === modulo) : todas;
 }
 
+// "1 día" / "15 días" (antes "día(s)"). Solo redacción: no cambia ningún cálculo.
+function nDias(n: number): string {
+  const a = Math.abs(n);
+  return `${a} ${a === 1 ? "día" : "días"}`;
+}
+
 export async function calcularPendientes(hoy: Date = new Date()): Promise<Pendiente[]> {
   const vacas = await cargarVacasConCiclo();
 
@@ -100,8 +106,10 @@ export async function calcularPendientes(hoy: Date = new Date()): Promise<Pendie
           diasRestantes: dias,
           mensaje:
             dias > 0
-              ? `Lista para montar en ${dias} día(s).`
-              : `Lista para montar (desde hace ${Math.abs(dias)} día(s)).`,
+              ? `Lista para montar en ${nDias(dias)}.`
+              : dias === 0
+              ? "Lista para montar desde hoy."
+              : `Lista para montar (desde hace ${nDias(dias)}).`,
         });
       }
       continue;
@@ -128,8 +136,10 @@ export async function calcularPendientes(hoy: Date = new Date()): Promise<Pendie
         diasRestantes: diasParto,
         mensaje:
           diasParto > 0
-            ? `Parto estimado en ${diasParto} día(s).`
-            : `Parto estimado vencido hace ${Math.abs(diasParto)} día(s); registra el parto.`,
+            ? `Parto estimado en ${nDias(diasParto)}.`
+            : diasParto === 0
+            ? "Parto estimado para hoy."
+            : `Parto estimado vencido hace ${nDias(diasParto)}; registra el parto.`,
       });
     } else if (diasSecado <= VENTANA_DIAS) {
       // Aún no toca el parto, pero el secado está cerca o en curso.
@@ -144,8 +154,10 @@ export async function calcularPendientes(hoy: Date = new Date()): Promise<Pendie
         diasRestantes: diasSecado,
         mensaje:
           diasSecado > 0
-            ? `Entra en secado en ${diasSecado} día(s).`
-            : `En secado (desde hace ${Math.abs(diasSecado)} día(s)).`,
+            ? `Entra en secado en ${nDias(diasSecado)}.`
+            : diasSecado === 0
+            ? "Entra en secado hoy."
+            : `En secado (desde hace ${nDias(diasSecado)}).`,
       });
     } else if (diasDesdeMonta >= 0 && diasDesdeMonta <= VENTANA_DIAS) {
       // Recién montada: entra en ordeño (el ordeño cuenta desde la monta).
@@ -161,7 +173,7 @@ export async function calcularPendientes(hoy: Date = new Date()): Promise<Pendie
         mensaje:
           diasDesdeMonta === 0
             ? "Montada hoy; entra en ordeño."
-            : `En ordeño (montada hace ${diasDesdeMonta} día(s)).`,
+            : `En ordeño (montada hace ${nDias(diasDesdeMonta)}).`,
       });
     }
   }

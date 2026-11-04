@@ -200,6 +200,16 @@ export function IconoInfo(p: Props) {
   );
 }
 
+// Aviso / atención (triángulo): errores y confirmaciones de acciones que no se deshacen.
+export function IconoAlerta(p: Props) {
+  return (
+    <svg {...base} {...p}>
+      <path d="M10.3 4.2 2.9 17.1A2 2 0 0 0 4.6 20h14.8a2 2 0 0 0 1.7-2.9L13.7 4.2a2 2 0 0 0-3.4 0Z" />
+      <path d="M12 9.5v4M12 16.6v.01" />
+    </svg>
+  );
+}
+
 export function IconoHistorial(p: Props) {
   return (
     <svg {...base} {...p}>

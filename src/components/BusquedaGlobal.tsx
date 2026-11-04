@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { IconoBuscar, IconoCerrar, IconoAnimal } from "@/components/iconos";
 import { MODULO_LABEL, etiquetaArete } from "@/lib/tipos";
+import { Spinner } from "@/components/ui";
+import { claseBusqueda } from "@/components/BuscadorAnimales";
 
 // Un resultado de búsqueda (lo que devuelve GET /api/animales, campos que mostramos).
 type Resultado = {
@@ -22,12 +24,16 @@ type Resultado = {
 // dentro del panel a pantalla completa (móvil). Al elegir un animal navega a su ficha.
 //  - `autoFocus`: enfoca el input al montar (para el panel móvil).
 //  - `onNavegar`: se llama tras elegir un resultado (p. ej. cerrar el panel móvil).
+//  - `accion`: botón que va a la derecha del campo, en su misma fila (p. ej. "Cancelar" en móvil);
+//    los resultados quedan debajo, a todo lo ancho.
 export function BusquedaGlobal({
   autoFocus = false,
   onNavegar,
+  accion,
 }: {
   autoFocus?: boolean;
   onNavegar?: () => void;
+  accion?: React.ReactNode;
 }) {
   const router = useRouter();
   const [texto, setTexto] = useState("");
@@ -83,8 +89,9 @@ export function BusquedaGlobal({
 
   return (
     <div className="relative">
-      <div className="relative">
-        <IconoBuscar className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-stone-400" />
+      <div className="flex items-center gap-2">
+      <div className="relative min-w-0 flex-1">
+        <IconoBuscar className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-stone-500 dark:text-stone-400" />
         <input
           ref={inputRef}
           type="search"
@@ -94,7 +101,7 @@ export function BusquedaGlobal({
           onFocus={() => resultados.length > 0 && setAbierto(true)}
           placeholder="Buscar arete, SENASA o nombre…"
           aria-label="Buscar animal por arete, arete de SENASA o nombre"
-          className="h-11 w-full rounded-xl border border-stone-300 bg-white pl-10 pr-10 text-sm outline-none focus:border-marca-500 focus:ring-2 focus:ring-marca-200 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-500 [&::-webkit-search-cancel-button]:hidden"
+          className={claseBusqueda}
         />
         {texto && (
           <button
@@ -111,12 +118,21 @@ export function BusquedaGlobal({
           </button>
         )}
       </div>
+      {accion}
+      </div>
 
       {/* Resultados */}
       {q.length >= 1 && (
-        <ul className="mt-2 max-h-[60vh] overflow-y-auto rounded-xl border border-stone-200 bg-white shadow-card dark:border-stone-800 dark:bg-stone-900">
+        <ul
+          aria-live="polite"
+          aria-busy={cargando || undefined}
+          className="mt-2 max-h-[60vh] overflow-y-auto overscroll-contain rounded-2xl bg-white shadow-flotante ring-1 ring-stone-900/[0.06] dark:bg-stone-900 dark:ring-white/10"
+        >
           {cargando && resultados.length === 0 && (
-            <li className="px-3 py-3 text-sm text-stone-500 dark:text-stone-400">Buscando…</li>
+            <li className="flex items-center gap-2.5 px-3 py-3 text-sm text-stone-500 dark:text-stone-400">
+              <Spinner />
+              Buscando…
+            </li>
           )}
           {sinResultados && (
             <li className="px-3 py-3 text-sm text-stone-500 dark:text-stone-400">
@@ -128,11 +144,11 @@ export function BusquedaGlobal({
               <button
                 type="button"
                 onClick={() => elegir(a.id)}
-                className="flex w-full items-center gap-3 border-b border-stone-100 px-3 py-2.5 text-left last:border-0 hover:bg-stone-50 active:bg-marca-50/60 dark:border-stone-800 dark:hover:bg-stone-800/60"
+                className="flex min-h-12 w-full items-center gap-3 border-b border-stone-100 px-3 py-2.5 text-left transition-colors last:border-0 hover:bg-stone-50 active:bg-stone-100 dark:border-stone-800 dark:hover:bg-stone-800/60 dark:active:bg-stone-800"
               >
                 {a.fotoMiniatura ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={a.fotoMiniatura} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover ring-1 ring-stone-200 dark:ring-stone-700" />
+                  <img src={a.fotoMiniatura} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10" />
                 ) : (
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400">
                     <IconoAnimal sexo={a.sexo} className="h-5 w-5" />
