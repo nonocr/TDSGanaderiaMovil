@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { IconoSol, IconoLuna } from "@/components/iconos";
+import { claseBotonIcono } from "@/components/ui";
 
 // Botón sol/luna para alternar modo oscuro. Guarda la preferencia en localStorage.
 // Hay dos montados a la vez (menú lateral y barra móvil): la verdad es la clase "dark" del
@@ -32,15 +33,26 @@ export function ToggleTema() {
     }
   }
 
+  // Los dos iconos están siempre en el DOM, uno encima del otro, y se cruzan con fundido,
+  // escala y desenfoque (icon swap). El que no toca queda invisible.
+  const icono = (visible: boolean) =>
+    "absolute inset-0 m-auto h-5 w-5 transition-[opacity,transform,filter] duration-[250ms] ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none " +
+    (visible ? "scale-100 opacity-100 blur-0" : "scale-[0.25] opacity-0 blur-[4px]");
+
   return (
     <button
       onClick={alternar}
       aria-label={oscuro ? "Activar modo claro" : "Activar modo oscuro"}
       title={oscuro ? "Modo claro" : "Modo oscuro"}
-      className="grid h-11 w-11 place-items-center rounded-lg border border-stone-200 bg-white text-stone-600 transition-colors hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
+      className={`${claseBotonIcono("discreto")} relative`}
     >
       {/* Evita desajuste de hidratacion: no renderiza icono hasta montar */}
-      {montado ? (oscuro ? <IconoSol className="h-5 w-5" /> : <IconoLuna className="h-5 w-5" />) : null}
+      {montado && (
+        <>
+          <IconoSol className={icono(oscuro)} />
+          <IconoLuna className={icono(!oscuro)} />
+        </>
+      )}
     </button>
   );
 }

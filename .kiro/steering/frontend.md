@@ -71,13 +71,23 @@ inclusion: always
 
 ## Estilo
 
+- **Sistema visual completo en `DESIGN.md`** (raíz) desde la v1.1.0 (rediseño "diseño V2"). Resumen:
 - Color de marca: `marca-50…950` (`tailwind.config.ts`). Neutros: `stone`.
-- Reutilizar `src/components/ui.tsx`: `Card`, `SectionTitle`, `Badge` (tonos neutral/verde/rojo/
-  ambar/azul), `EstadoBadge`, `SexoBadge`, `AnimalLink`, `PageHeader`, `BotonPrimario`, `Vacio`.
+- **El color tiene un solo significado**: verde = listo/activo, azul (sky) = en curso/informativo,
+  ámbar = se acerca algo que atender, rojo = vencido/problema/borrar, neutral = dato. Sexo, módulo,
+  raza y etapa van en neutro (icono + texto). Estados de la vaca: `TONO_REPRO`; recuadros de icono: `ACENTO`.
+- Reutilizar `src/components/ui.tsx`: `Card`/`claseSuperficie`, `SectionTitle` (con `conteo`/`accion`),
+  `Badge`, `EstadoBadge`, `SexoBadge`, `AnimalLink`, `PageHeader`, `EnlaceVolver`, `BotonPrimario`,
+  `claseBoton(variante)`, `claseBotonIcono`, `BotonEnviar`, `Spinner`, `Vacio`, `AvisoError`/`AvisoExito`/
+  `AvisoInfo`, `claseCampo`, `claseEtiqueta`.
+- **Nunca `confirm()`/`alert()`**: `confirmar()` y `avisar()` de `src/components/Dialogos.tsx`.
+- Entrar/salir con transición: `usePresencia` (`src/lib/usar-presencia.ts`) + clases `.t-*` de
+  `globals.css` con `data-estado`. Tokens de movimiento en `globals.css`; todo se apaga con movimiento reducido.
 - Iconos de línea en `src/components/iconos.tsx` (heredan `currentColor`). Agregar ahí los nuevos.
 - **Modo oscuro** por clase (`dark:`): toda clase de color lleva su variante `dark:`.
 - Impresión: `no-print` oculta elementos al imprimir; la ficha del animal se imprime.
-- Bordes `rounded-xl`, sombra `shadow-card`, textos de ayuda `text-xs text-stone-400`.
+- Superficies `rounded-2xl` con `shadow-card` y filo de 1px (sin bordes para dar relieve); textos de
+  ayuda `text-xs text-stone-500 dark:text-stone-400`.
 
 ## Seguridad en el frontend
 

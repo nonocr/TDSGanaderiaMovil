@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-04T00:00:00Z",
+  "title": "Design System: TDS Ganadería",
+  "extensions": {
+    "provenance": "Documentado desde el código construido. Evolución profunda aprobada del mundo visual existente, hecha directamente en código: sin tirada de conceptos ni seed. No buscar referencia seed.",
+    "colorMeta": {
+      "marca-verde": { "role": "primary", "displayName": "Verde Finca", "canonical": "#4b7a3f", "tonalRamp": ["#13220f", "#273f22", "#2f4e28", "#3b6132", "#4b7a3f", "#7fae60", "#c8dfb6", "#f4f8f1"] },
+      "marca-hondo": { "role": "primary", "displayName": "Verde Hondo", "canonical": "#3b6132", "tonalRamp": ["#13220f", "#273f22", "#2f4e28", "#3b6132", "#4b7a3f", "#7fae60", "#c8dfb6", "#f4f8f1"] },
+      "marca-tierra": { "role": "primary", "displayName": "Verde Tierra", "canonical": "#2f4e28", "tonalRamp": ["#13220f", "#273f22", "#2f4e28", "#3b6132", "#4b7a3f", "#7fae60", "#c8dfb6", "#f4f8f1"] },
+      "marca-brote": { "role": "primary", "displayName": "Verde Brote", "canonical": "#5e9142", "tonalRamp": ["#13220f", "#273f22", "#2f4e28", "#3b6132", "#5e9142", "#a4c988", "#c8dfb6", "#f4f8f1"] },
+      "marca-claro": { "role": "primary", "displayName": "Verde Claro", "canonical": "#7fae60", "tonalRamp": ["#13220f", "#273f22", "#2f4e28", "#3b6132", "#5e9142", "#7fae60", "#c8dfb6", "#f4f8f1"] },
+      "marca-niebla": { "role": "primary", "displayName": "Niebla Verde", "canonical": "#e4efdb", "tonalRamp": ["#13220f", "#273f22", "#2f4e28", "#3b6132", "#5e9142", "#a4c988", "#e4efdb", "#f4f8f1"] },
+      "marca-rocio": { "role": "primary", "displayName": "Rocío", "canonical": "#f4f8f1", "tonalRamp": ["#13220f", "#273f22", "#2f4e28", "#3b6132", "#5e9142", "#a4c988", "#e4efdb", "#f4f8f1"] },
+      "superficie": { "role": "neutral", "displayName": "Hoja", "canonical": "#ffffff", "tonalRamp": ["#0c0a09", "#1c1917", "#292524", "#57534e", "#78716c", "#d6d3d1", "#f5f5f4", "#ffffff"] },
+      "piedra-fondo": { "role": "neutral", "displayName": "Piedra Clara", "canonical": "#f5f5f4", "tonalRamp": ["#0c0a09", "#1c1917", "#292524", "#57534e", "#78716c", "#d6d3d1", "#f5f5f4", "#fafaf9"] },
+      "piedra-borde": { "role": "neutral", "displayName": "Piedra Borde", "canonical": "#d6d3d1", "tonalRamp": ["#0c0a09", "#1c1917", "#292524", "#57534e", "#78716c", "#d6d3d1", "#f5f5f4", "#fafaf9"] },
+      "piedra-minimo": { "role": "neutral", "displayName": "Piedra Mínimo", "canonical": "#78716c", "tonalRamp": ["#0c0a09", "#1c1917", "#292524", "#57534e", "#78716c", "#d6d3d1", "#f5f5f4", "#fafaf9"] },
+      "piedra-secundario": { "role": "neutral", "displayName": "Piedra Secundario", "canonical": "#57534e", "tonalRamp": ["#0c0a09", "#1c1917", "#292524", "#57534e", "#78716c", "#d6d3d1", "#f5f5f4", "#fafaf9"] },
+      "piedra-etiqueta": { "role": "neutral", "displayName": "Piedra Etiqueta", "canonical": "#44403c", "tonalRamp": ["#0c0a09", "#1c1917", "#292524", "#44403c", "#78716c", "#d6d3d1", "#f5f5f4", "#fafaf9"] },
+      "piedra-texto": { "role": "neutral", "displayName": "Piedra Texto", "canonical": "#292524", "tonalRamp": ["#0c0a09", "#1c1917", "#292524", "#57534e", "#78716c", "#d6d3d1", "#f5f5f4", "#fafaf9"] },
+      "piedra-tinta": { "role": "neutral", "displayName": "Piedra Tinta", "canonical": "#1c1917", "tonalRamp": ["#0c0a09", "#1c1917", "#292524", "#57534e", "#78716c", "#d6d3d1", "#f5f5f4", "#fafaf9"] },
+      "piedra-noche": { "role": "neutral", "displayName": "Piedra Noche", "canonical": "#0c0a09", "tonalRamp": ["#0c0a09", "#1c1917", "#292524", "#57534e", "#78716c", "#d6d3d1", "#f5f5f4", "#fafaf9"] },
+      "tono-azul": { "role": "secondary", "displayName": "Azul Ordeño", "canonical": "#075985", "tonalRamp": ["#082f49", "#0c4a6e", "#075985", "#0369a1", "#0284c7", "#38bdf8", "#bae6fd", "#f0f9ff"] },
+      "tono-azul-fondo": { "role": "secondary", "displayName": "Azul Ordeño (fondo)", "canonical": "#f0f9ff", "tonalRamp": ["#082f49", "#0c4a6e", "#075985", "#0369a1", "#0284c7", "#38bdf8", "#bae6fd", "#f0f9ff"] },
+      "tono-ambar": { "role": "secondary", "displayName": "Ámbar Atención", "canonical": "#92400e", "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#fbbf24", "#fde68a", "#fffbeb"] },
+      "tono-ambar-fondo": { "role": "secondary", "displayName": "Ámbar Atención (fondo)", "canonical": "#fffbeb", "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#fbbf24", "#fde68a", "#fffbeb"] },
+      "tono-rojo": { "role": "secondary", "displayName": "Rojo Vencido", "canonical": "#b91c1c", "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#f87171", "#fecaca", "#fef2f2"] },
+      "tono-rojo-fondo": { "role": "secondary", "displayName": "Rojo Vencido (fondo)", "canonical": "#fef2f2", "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#f87171", "#fecaca", "#fef2f2"] },
+      "peligro": { "role": "secondary", "displayName": "Rojo Peligro", "canonical": "#dc2626", "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#f87171", "#fecaca", "#fef2f2"] }
+    },
+    "typographyMeta": {
+      "titulo-pagina": { "displayName": "Título de página", "purpose": "h1 de PageHeader, uno por pantalla. Desde sm: 1.75rem / 2.25rem." },
+      "cifra": { "displayName": "Cifra", "purpose": "Conteos de módulos y totales; 20px en desgloses." },
+      "titulo-seccion": { "displayName": "Título de sección", "purpose": "h2 de SectionTitle, hojas y diálogos." },
+      "nombre-fila": { "displayName": "Nombre de fila", "purpose": "Nombre o arete del animal en listas y pendientes." },
+      "cuerpo": { "displayName": "Cuerpo", "purpose": "Texto general, botones (500), campos y tablas." },
+      "etiqueta": { "displayName": "Etiqueta", "purpose": "Insignias, cabeceras de tabla, grupos del menú lateral, notas." },
+      "etiqueta-nav": { "displayName": "Etiqueta de navegación", "purpose": "Texto bajo iconos en barra inferior y pestañas móviles." }
+    },
+    "shadows": [
+      { "name": "card", "value": "0 1px 2px 0 rgb(28 25 23 / 0.05), 0 2px 8px -2px rgb(28 25 23 / 0.07)", "purpose": "Superficies en reposo (con anillo 1px stone-900 al 6%). Se quita en oscuro." },
+      { "name": "flotante", "value": "0 -1px 0 0 rgb(28 25 23 / 0.04), 0 12px 32px -8px rgb(28 25 23 / 0.28)", "purpose": "Solo lo que va encima de la página: hoja Más, diálogo, aviso flotante." },
+      { "name": "boton", "value": "0 1px 2px 0 rgb(28 25 23 / 0.12), inset 0 1px 0 0 rgb(255 255 255 / 0.12)", "purpose": "Relieve de botones llenos y de la pastilla de pestaña activa." },
+      { "name": "fab", "value": "0 6px 16px -4px rgb(39 63 34 / 0.55)", "purpose": "Solo el botón central de agregar de la barra inferior." },
+      { "name": "linea-barra", "value": "0 1px 0 rgb(28 25 23 / 0.07)", "purpose": "Línea de 1px de barras superior, inferior (invertida), lateral y de pestañas. En oscuro: rgb(255 255 255 / 0.07)." }
+    ],
+    "motion": [
+      { "name": "--duration-stagger", "value": "40ms", "purpose": "Desfase por elemento." },
+      { "name": "--duration-micro", "value": "80ms", "purpose": "Retardo de intención." },
+      { "name": "--duration-quick", "value": "150ms", "purpose": "Cerrar diálogo, hoja o menú; cambio de texto; respuesta al toque de botones." },
+      { "name": "--duration-fast", "value": "250ms", "purpose": "Abrir diálogo u hoja, pestañas, aparición de panel." },
+      { "name": "--duration-medium", "value": "350ms", "purpose": "Llegada del aviso flotante; cerrar panel." },
+      { "name": "--duration-slow", "value": "400ms", "purpose": "Abrir panel, revelar contenido." },
+      { "name": "--ease-smooth-out", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Toda superficie que abre, cierra o se desplaza." },
+      { "name": "--distance-micro", "value": "4px", "purpose": "Aparición de panel de pestaña (.t-aparecer)." },
+      { "name": "--distance-base", "value": "8px", "purpose": "Entrada de la búsqueda a pantalla completa (.t-pantalla)." },
+      { "name": "--distance-medium", "value": "12px", "purpose": "Desplazamiento medio." },
+      { "name": "--scale-large", "value": "0.96", "purpose": "Diálogo (.t-modal) y respuesta al toque de botones." },
+      { "name": "--scale-medium", "value": "0.97", "purpose": "Menú y aviso flotante." },
+      { "name": "--blur-small", "value": "2px", "purpose": "Desenfoque de entrada de búsqueda y aviso." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ],
+    "layout": {
+      "maxContentWidth": "72rem",
+      "sidebarWidth": "240px",
+      "mobileTopBar": "56px",
+      "pagePaddingX": ["16px", "24px", "32px"],
+      "minTouchTarget": "44px"
+    },
+    "darkMode": "class en <html>; superficies stone-900 sin sombra con anillo blanco al 8%; fondo stone-950; impresión siempre en claro."
+  },
+  "components": [
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal de una pantalla o formulario.",
+      "html": "<button class=\"ds-btn ds-btn-primario\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg>Agregar animal</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border: none; border-radius: 12px; font: 500 14px/20px ui-sans-serif, system-ui, sans-serif; cursor: pointer; transition: background-color 150ms ease-out, box-shadow 150ms ease-out, color 150ms ease-out, transform 150ms ease-out; } .ds-btn:active { transform: scale(0.96); } .ds-btn:focus-visible { outline: 2px solid #4b7a3f; outline-offset: 2px; } .ds-btn-primario { background: #4b7a3f; color: #fff; box-shadow: 0 1px 2px 0 rgb(28 25 23 / 0.12), inset 0 1px 0 0 rgb(255 255 255 / 0.12); } .ds-btn-primario:hover { background: #3b6132; } .ds-btn-primario:active { background: #2f4e28; transform: scale(0.96); }"
+    },
+    {
+      "name": "Botón secundario",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acción secundaria o de cancelar; exportar CSV.",
+      "html": "<button class=\"ds-btn-sec\">Cancelar</button>",
+      "css": ".ds-btn-sec { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border: none; border-radius: 12px; background: #fff; color: #44403c; font: 500 14px/20px ui-sans-serif, system-ui, sans-serif; box-shadow: inset 0 0 0 1px #d6d3d1, 0 1px 2px 0 rgb(28 25 23 / 0.05), 0 2px 8px -2px rgb(28 25 23 / 0.07); cursor: pointer; transition: background-color 150ms ease-out, transform 150ms ease-out; } .ds-btn-sec:hover { background: #fafaf9; } .ds-btn-sec:active { background: #f5f5f4; transform: scale(0.96); } .ds-btn-sec:focus-visible { outline: 2px solid #4b7a3f; outline-offset: 2px; }"
+    },
+    {
+      "name": "Botón de peligro",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Confirmar una acción destructiva (eliminar).",
+      "html": "<button class=\"ds-btn-peligro\">Eliminar</button>",
+      "css": ".ds-btn-peligro { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 16px; border: none; border-radius: 12px; background: #dc2626; color: #fff; font: 500 14px/20px ui-sans-serif, system-ui, sans-serif; box-shadow: 0 1px 2px 0 rgb(28 25 23 / 0.12), inset 0 1px 0 0 rgb(255 255 255 / 0.12); cursor: pointer; transition: background-color 150ms ease-out, transform 150ms ease-out; } .ds-btn-peligro:hover { background: #b91c1c; } .ds-btn-peligro:active { background: #991b1b; transform: scale(0.96); } .ds-btn-peligro:focus-visible { outline: 2px solid #4b7a3f; outline-offset: 2px; }"
+    },
+    {
+      "name": "Botón discreto de marca",
+      "kind": "button",
+      "refersTo": "button-ghost-brand",
+      "description": "Acción terciaria sin fondo en verde (enlaces de sección como Calendario).",
+      "html": "<button class=\"ds-btn-marca-discreto\">Calendario</button>",
+      "css": ".ds-btn-marca-discreto { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border: none; border-radius: 12px; background: transparent; color: #3b6132; font: 500 14px/20px ui-sans-serif, system-ui, sans-serif; cursor: pointer; transition: background-color 150ms ease-out, transform 150ms ease-out; } .ds-btn-marca-discreto:hover { background: #f4f8f1; } .ds-btn-marca-discreto:active { background: #e4efdb; transform: scale(0.96); } .ds-btn-marca-discreto:focus-visible { outline: 2px solid #4b7a3f; outline-offset: 2px; }"
+    },
+    {
+      "name": "Campo de texto",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Input, select o textarea de formulario con su etiqueta.",
+      "html": "<label class=\"ds-etiqueta\">Arete<input class=\"ds-campo\" placeholder=\"Ej. 1024\"></label>",
+      "css": ".ds-etiqueta { display: block; font: 500 14px/20px ui-sans-serif, system-ui, sans-serif; color: #44403c; } .ds-campo { display: block; width: 100%; margin-top: 4px; min-height: 44px; padding: 8px 12px; border: 1px solid #d6d3d1; border-radius: 12px; background: #fff; color: #1c1917; font: 400 14px/20px ui-sans-serif, system-ui, sans-serif; box-shadow: inset 0 1px 1px rgb(28 25 23 / 0.04); outline: none; caret-color: #4b7a3f; transition: border-color 150ms, box-shadow 150ms; } .ds-campo::placeholder { color: #78716c; } .ds-campo:hover { border-color: #a8a29e; } .ds-campo:focus { border-color: #5e9142; box-shadow: 0 0 0 3px rgb(94 145 66 / 0.2); }"
+    },
+    {
+      "name": "Insignias de tono",
+      "kind": "chip",
+      "refersTo": "badge-verde",
+      "description": "Estado con un solo significado por color, siempre con punto y texto.",
+      "html": "<span class=\"ds-badge ds-verde\"><i></i>Lista para montar</span> <span class=\"ds-badge ds-azul\"><i></i>En ordeño</span> <span class=\"ds-badge ds-ambar\"><i></i>Por parir</span> <span class=\"ds-badge ds-rojo\"><i></i>Parto atrasado</span> <span class=\"ds-badge ds-neutro\"><i></i>Desarrollo</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; padding: 2px 10px; border-radius: 9999px; font: 500 12px/16px ui-sans-serif, system-ui, sans-serif; } .ds-badge i { width: 6px; height: 6px; border-radius: 9999px; } .ds-verde { background: #f4f8f1; color: #2f4e28; box-shadow: inset 0 0 0 1px #c8dfb6; } .ds-verde i { background: #5e9142; } .ds-azul { background: #f0f9ff; color: #075985; box-shadow: inset 0 0 0 1px #bae6fd; } .ds-azul i { background: #0ea5e9; } .ds-ambar { background: #fffbeb; color: #92400e; box-shadow: inset 0 0 0 1px #fde68a; } .ds-ambar i { background: #f59e0b; } .ds-rojo { background: #fef2f2; color: #b91c1c; box-shadow: inset 0 0 0 1px #fecaca; } .ds-rojo i { background: #ef4444; } .ds-neutro { background: #f5f5f4; color: #44403c; box-shadow: inset 0 0 0 1px #e7e5e4; } .ds-neutro i { background: #a8a29e; }"
+    },
+    {
+      "name": "Opción en pastilla",
+      "kind": "chip",
+      "refersTo": "option-pill",
+      "description": "Radio táctil de 44px; elegida en verde.",
+      "html": "<label class=\"ds-opcion\"><input type=\"radio\" name=\"s\" checked> Hembra</label> <label class=\"ds-opcion\"><input type=\"radio\" name=\"s\"> Macho</label>",
+      "css": ".ds-opcion { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 14px; border-radius: 12px; background: #fff; color: #44403c; font: 500 14px/20px ui-sans-serif, system-ui, sans-serif; box-shadow: inset 0 0 0 1px #d6d3d1; cursor: pointer; accent-color: #4b7a3f; transition: background-color 150ms; } .ds-opcion:hover { background: #fafaf9; } .ds-opcion:has(:checked) { background: #f4f8f1; color: #273f22; box-shadow: inset 0 0 0 1px #5e9142; } .ds-opcion:has(:focus-visible) { outline: 2px solid #4b7a3f; outline-offset: 2px; }"
+    },
+    {
+      "name": "Superficie con filas",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Una superficie, muchas filas: lista móvil con divisores finos.",
+      "html": "<ul class=\"ds-superficie\"><li><a href=\"#\"><b>Lucero</b> <span>A-102</span><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M9 6l6 6-6 6\"/></svg></a></li><li><a href=\"#\"><b>Canela</b> <span>A-117</span><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M9 6l6 6-6 6\"/></svg></a></li></ul>",
+      "css": ".ds-superficie { list-style: none; margin: 0; padding: 0; overflow: hidden; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px rgb(28 25 23 / 0.06), 0 1px 2px 0 rgb(28 25 23 / 0.05), 0 2px 8px -2px rgb(28 25 23 / 0.07); font-family: ui-sans-serif, system-ui, sans-serif; } .ds-superficie li + li { border-top: 1px solid #f5f5f4; } .ds-superficie a { display: flex; align-items: center; gap: 6px; min-height: 60px; padding: 10px 12px; color: #1c1917; text-decoration: none; transition: background-color 150ms; } .ds-superficie a:hover { background: #fafaf9; } .ds-superficie a:active { background: #f5f5f4; } .ds-superficie a:focus-visible { outline: 2px solid #4b7a3f; outline-offset: -2px; } .ds-superficie b { font-weight: 600; } .ds-superficie span { flex: 1; color: #78716c; } .ds-superficie svg { color: #a8a29e; }"
+    },
+    {
+      "name": "Barra inferior móvil",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Navegación al alcance del pulgar con botón central de agregar.",
+      "html": "<nav class=\"ds-barra\"><a class=\"ds-tab ds-activa\" href=\"#\"><span><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><path d=\"M3 11l9-7 9 7v9H5v-9\"/></svg></span>Inicio</a><a class=\"ds-tab\" href=\"#\"><span><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><circle cx=\"12\" cy=\"12\" r=\"8\"/></svg></span>Engorde</a><div class=\"ds-centro\"><a class=\"ds-fab\" href=\"#\" aria-label=\"Agregar animal\"><svg width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg></a></div><a class=\"ds-tab\" href=\"#\"><span><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><path d=\"M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z\"/></svg></span>Lechería</a><a class=\"ds-tab\" href=\"#\"><span><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\"><path d=\"M4 7h16M4 12h16M4 17h16\"/></svg></span>Más</a></nav>",
+      "css": ".ds-barra { display: flex; align-items: stretch; max-width: 448px; padding: 0 4px; background: rgb(255 255 255 / 0.95); box-shadow: 0 -1px 0 rgb(28 25 23 / 0.07); font-family: ui-sans-serif, system-ui, sans-serif; } .ds-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 56px; padding: 6px 0; border-radius: 12px; color: #57534e; font: 500 11px/16px ui-sans-serif, system-ui, sans-serif; text-decoration: none; transition: color 150ms; } .ds-tab span { display: grid; place-items: center; width: 56px; height: 28px; border-radius: 9999px; transition: background-color 150ms, transform 150ms; } .ds-tab:active span { background: #f5f5f4; transform: scale(0.96); } .ds-tab:focus-visible { outline: 2px solid #4b7a3f; outline-offset: 2px; } .ds-activa { color: #2f4e28; } .ds-activa span { background: #e4efdb; } .ds-centro { flex: 1; display: flex; align-items: center; justify-content: center; } .ds-fab { margin-top: -20px; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 9999px; background: #4b7a3f; color: #fff; box-shadow: 0 0 0 4px #f5f5f4, 0 6px 16px -4px rgb(39 63 34 / 0.55); transition: transform 150ms, background-color 150ms; } .ds-fab:hover { background: #3b6132; } .ds-fab:active { transform: scale(0.96); } .ds-fab:focus-visible { outline: 2px solid #4b7a3f; outline-offset: 6px; }"
+    },
+    {
+      "name": "Aviso flotante",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "avisar(): caja invertida con icono del tono, encima de la barra inferior.",
+      "html": "<div class=\"ds-toast\" role=\"status\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M5 12l5 5L19 7\"/></svg><p>Foto actualizada.</p><button aria-label=\"Cerrar aviso\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M6 6l12 12M18 6L6 18\"/></svg></button></div>",
+      "css": ".ds-toast { display: flex; align-items: flex-start; gap: 12px; max-width: 448px; padding: 12px 6px 12px 16px; border-radius: 16px; background: #1c1917; color: #fff; font: 400 14px/1.375 ui-sans-serif, system-ui, sans-serif; box-shadow: 0 -1px 0 0 rgb(28 25 23 / 0.04), 0 12px 32px -8px rgb(28 25 23 / 0.28); } .ds-toast > svg { flex-shrink: 0; margin-top: 2px; color: #a4c988; } .ds-toast p { flex: 1; margin: 0; padding: 2px 0; } .ds-toast button { display: grid; place-items: center; width: 40px; height: 40px; margin: -8px 0; border: none; border-radius: 12px; background: transparent; color: rgb(255 255 255 / 0.75); cursor: pointer; transition: background-color 150ms, color 150ms; } .ds-toast button:hover { background: rgb(255 255 255 / 0.1); color: #fff; } .ds-toast button:focus-visible { outline: 2px solid #7fae60; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "La libreta del corral",
+    "overview": "TDS Ganadería se ve como una libreta de campo bien llevada: hojas blancas sobre una mesa de piedra clara, un solo verde de finca para lo que se toca y lo que está listo, y un puñado de colores que significan siempre lo mismo. Está pensada para usarse de pie, con una mano, al sol o al amanecer en el ordeño. Por eso la densidad es media: filas de 56 a 60 px, áreas táctiles de 44 px como mínimo y texto de 14 px con cifras de ancho fijo para que los conteos, kilos y litros no \"bailen\".\n\nLa profundidad es discreta y funcional. Las superficies en reposo llevan una sombra suave tintada de piedra y un filo de 1 px casi invisible; las barras de navegación se separan con una línea de 1 px y fondo translúcido; solo lo que de verdad flota encima de la página (la hoja \"Más\", el diálogo de confirmación y el aviso flotante) lleva una sombra larga. El movimiento sigue la misma lógica: una sola escala de duraciones, curvas suaves de salida, y cerrar siempre es más rápido que abrir. Todo tiene su versión con movimiento reducido.\n\nEl sistema existe en claro y en oscuro (clase `dark` en `<html>`). En oscuro, las hojas pasan a piedra muy oscura, pierden la sombra y conservan solo el filo claro translúcido. Al imprimir, todo vuelve a claro.",
+    "keyCharacteristics": [
+      "Un solo acento de marca (verde finca) para acciones, lo activo y \"listo\"; el resto es piedra.",
+      "El color tiene un solo significado en toda la app (verde, azul, ámbar, rojo, neutro).",
+      "Una superficie, muchas filas: las listas van en un bloque con divisores finos, no en tarjetas sueltas.",
+      "Táctil primero: 44 px mínimos, barra inferior al alcance del pulgar con botón central de agregar.",
+      "Cifras tabulares en todo el documento; títulos equilibrados (`text-wrap: balance`).",
+      "Movimiento corto, con salida más rápida que la entrada y guarda de movimiento reducido."
+    ],
+    "rules": [
+      { "name": "La regla de un solo significado", "body": "Cada tono significa una sola cosa en toda la app: verde = listo/activo/bien, azul = en curso, ámbar = se acerca, rojo = vencido/problema/borrar, neutro = dato sin urgencia. Los estados reproductivos se colorean siempre con la misma tabla (`TONO_REPRO`: ordeño azul, secado neutro, por parir ámbar, lista para montar verde) en listas, ficha, lechería e inicio.", "section": "colors" },
+      { "name": "La regla del dato neutro", "body": "Sexo, módulo, raza, etapa de engorde y categoría son datos, no estados: van en neutro y se distinguen con icono dibujado y texto. Los recuadros de icono de los módulos en Inicio son piedra, no verde.", "section": "colors" },
+      { "name": "La regla del color que no va solo", "body": "Ningún estado se comunica solo con color: las insignias llevan punto y texto; los avisos llevan icono (check, alerta, info) y `role=\"alert\"`/`\"status\"`.", "section": "colors" },
+      { "name": "La regla del contraste mínimo", "body": "El texto secundario nunca es más claro que `stone-500` en claro ni que `stone-400` en oscuro. Los tonos más tenues quedan solo para iconos decorativos (flechas de fila, marcador sin foto).", "section": "colors" },
+      { "name": "La regla de las cifras quietas", "body": "`font-variant-numeric: tabular-nums` está en `body`: todos los números de la app tienen el mismo ancho. No se quita en ningún componente.", "section": "typography" },
+      { "name": "La regla del caso normal", "body": "Títulos de página, de sección, de grupo y botones van en mayúscula inicial normal, nunca en versalitas ni todo en mayúsculas con espaciado.", "section": "typography" },
+      { "name": "La regla de los 16 px en el campo", "body": "En pantallas de hasta 640 px, `input`, `select` y `textarea` van a 16 px para que iOS no haga zoom; en escritorio vuelven a 14 px.", "section": "typography" },
+      { "name": "Una superficie, muchas filas", "body": "Una lista, un desglose o un grupo de conteos es UNA superficie dividida en filas o columnas por líneas de 1 px (`stone-100` / `stone-800`), no una tarjeta por elemento ni tarjetas dentro de tarjetas. Dentro de un formulario, los grupos de campos usan un recuadro tonal hundido (`stone-50` con filo de 6 %), no otra tarjeta con sombra.", "section": "layout" },
+      { "name": "La regla del pulgar", "body": "Lo diario está abajo en móvil: Inicio, Engorde, Agregar (centro), Lechería y Más. Lo que no cabe vive en la hoja \"Más\".", "section": "layout" },
+      { "name": "La regla de lo que flota", "body": "La sombra flotante es solo para lo que va encima de la página (hojas, diálogos, avisos). Nada en el flujo normal ni las barras fijas la usan.", "section": "elevation" },
+      { "name": "La regla del oscuro plano", "body": "En oscuro no hay sombras de reposo: la separación la da el filo claro translúcido y el salto de `stone-950` a `stone-900`.", "section": "elevation" }
+    ],
+    "dos": [
+      "**Do** usar `claseSuperficie` / `Card` para toda superficie, y `claseBoton(variante)` / `claseBotonIcono` para todo botón o enlace con forma de botón.",
+      "**Do** colorear estados con `Badge tono=…` y `TONO_REPRO`, siempre con punto o icono además del color.",
+      "**Do** mantener 44 px de área táctil mínima en móvil (botones, filas, campos, opciones, enlace \"Volver\").",
+      "**Do** agrupar listas y conteos en una sola superficie con divisores de 1 px `stone-100` (`stone-800` en oscuro).",
+      "**Do** usar `confirmar()` y `avisar()` de `Dialogos.tsx` para preguntas y avisos.",
+      "**Do** dar a cada nueva transición de superficie su clase `.t-*` con `data-estado`, los tokens `--duration-*`/`--ease-smooth-out`, una salida más rápida que la entrada y su guarda de `prefers-reduced-motion`.",
+      "**Do** escribir cada clase de modo oscuro junto a la de claro (superficie `stone-900`, sin sombra, filo blanco al 8 %).",
+      "**Do** marcar con `no-print` la navegación y las acciones, y comprobar que la vista imprime en claro."
+    ],
+    "donts": [
+      "**Don't** usar `window.confirm()` ni `window.alert()`: dentro del APK salen sin marca y sin modo oscuro.",
+      "**Don't** dar color a sexo, módulo, raza, etapa o categoría; van en neutro con icono y texto.",
+      "**Don't** usar un tono semántico para decorar ni con un significado distinto al de la tabla de tonos.",
+      "**Don't** usar texto secundario más claro que `stone-500` en claro o `stone-400` en oscuro.",
+      "**Don't** poner tarjetas con sombra dentro de otras tarjetas, ni una tarjeta por fila en listas.",
+      "**Don't** usar la sombra flotante en elementos del flujo normal de la página ni en las barras fijas.",
+      "**Don't** poner títulos, encabezados de grupo ni botones en mayúsculas con espaciado.",
+      "**Don't** usar caracteres como iconos (♂, ♀, ✓, ×): los iconos son SVG dibujados de `src/components/iconos`."
+    ]
+  }
+}

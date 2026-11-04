@@ -23,6 +23,88 @@ _(ninguno todavía)_
 
 Lo que Claude Code detecta y le toca resolver al frontend. Kiro marca `[HECHO]` al corregirlo.
 
+### [INFO] Kiro: leer — rediseño "diseño V2" de todo el frontend (Claude Code, 2026-11-04, pedido del dueño)
+
+> Claude: el dueño pidió una **evolución profunda del diseño** (no un cambio de identidad: logo,
+> verde de marca y estructura de navegación se conservan). Está en la rama **`diseñoV2`**, v1.1.0,
+> **sin mezclar a `master`** hasta que el dueño lo apruebe. No cambié flujos, reglas de negocio,
+> API ni datos. El sistema visual queda documentado en **`DESIGN.md`** (raíz) y el producto en
+> **`PRODUCT.md`**. Haz `git pull` y trabaja sobre `diseñoV2` si vas a tocar el frontend antes del merge.
+>
+> **Por qué:** el color significaba cosas distintas según la pantalla (celeste = macho, lechería,
+> destete y "en ordeño"; "Por parir" era rojo en Inicio y ámbar en la lista), los pendientes del día
+> quedaban debajo de cuatro tarjetas de conteo, no había foco visible con teclado, las confirmaciones
+> eran `confirm()`/`alert()` del navegador (feas dentro del APK) y las hojas/diálogos aparecían de golpe.
+>
+> **Reglas nuevas del frontend (síguelas en todo lo nuevo):**
+> 1. **El color tiene un solo significado** (`src/components/ui.tsx`, sección "Tonos"): verde = listo /
+>    activo, azul (sky) = en curso / informativo (En ordeño, registros por enviar), ámbar = se acerca
+>    algo que atender (secar, por parir, sin señal), rojo = vencido / problema / borrar, neutral = dato.
+>    **Sexo, módulo, raza y etapa van en neutro** (icono + texto), nunca en color. Para estados de la
+>    vaca usa `TONO_REPRO[estado]`; para recuadros de icono, `ACENTO[tono]`. No inventes tonos nuevos.
+> 2. **Superficies**: `<Card>` o `claseSuperficie` (blanco, `rounded-2xl`, `shadow-card` + filo de 1px
+>    translúcido). No uses `border border-stone-200` para dar relieve; los bordes quedan para separar
+>    (divisores) o para estados (foco, seleccionado). Nada de franjas de color de más de 1px a la izquierda.
+> 3. **Botones**: `claseBoton(variante)` / `claseBotonIcono(variante)` con variantes `primario`,
+>    `secundario`, `peligro`, `peligroSuave`, `discreto`, `marcaDiscreto` (editar) y `peligroDiscreto`
+>    (borrar). **No le sumes `text-*` a una variante**: las clases chocan y gana la que Tailwind escribe
+>    después (así un icono rojo salía gris); si falta un color, crea la variante en `ui.tsx`.
+>    Formularios: `<BotonEnviar cargando>` (spinner + "Guardando…" y `aria-busy`). Enlace que parece
+>    botón: `<BotonPrimario href variante>`. Borrar va aparte y discreto, nunca del mismo peso que Editar.
+> 4. **Confirmar y avisar**: **nunca** `window.confirm`/`alert`. Usa
+>    `await confirmar({ titulo, mensaje, accion, peligro })` y `avisar(texto, "error" | "ok" | "info")`
+>    de `src/components/Dialogos.tsx` (montado una vez en `layout.tsx`). El aviso sobrevive a
+>    `router.push`, así que sirve para "Guardado." antes de navegar.
+> 5. **Campos**: `claseCampo` / `claseEtiqueta` (44 px en móvil, anillo de foco de la marca). Radios y
+>    opciones: pastillas táctiles como `claseOpcion` en `FormularioAnimal.tsx`.
+> 6. **Títulos**: `PageHeader` (h1) y `SectionTitle` (h2, en minúscula normal, con `conteo` y `accion`
+>    opcionales). Ya no hay títulos de sección en MAYÚSCULAS pequeñas ni la barrita verde.
+>    "← Volver": `<EnlaceVolver href>`.
+> 7. **Movimiento**: tokens en `globals.css` (`--duration-*`, `--ease-smooth-out`…). Para algo que entra
+>    y sale (hoja, diálogo, aviso) usa `usePresencia(abierto, msSalida)` de `src/lib/usar-presencia.ts`
+>    con las clases `.t-hoja`, `.t-modal`, `.t-fondo`, `.t-pantalla`, `.t-toast` y `data-estado`.
+>    Cerrar siempre más rápido que abrir; nada de animaciones en lo que se toca muchas veces; todo se
+>    apaga con movimiento reducido (cada clase `.t-*` tiene su guarda). Botones: `active:scale-[0.96]`.
+> 8. **Modales encima de modales**: `useModalAccesible` ahora lleva una pila; solo el de arriba atiende
+>    Escape y Tab (la confirmación de borrar sobre el historial completo ya no choca con él).
+> 9. **Números**: `tabular-nums` es global (`body`). Fotos: filo `outline outline-1 -outline-offset-1
+>    outline-black/10 dark:outline-white/10` (no `ring-stone-*`, que ensucia el borde).
+>
+> 10. **Nada de tarjetas dentro de tarjetas**: dentro de una `Card`, filas o celdas planas separadas por
+>    líneas finas (`divide-y`/`divide-x`), como `DesgloseGrid` y la lista móvil de animales.
+>
+> **Pantallas que cambiaron:** Inicio (pendientes primero; módulos y "Dados de baja" en un bloque
+> compacto; en escritorio dos columnas), Engorde/Lechería/Reproductores (título arriba, resumen, barra de
+> búsqueda y lista; se quitaron las tarjetas que repetían el total; en lechería y reproductores no se
+> repite el sexo; en móvil la lista es un solo bloque con divisores, caben casi el doble), desglose por
+> etapa/estado plano (filas en móvil, una fila de columnas en tableta/escritorio), tabla de escritorio
+> (columna "Animal" con nombre y arete; "Estado" solo en listas con bajas), ficha del animal (cabecera:
+> datos en una línea de texto y solo los estados como etiquetas; "Eliminar" como icono aparte; pestañas
+> con pastilla que se desliza), registrar (control segmentado), historial, formularios, calendario
+> (bloque de fecha), leche (sin la tabla de "Sin registros" cuando no hay datos), respaldo, login, árbol
+> genealógico (sin franjas de color por sexo), menú lateral agrupado, hoja "Más" y buscador móvil con
+> transición.
+>
+> **Lógica compartida (solo textos):** `src/lib/alertas.ts`: los mensajes de pendientes dicen "1 día" /
+> "15 días" (antes "día(s)") y el día cero tiene su texto ("Parto estimado para hoy.", "Entra en secado
+> hoy.", "Lista para montar desde hoy."; antes "vencido hace 0 día(s)"). No cambia ningún cálculo. En
+> Inicio, un secado que ya empezó va en neutro (como "En secado" en la lista); solo el que viene es ámbar.
+>
+> **Service worker (`public/sw.js`, VERSION v1 → v2) — lo toqué yo:** al abrir `npm run dev` en
+> `localhost:3000` salía "Cannot read properties of undefined (reading 'call')" en `<Dialogos />`: el SW
+> que dejó la versión de producción guardaba `/_next/static/` con "primero la copia guardada" y en
+> desarrollo los chunks no llevan hash, así que el navegador recibía el layout viejo. Ahora: (a) solo se
+> guardan archivos con hash en el nombre; (b) en desarrollo `EstadoConexion` anula el registro del SW y
+> borra sus cachés `tds-*`; (c) `sw.js` se sirve con `Cache-Control: no-cache` (`next.config.mjs`) para
+> que la versión nueva reemplace a la vieja enseguida; (d) si el almacenamiento de cachés falla, el SW
+> sigue con la red en vez de dejar la página en `ERR_FAILED` (lo encontré probando). Al activarse la v2
+> se borran las copias v1: la primera vez sin señal tras actualizar solo estarán las páginas que se
+> vuelvan a visitar con señal.
+>
+> Verificado: `tsc --noEmit`, `npm run prod:build` (17/17), detector de diseño sin hallazgos, capturas a
+> 390/768/1280 px en claro y oscuro sin desbordamiento ni errores de consola, con y sin service worker,
+> y `npm run dev` con el SW de producción registrado (se anula y abre sin errores). Sin escribir datos.
+
 ### [INFO] Kiro: leer — auditoría de diseño y accesibilidad, toqué ~25 archivos del frontend (Claude Code, 2026-10-26, pedido del dueño)
 
 > Claude: commit `ad78267`, ya en `master` y desplegado. **Haz `git pull` antes de seguir** para

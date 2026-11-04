@@ -1,6 +1,7 @@
 import { ListaAnimales } from "@/components/ListaAnimales";
 import { AvisoBajas } from "@/components/AvisoBajas";
 import { TotalesPrincipales, DesgloseGrid, type Celda } from "@/components/ResumenConteos";
+import { ACENTO } from "@/components/ui";
 import { conteosModulo, desgloseEtapasEngorde, type ConteosModulo } from "@/lib/modulos";
 import { ETAPA_LABEL } from "@/lib/tipos";
 import {
@@ -15,11 +16,12 @@ import {
 export const dynamic = "force-dynamic";
 
 // Celdas del desglose por etapa (orden: Destete → Desarrollo → Engorde → Sin fecha de nacimiento).
+// Las etapas son datos de la edad, no avisos: el verde de la marca, más intenso según avanza.
 const ETAPAS_CELDA = [
-  { clave: "DESTETE", Icono: IconoBiberon, acento: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300" },
-  { clave: "DESARROLLO", Icono: IconoReloj, acento: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" },
-  { clave: "ENGORDE", Icono: IconoPeso, acento: "bg-marca-100 text-marca-700 dark:bg-marca-950 dark:text-marca-300" },
-  { clave: "SIN_ETAPA", Icono: IconoInfo, acento: "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400" },
+  { clave: "DESTETE", Icono: IconoBiberon, acento: "bg-marca-50 text-marca-700 dark:bg-marca-950/60 dark:text-marca-300" },
+  { clave: "DESARROLLO", Icono: IconoReloj, acento: "bg-marca-100 text-marca-700 dark:bg-marca-950 dark:text-marca-300" },
+  { clave: "ENGORDE", Icono: IconoPeso, acento: "bg-marca-200 text-marca-800 dark:bg-marca-900 dark:text-marca-200" },
+  { clave: "SIN_ETAPA", Icono: IconoInfo, acento: ACENTO.neutral },
 ] as const;
 
 export default async function EngordePage({
@@ -37,8 +39,16 @@ export default async function EngordePage({
 
   return (
     <div className="space-y-6">
-      <Resumen conteos={conteos} etapas={etapas} />
-      <ListaAnimales modulo="ENGORDE" titulo="Engorde" filtro={filtro} q={q} basePath="/engorde" soloActivos agregarModulo="ENGORDE" />
+      <ListaAnimales
+        modulo="ENGORDE"
+        titulo="Engorde"
+        filtro={filtro}
+        q={q}
+        basePath="/engorde"
+        soloActivos
+        agregarModulo="ENGORDE"
+        resumen={<Resumen conteos={conteos} etapas={etapas} />}
+      />
       <AvisoBajas cantidad={conteos.then((c) => c.inactivos)} href="/engorde/bajas" />
     </div>
   );
@@ -53,10 +63,11 @@ async function Resumen({
 }) {
   const [conteos, etapas] = await Promise.all([conteosP, etapasP]);
 
+  // El total ya está bajo el título de la página: aquí solo el reparto por sexo (en neutro:
+  // el sexo es un dato, no un estado).
   const totales: Celda[] = [
-    { clave: "total", valor: conteos.total, etiqueta: "Total", Icono: IconoPeso, acento: "bg-marca-100 text-marca-700 dark:bg-marca-950 dark:text-marca-300", href: "/engorde" },
-    { clave: "machos", valor: conteos.machos, etiqueta: "Machos", Icono: IconoMacho, acento: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300" },
-    { clave: "hembras", valor: conteos.hembras, etiqueta: "Hembras", Icono: IconoHembra, acento: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300" },
+    { clave: "machos", valor: conteos.machos, etiqueta: "Machos", Icono: IconoMacho, acento: ACENTO.neutral },
+    { clave: "hembras", valor: conteos.hembras, etiqueta: "Hembras", Icono: IconoHembra, acento: ACENTO.neutral },
   ];
 
   const etapasCeldas: Celda[] = ETAPAS_CELDA.map((e) => ({
@@ -75,7 +86,6 @@ async function Resumen({
       <DesgloseGrid
         titulo="Por etapa"
         celdas={etapasCeldas}
-        columnas={2}
         nota="La etapa se calcula sola por la edad: Destete hasta los 4 meses, Desarrollo hasta los 16 y Engorde desde entonces. Los animales sin fecha de nacimiento no se pueden ubicar."
       />
     </>

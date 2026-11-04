@@ -10,6 +10,7 @@ import {
   FormPalpacion,
 } from "./FormulariosEventos";
 import { EtapaAutomatica } from "./EtapaAutomatica";
+import { claseSuperficie } from "@/components/ui";
 
 type Opcion = { id: string; arete: string; nombre: string | null; sinArete?: boolean | null; areteCenasa?: string | null };
 
@@ -56,32 +57,45 @@ export function PanelRegistro({
   const [tab, setTab] = useState(tabs[0].id);
 
   return (
-    <div className="rounded-xl border border-stone-200/80 bg-white shadow-card dark:border-stone-800 dark:bg-stone-900">
-      {/* Las pestañas reparten el ancho para que todas quepan en el celular. */}
-      <div role="tablist" aria-label="Qué registrar" className="flex items-center border-b border-stone-200 px-1 pt-1 sm:gap-1 sm:px-2 sm:pt-2 dark:border-stone-800">
-        {tabs.map((t) => {
-          const activo = tab === t.id;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={activo}
-              onClick={() => setTab(t.id)}
-              className={
-                "flex-1 whitespace-nowrap rounded-t-lg px-1 py-3 text-sm font-medium transition-colors sm:flex-none sm:px-4 sm:py-2.5 " +
-                (activo
-                  ? "border-b-2 border-marca-600 text-marca-700 dark:border-marca-400 dark:text-marca-300"
-                  : "text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200")
-              }
-            >
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
+    <div className={claseSuperficie}>
+      {/* Control segmentado: las opciones reparten el ancho para que todas quepan en el celular. */}
+      {tabs.length > 1 && (
+        <div className="px-3 pt-3 sm:px-4 sm:pt-4">
+          <div role="tablist" aria-label="Qué registrar" className="flex gap-1 rounded-xl bg-stone-100 p-1 dark:bg-stone-800">
+            {tabs.map((t) => {
+              const activo = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  id={`registro-${t.id}`}
+                  aria-selected={activo}
+                  aria-controls="registro-panel"
+                  onClick={() => setTab(t.id)}
+                  className={
+                    "min-h-10 flex-1 whitespace-nowrap rounded-lg px-2 text-sm font-medium transition-[background-color,color,box-shadow] duration-150 sm:flex-none sm:px-4 " +
+                    (activo
+                      ? "bg-white text-stone-900 shadow-card dark:bg-stone-600 dark:text-white"
+                      : "text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-white")
+                  }
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
-      <div role="tabpanel" className="p-4 sm:p-5">
+      <div
+        role="tabpanel"
+        id="registro-panel"
+        aria-labelledby={tabs.length > 1 ? `registro-${tab}` : undefined}
+        aria-label={tabs.length > 1 ? undefined : tabs[0].label}
+        key={tab}
+        className="t-aparecer p-4 sm:p-5"
+      >
         {tab === "peso" && <FormPeso animalId={animalId} />}
         {tab === "etapa" && (
           <div className="space-y-2">

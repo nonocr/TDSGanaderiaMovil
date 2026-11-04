@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { IconoRespaldo, IconoRestaurar } from "@/components/iconos";
 import { hoyLocalISO } from "@/lib/fechas";
 import { SIN_CONEXION } from "@/lib/api-cliente";
+import { ACENTO, AvisoError, AvisoExito, Spinner, claseBoton, claseSuperficie } from "@/components/ui";
+import { confirmar } from "@/components/Dialogos";
 
 export function Respaldo() {
   const router = useRouter();
@@ -41,13 +43,16 @@ export function Respaldo() {
 
   // Restaurar: leer el archivo elegido y enviarlo. Reemplaza TODOS los datos.
   async function restaurar(archivo: File) {
-    const confirmar = confirm(
-      "¿Restaurar este respaldo?\n\n" +
-        "Se reemplazarán TODOS los datos actuales por los del archivo. " +
-        "Esto no se puede deshacer.\n\n" +
-        "Consejo: descarga un respaldo de lo que tienes ahora antes de continuar."
-    );
-    if (!confirmar) {
+    const si = await confirmar({
+      titulo: "¿Restaurar este respaldo?",
+      mensaje:
+        `Archivo: ${archivo.name}\n\n` +
+        "Se reemplazarán TODOS los datos actuales por los del archivo. Esto no se puede deshacer.\n\n" +
+        "Consejo: descarga un respaldo de lo que tienes ahora antes de continuar.",
+      accion: "Reemplazar todos los datos",
+      peligro: true,
+    });
+    if (!si) {
       if (inputRef.current) inputRef.current.value = "";
       return;
     }
@@ -85,27 +90,21 @@ export function Respaldo() {
   }
 
   return (
-    <div className="space-y-6">
-      {mensaje && (
-        <div
-          role={mensaje.tipo === "ok" ? "status" : "alert"}
-          className={
-            "rounded-lg border px-4 py-3 text-sm " +
-            (mensaje.tipo === "ok"
-              ? "border-marca-200 bg-marca-50 text-marca-800 dark:border-marca-800 dark:bg-marca-950 dark:text-marca-200"
-              : "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300")
-          }
-        >
-          {mensaje.texto}
-        </div>
-      )}
+    <div className="space-y-4">
+      {mensaje &&
+        (mensaje.tipo === "ok" ? <AvisoExito>{mensaje.texto}</AvisoExito> : <AvisoError>{mensaje.texto}</AvisoError>)}
 
+      {/* En escritorio, las dos acciones lado a lado; en móvil, una debajo de la otra. */}
+      <div className="grid gap-4 lg:grid-cols-2">
       {/* Descargar respaldo */}
-      <div className="rounded-xl border border-stone-200/80 bg-white p-5 shadow-card dark:border-stone-800 dark:bg-stone-900">
-        <h2 className="flex items-center gap-2 text-base font-bold text-stone-800 dark:text-stone-100">
-<IconoRespaldo className="h-5 w-5 text-marca-600 dark:text-marca-400" /> Descargar respaldo
+      <div className={`${claseSuperficie} flex flex-col p-5`}>
+        <h2 className="flex items-center gap-2.5 text-base font-semibold text-stone-900 dark:text-stone-50">
+          <span className={`grid h-9 w-9 place-items-center rounded-lg ${ACENTO.marca}`}>
+            <IconoRespaldo className="h-5 w-5" />
+          </span>
+          Descargar respaldo
         </h2>
-        <p className="mt-1.5 text-sm text-stone-500 dark:text-stone-400">
+        <p className="mt-2 flex-1 text-sm text-stone-600 dark:text-stone-400">
           Guarda una copia de toda tu información (animales, eventos, pesos, leche) en un
           archivo. Guárdalo en un lugar seguro, como tu correo o la nube. Te recomendamos
           hacerlo cada cierto tiempo.
@@ -113,20 +112,25 @@ export function Respaldo() {
         <button
           onClick={descargar}
           disabled={descargando}
-          className="mt-4 w-full rounded-lg bg-marca-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-marca-700 disabled:opacity-50 sm:w-auto"
+          aria-busy={descargando || undefined}
+          className={`${claseBoton("primario")} mt-4 w-full sm:w-auto sm:self-start`}
         >
+          {descargando && <Spinner />}
           {descargando ? "Preparando…" : "Descargar respaldo"}
         </button>
       </div>
 
       {/* Restaurar respaldo */}
-      <div className="rounded-xl border border-stone-200/80 bg-white p-5 shadow-card dark:border-stone-800 dark:bg-stone-900">
-        <h2 className="flex items-center gap-2 text-base font-bold text-stone-800 dark:text-stone-100">
-<IconoRestaurar className="h-5 w-5 text-marca-600 dark:text-marca-400" /> Restaurar respaldo
+      <div className={`${claseSuperficie} flex flex-col p-5`}>
+        <h2 className="flex items-center gap-2.5 text-base font-semibold text-stone-900 dark:text-stone-50">
+          <span className={`grid h-9 w-9 place-items-center rounded-lg ${ACENTO.ambar}`}>
+            <IconoRestaurar className="h-5 w-5" />
+          </span>
+          Restaurar respaldo
         </h2>
-        <p className="mt-1.5 text-sm text-stone-500 dark:text-stone-400">
+        <p className="mt-2 flex-1 text-sm text-stone-600 dark:text-stone-400">
           Carga un archivo de respaldo para recuperar tu información. Esto{" "}
-          <span className="font-semibold text-stone-700 dark:text-stone-200">
+          <span className="font-semibold text-stone-800 dark:text-stone-200">
             reemplaza todos los datos actuales
           </span>{" "}
           por los del archivo, así que úsalo con cuidado.
@@ -145,10 +149,13 @@ export function Respaldo() {
         <button
           onClick={() => inputRef.current?.click()}
           disabled={restaurando}
-          className="mt-4 w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 text-sm font-medium text-stone-700 hover:bg-stone-50 disabled:opacity-50 sm:w-auto dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
+          aria-busy={restaurando || undefined}
+          className={`${claseBoton("secundario")} mt-4 w-full sm:w-auto sm:self-start`}
         >
+          {restaurando && <Spinner />}
           {restaurando ? "Restaurando…" : "Elegir archivo y restaurar"}
         </button>
+      </div>
       </div>
     </div>
   );

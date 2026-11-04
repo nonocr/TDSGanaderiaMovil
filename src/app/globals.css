@@ -4,25 +4,211 @@
 
 :root {
   color-scheme: light;
+  /* Casillas, radios y barras de progreso nativas con el verde de la marca. */
+  accent-color: theme("colors.marca.600");
+
+  /* --- Escala de movimiento (transitions-polish) ---
+     Una sola escala para toda la app: cada transición usa el token de SU uso
+     (abrir/cerrar un diálogo, deslizar una pestaña, aparecer un aviso…). */
+  --duration-stagger: 40ms; /* desfase por elemento */
+  --duration-micro: 80ms; /* retardo de intención */
+  --duration-quick: 150ms; /* cerrar diálogo / menú, cambio de texto */
+  --duration-fast: 250ms; /* abrir diálogo / menú, pestañas, cambio de página */
+  --duration-medium: 350ms; /* cerrar panel o aviso */
+  --duration-slow: 400ms; /* abrir panel, revelar contenido */
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1); /* superficies que abren, cierran o se desplazan */
+  --ease-in-out: ease-in-out;
+  --ease-linear: linear;
+  --distance-micro: 4px;
+  --distance-base: 8px;
+  --distance-medium: 12px;
+  --scale-large: 0.96; /* diálogo */
+  --scale-medium: 0.97; /* menú */
+  --blur-small: 2px;
 }
 
 /* En oscuro, los controles nativos (desplegables de <select>, calendario de fechas,
    barras de scroll) también deben ir en oscuro. */
 html.dark {
   color-scheme: dark;
+  accent-color: theme("colors.marca.500");
 }
 
 body {
   @apply bg-stone-100 text-stone-800 antialiased dark:bg-stone-950 dark:text-stone-200;
+  /* Las cifras con el mismo ancho en toda la app: conteos, kilos, litros y fechas no "bailan". */
+  font-variant-numeric: tabular-nums;
 }
 
-/* Transiciones suaves y discretas en elementos interactivos */
+/* Títulos sin palabras sueltas en la última línea; párrafos sin viudas. */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+
+/* Transiciones suaves y discretas en elementos interactivos (solo color: el resto de
+   propiedades las declara cada componente). */
 a,
 button,
 select,
 input,
 textarea {
   @apply transition-colors duration-150;
+}
+
+/* --- Superficies del navegador: también llevan la marca --- */
+
+/* Foco visible al usar el teclado (no aparece al tocar con el dedo). Los campos de texto
+   tienen su propio anillo (`claseCampo`), por eso aquí solo van controles y enlaces. */
+:where(a, button, summary, [role="button"], [role="tab"], label[for]):focus-visible {
+  outline: 2px solid theme("colors.marca.600");
+  outline-offset: 2px;
+}
+.dark :where(a, button, summary, [role="button"], [role="tab"], label[for]):focus-visible {
+  outline-color: theme("colors.marca.400");
+}
+
+::selection {
+  background-color: theme("colors.marca.200");
+  color: theme("colors.marca.950");
+}
+.dark ::selection {
+  background-color: theme("colors.marca.800");
+  color: theme("colors.marca.50");
+}
+
+input,
+textarea {
+  caret-color: theme("colors.marca.600");
+}
+.dark input,
+.dark textarea {
+  caret-color: theme("colors.marca.400");
+}
+
+/* Barras de desplazamiento finas y del color de los neutros (Firefox y Chromium modernos). */
+html {
+  scrollbar-color: theme("colors.stone.300") transparent;
+}
+html.dark {
+  scrollbar-color: theme("colors.stone.700") transparent;
+}
+
+/* --- Transiciones de superficies (transitions-dev) ---
+   Cada una tiene su guarda de movimiento reducido. El estado lo pone React con
+   `data-estado="abierto"` (ver src/lib/usar-presencia.ts). */
+
+/* Fondo oscuro de diálogos y hojas: solo se desvanece. */
+.t-fondo {
+  opacity: 0;
+  transition: opacity var(--duration-quick) var(--ease-smooth-out);
+}
+.t-fondo[data-estado="abierto"] {
+  opacity: 1;
+  transition-duration: var(--duration-fast);
+}
+
+/* Hoja que sube desde abajo (menú "Más"). Cerrar es más rápido que abrir. */
+.t-hoja {
+  transform: translateY(100%);
+  transition: transform var(--duration-quick) var(--ease-smooth-out);
+  will-change: transform;
+}
+.t-hoja[data-estado="abierto"] {
+  transform: translateY(0);
+  transition-duration: var(--duration-fast);
+}
+
+/* Diálogo: crece desde 0.96 al abrir y vuelve a 0.96 al cerrar (patrón modal). */
+.t-modal {
+  transform-origin: center;
+  transform: scale(var(--scale-large));
+  opacity: 0;
+  transition:
+    transform var(--duration-quick) var(--ease-smooth-out),
+    opacity var(--duration-quick) var(--ease-smooth-out);
+  will-change: transform, opacity;
+}
+.t-modal[data-estado="abierto"] {
+  transform: scale(1);
+  opacity: 1;
+  transition-duration: var(--duration-fast);
+}
+
+/* Pantalla de búsqueda (móvil): entra con un desplazamiento corto y un leve desenfoque. */
+.t-pantalla {
+  opacity: 0;
+  transform: translateY(var(--distance-base));
+  filter: blur(var(--blur-small));
+  transition:
+    opacity var(--duration-quick) var(--ease-smooth-out),
+    transform var(--duration-quick) var(--ease-smooth-out),
+    filter var(--duration-quick) var(--ease-smooth-out);
+}
+.t-pantalla[data-estado="abierto"] {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+  transition-duration: var(--duration-fast);
+}
+
+/* Aviso flotante (toast): sube con fundido y desenfoque; se va más rápido de lo que llega. */
+.t-toast {
+  opacity: 0;
+  transform: translateY(16px) scale(0.97);
+  filter: blur(2px);
+  will-change: transform, opacity, filter;
+  transition:
+    opacity 250ms var(--ease-smooth-out),
+    transform 250ms var(--ease-smooth-out),
+    filter 250ms var(--ease-smooth-out);
+}
+.t-toast[data-estado="abierto"] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+  transition:
+    opacity 350ms var(--ease-smooth-out),
+    transform 350ms var(--ease-smooth-out),
+    filter 350ms var(--ease-smooth-out);
+}
+
+/* Pastilla de la pestaña activa que se desliza (patrón tabs sliding). La posición y el
+   ancho los escribe JS; CSS hace la transición. */
+.t-tabs-pill {
+  transition:
+    transform var(--duration-fast) var(--ease-smooth-out),
+    width var(--duration-fast) var(--ease-smooth-out);
+  will-change: transform, width;
+}
+
+/* Cambio de contenido de una pestaña: aparece con un fundido corto, sin mover nada. */
+.t-aparecer {
+  animation: t-aparecer var(--duration-fast) var(--ease-smooth-out) both;
+}
+@keyframes t-aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(var(--distance-micro));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-fondo,
+  .t-hoja,
+  .t-modal,
+  .t-pantalla,
+  .t-toast,
+  .t-tabs-pill {
+    transition: none !important;
+  }
+  .t-aparecer {
+    animation: none !important;
+  }
 }
 
 /* Movimiento reducido (preferencia del sistema): sin animaciones ni desplazamientos suaves.

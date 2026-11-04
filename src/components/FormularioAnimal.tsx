@@ -5,7 +5,16 @@ import { useEffect, useRef, useState } from "react";
 import { MODULO_LABEL, etiquetaArete } from "@/lib/tipos";
 import { hoyLocalISO } from "@/lib/fechas";
 import { llamarApi } from "@/lib/api-cliente";
-import { claseCampo, claseEtiqueta, claseBotonPrimario, AvisoError } from "@/components/ui";
+import { claseCampo, claseEtiqueta, claseBoton, BotonEnviar, AvisoError } from "@/components/ui";
+import { avisar } from "@/components/Dialogos";
+
+// Opción de radio como "pastilla" táctil (44 px): el círculo nativo dentro, con el borde y el
+// fondo de la marca cuando está elegida.
+const claseOpcion =
+  "flex min-h-11 cursor-pointer select-none items-center gap-2.5 rounded-xl bg-white px-3.5 text-sm font-medium text-stone-700 ring-1 ring-inset ring-stone-300 transition-colors hover:bg-stone-50 has-[:checked]:bg-marca-50 has-[:checked]:text-marca-900 has-[:checked]:ring-marca-500 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-marca-600 dark:bg-stone-800 dark:text-stone-200 dark:ring-stone-700 dark:hover:bg-stone-700 dark:has-[:checked]:bg-marca-950 dark:has-[:checked]:text-marca-100 dark:has-[:checked]:ring-marca-500";
+// Grupo de campos (padre, madre): superficie suave en lugar de un borde fino.
+const claseGrupo =
+  "rounded-2xl bg-stone-50 p-4 ring-1 ring-inset ring-stone-900/[0.06] dark:bg-stone-800/40 dark:ring-white/[0.06]";
 
 // Prefijo del arete interno que genera el backend para los animales sin arete físico. No se le
 // muestra al usuario (ver src/lib/validar.ts, PREFIJO_SIN_ARETE).
@@ -191,12 +200,13 @@ export function FormularioAnimal({
         body: { animalId: animal.id, fecha: fechaNac, pesoKg: pesoNacer, notas: "Peso al nacer" },
       });
       if (!rPeso.ok) {
-        alert(
+        // El aviso vive en el layout: sigue a la vista al pasar a la ficha.
+        avisar(
           `El animal se guardó, pero no el peso al nacer: ${rPeso.error} ` +
             "Puedes añadirlo desde su ficha en Registrar → Peso."
         );
-      }
-    }
+      } else avisar("Animal guardado.", "ok");
+    } else avisar(esEdicion ? "Cambios guardados." : "Animal guardado.", "ok");
 
     router.push(`/animales/${animal.id}`);
     router.refresh();
@@ -257,22 +267,22 @@ export function FormularioAnimal({
       {esReproductor && !esEdicion && (
         <div>
           <span className={etiqueta}>Tipo *</span>
-          <div className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-sm">
-            <label className="flex items-center gap-2 py-1">
+          <div className="mt-1.5 flex flex-wrap gap-2 text-sm">
+            <label className={claseOpcion}>
               <input
                 type="radio"
                 name="tipoReproductor"
-                className="h-4 w-4 accent-marca-600"
+                className="h-[18px] w-[18px] shrink-0 accent-marca-600"
                 checked={tipoReproductor === "TORO"}
                 onChange={() => setTipoReproductor("TORO")}
               />
               Toro
             </label>
-            <label className="flex items-center gap-2 py-1">
+            <label className={claseOpcion}>
               <input
                 type="radio"
                 name="tipoReproductor"
-                className="h-4 w-4 accent-marca-600"
+                className="h-[18px] w-[18px] shrink-0 accent-marca-600"
                 checked={tipoReproductor === "PAJILLA"}
                 onChange={() => setTipoReproductor("PAJILLA")}
               />
@@ -320,7 +330,7 @@ export function FormularioAnimal({
       ) : (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-stone-600 dark:text-stone-300">
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-stone-700 dark:text-stone-300">
             <input
               type="checkbox"
               className="h-5 w-5 shrink-0 accent-marca-600"
@@ -340,7 +350,7 @@ export function FormularioAnimal({
             </p>
           </div>
         ) : (
-          <div className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-500 dark:border-stone-700 dark:bg-stone-800/50 dark:text-stone-400">
+          <div className="rounded-xl bg-stone-100 px-3 py-2.5 text-xs leading-relaxed text-stone-600 dark:bg-stone-800/60 dark:text-stone-400">
             Sin arete de la finca. Aparecerá como <strong>&quot;Sin arete&quot;</strong> hasta que le
             pongas un número (arete o SENASA) editándolo. Útil para una cría recién nacida.
           </div>
@@ -482,8 +492,8 @@ export function FormularioAnimal({
 
       {/* Datos de baja: solo cuando el animal está Vendido o Muerto. */}
       {esBaja && (
-        <fieldset className="rounded border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900/60 dark:bg-amber-950/20">
-          <legend className="px-1 text-sm font-semibold text-amber-700 dark:text-amber-400">
+        <fieldset className="rounded-2xl bg-amber-50/70 p-4 ring-1 ring-inset ring-amber-200 dark:bg-amber-950/25 dark:ring-amber-900/60">
+          <legend className="-ml-1 rounded-md bg-amber-50 px-1 text-sm font-semibold text-amber-800 dark:bg-stone-950 dark:text-amber-300">
             {estado === "VENDIDO" ? "Datos de la venta" : "Datos de la baja"}
           </legend>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -530,20 +540,20 @@ export function FormularioAnimal({
       {!esPajilla && (
       <>
       {/* Genealogia: padre */}
-      <fieldset className="rounded border border-stone-200 p-3 dark:border-stone-700">
-        <legend className="px-1 text-sm font-semibold text-stone-600 dark:text-stone-300">Padre (opcional)</legend>
+      <fieldset className={claseGrupo}>
+        <legend className="-ml-1 px-1 text-sm font-semibold text-stone-900 dark:text-stone-100">Padre (opcional)</legend>
         <p className="mb-2 text-xs text-stone-500 dark:text-stone-400">
           Elige &quot;Registrado&quot; si el padre ya está en la app (solo aparecen los toros y pajillas de
           Reproductores). Elige &quot;De otra finca&quot; si es un animal que no tienes registrado (solo
           escribes su nombre). Puedes dejarlo en blanco si no lo sabes.
         </p>
-        <div className="mb-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
-          <label className="flex items-center gap-2 py-1">
-            <input type="radio" name="padreModo" className="h-4 w-4 accent-marca-600" checked={padreModo === "registrado"} onChange={() => setPadreModo("registrado")} />
+        <div className="mb-3 flex flex-wrap gap-2 text-sm">
+          <label className={claseOpcion}>
+            <input type="radio" name="padreModo" className="h-[18px] w-[18px] shrink-0 accent-marca-600" checked={padreModo === "registrado"} onChange={() => setPadreModo("registrado")} />
             Registrado
           </label>
-          <label className="flex items-center gap-2 py-1">
-            <input type="radio" name="padreModo" className="h-4 w-4 accent-marca-600" checked={padreModo === "externo"} onChange={() => setPadreModo("externo")} />
+          <label className={claseOpcion}>
+            <input type="radio" name="padreModo" className="h-[18px] w-[18px] shrink-0 accent-marca-600" checked={padreModo === "externo"} onChange={() => setPadreModo("externo")} />
             De otra finca
           </label>
         </div>
@@ -562,19 +572,19 @@ export function FormularioAnimal({
       </fieldset>
 
       {/* Genealogia: madre */}
-      <fieldset className="rounded border border-stone-200 p-3 dark:border-stone-700">
-        <legend className="px-1 text-sm font-semibold text-stone-600 dark:text-stone-300">Madre (opcional)</legend>
+      <fieldset className={claseGrupo}>
+        <legend className="-ml-1 px-1 text-sm font-semibold text-stone-900 dark:text-stone-100">Madre (opcional)</legend>
         <p className="mb-2 text-xs text-stone-500 dark:text-stone-400">
           Elige &quot;Registrada&quot; si la madre ya está en la app. Elige &quot;De otra finca&quot; si no la tienes
           registrada (solo escribes su nombre). Puedes dejarlo en blanco si no lo sabes.
         </p>
-        <div className="mb-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
-          <label className="flex items-center gap-2 py-1">
-            <input type="radio" name="madreModo" className="h-4 w-4 accent-marca-600" checked={madreModo === "registrado"} onChange={() => setMadreModo("registrado")} />
+        <div className="mb-3 flex flex-wrap gap-2 text-sm">
+          <label className={claseOpcion}>
+            <input type="radio" name="madreModo" className="h-[18px] w-[18px] shrink-0 accent-marca-600" checked={madreModo === "registrado"} onChange={() => setMadreModo("registrado")} />
             Registrada
           </label>
-          <label className="flex items-center gap-2 py-1">
-            <input type="radio" name="madreModo" className="h-4 w-4 accent-marca-600" checked={madreModo === "externo"} onChange={() => setMadreModo("externo")} />
+          <label className={claseOpcion}>
+            <input type="radio" name="madreModo" className="h-[18px] w-[18px] shrink-0 accent-marca-600" checked={madreModo === "externo"} onChange={() => setMadreModo("externo")} />
             De otra finca
           </label>
         </div>
@@ -594,13 +604,14 @@ export function FormularioAnimal({
       </>
       )}
 
-      <button
-        type="submit"
-        disabled={guardando}
-        className={`${claseBotonPrimario} w-full sm:w-auto`}
-      >
-        {guardando ? "Guardando…" : esEdicion ? "Guardar cambios" : "Guardar animal"}
-      </button>
+      <div className="flex flex-col-reverse gap-2 border-t border-stone-200/80 pt-4 sm:flex-row sm:items-center dark:border-stone-800">
+        <button type="button" onClick={() => router.back()} className={`${claseBoton("secundario")} w-full sm:w-auto`}>
+          Cancelar
+        </button>
+        <BotonEnviar cargando={guardando} className="w-full sm:w-auto">
+          {esEdicion ? "Guardar cambios" : "Guardar animal"}
+        </BotonEnviar>
+      </div>
     </form>
   );
 }

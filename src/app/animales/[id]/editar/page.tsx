@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { listarAnimales, opcionesToro } from "@/lib/genealogia";
 import { ANIMAL_SIN_FOTO } from "@/lib/validar";
-import { Card } from "@/components/ui";
+import { Card, EnlaceVolver, PageHeader } from "@/components/ui";
 import { FormularioAnimal } from "@/components/FormularioAnimal";
 import { etiquetaArete } from "@/lib/tipos";
 
@@ -30,15 +29,9 @@ export default async function EditarAnimalPage({
   const hembras = todos.filter((a) => a.sexo === "HEMBRA").map(sinSexo);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-stone-800 dark:text-stone-100">
-          Editar {animal.nombre ? `${animal.nombre} ` : ""}{etiquetaArete(animal)}
-        </h1>
-        <Link href={`/animales/${animal.id}`} className="text-sm text-marca-700 hover:underline dark:text-marca-400">
-          ← Volver a la ficha
-        </Link>
-      </div>
+    <div className="mx-auto max-w-2xl">
+      <EnlaceVolver href={`/animales/${animal.id}`}>Volver a la ficha</EnlaceVolver>
+      <PageHeader titulo={`Editar ${animal.nombre ? `${animal.nombre} ` : ""}${etiquetaArete(animal)}`} />
       <Card>
         <FormularioAnimal
           machos={machos}

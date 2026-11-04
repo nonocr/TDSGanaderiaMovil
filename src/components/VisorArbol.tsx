@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode, type Touch as ReactTouch } from "react";
+import { claseBotonIcono } from "@/components/ui";
 
 // Visor con zoom y desplazamiento (pan) para el árbol genealógico ampliado.
 // - PC: rueda del mouse para acercar/alejar; arrastrar con el mouse para mover.
@@ -173,7 +174,7 @@ export function VisorArbol({ children }: { children: ReactNode }) {
           type="button"
           onClick={acercar}
           aria-label="Acercar"
-          className="grid h-10 w-10 place-items-center rounded-lg border border-stone-200 bg-white text-lg font-medium text-stone-700 shadow-sm transition-colors hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
+          className={`${claseBotonIcono("secundario")} text-lg`}
         >
           +
         </button>
@@ -181,7 +182,7 @@ export function VisorArbol({ children }: { children: ReactNode }) {
           type="button"
           onClick={alejar}
           aria-label="Alejar"
-          className="grid h-10 w-10 place-items-center rounded-lg border border-stone-200 bg-white text-lg font-medium text-stone-700 shadow-sm transition-colors hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
+          className={`${claseBotonIcono("secundario")} text-lg`}
         >
           −
         </button>
@@ -190,7 +191,7 @@ export function VisorArbol({ children }: { children: ReactNode }) {
           onClick={restablecer}
           aria-label="Restablecer zoom"
           title="Restablecer"
-          className="grid h-10 w-10 place-items-center rounded-lg border border-stone-200 bg-white text-stone-600 shadow-sm transition-colors hover:bg-stone-50 active:bg-stone-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
+          className={`${claseBotonIcono("secundario")} text-lg`}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
             <path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8" />

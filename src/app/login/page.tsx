@@ -28,19 +28,19 @@ export default async function LoginPage({
         className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/45"
         aria-hidden="true"
       />
-      <div className="relative w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-xl dark:border-stone-800 dark:bg-stone-900">
+      <div className="relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-flotante ring-1 ring-black/5 sm:p-7 dark:bg-stone-900 dark:ring-white/10">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
           <Image
             src="/logo.png"
             alt="TDS Ganadería"
-            width={64}
-            height={64}
-            className="h-16 w-16 rounded-full bg-white object-contain ring-1 ring-stone-200 dark:ring-stone-700"
+            width={72}
+            height={72}
+            className="h-[72px] w-[72px] rounded-full bg-white object-contain shadow-card ring-1 ring-black/5"
             priority
           />
           <div>
-            <h1 className="text-lg font-bold text-stone-800 dark:text-stone-100">Finca Tierra de Sueños</h1>
-            <p className="text-sm text-stone-500 dark:text-stone-400">Ingresa la contraseña para continuar</p>
+            <h1 className="text-xl font-bold tracking-tight text-stone-900 dark:text-stone-50">Finca Tierra de Sueños</h1>
+            <p className="mt-0.5 text-sm font-medium text-marca-700 dark:text-marca-400">Ganadería</p>
           </div>
         </div>
         <FormularioLogin destino={destino} />

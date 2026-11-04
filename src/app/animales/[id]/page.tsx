@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ANIMAL_SIN_FOTO } from "@/lib/validar";
-import { Card, SectionTitle, EstadoBadge, SexoBadge, AnimalLink, Badge } from "@/components/ui";
+import { Card, SectionTitle, EstadoBadge, AnimalLink, Badge, EnlaceVolver, claseSuperficie, TONO_REPRO } from "@/components/ui";
 import { formatearFecha, calcularEdad } from "@/lib/fechas";
 import { SEXO_LABEL, ETAPA_LABEL, MODULO_LABEL, CATEGORIA_LABEL, etiquetaArete } from "@/lib/tipos";
 import {
@@ -29,7 +29,7 @@ import { AccionesAnimal } from "./AccionesAnimal";
 import { HistorialEventos } from "./HistorialEventos";
 import { AccionesEtapa } from "./AccionesEtapa";
 import { FotoAnimal } from "./FotoAnimal";
-import { IconoAtras, IconoFlecha } from "@/components/iconos";
+import { IconoFlecha, IconoMacho, IconoHembra } from "@/components/iconos";
 import { GraficaPesoDiferida } from "./GraficaPesoDiferida";
 import { FichaTabs } from "./FichaTabs";
 import { ProduccionLecheVaca } from "./ProduccionLecheVaca";
@@ -224,7 +224,7 @@ export default async function AnimalDetallePage({
       id: p.id,
       fecha: p.fecha,
       tipo: "Parto",
-      detalle: `${p.crias.length} cría(s)${extras.length ? " · " + extras.join(" · ") : ""}`,
+      detalle: `${p.crias.length} ${p.crias.length === 1 ? "cría" : "crías"}${extras.length ? " · " + extras.join(" · ") : ""}`,
       editable: true,
       toroId: p.toroId,
       descripcion: p.descripcion,
@@ -360,73 +360,83 @@ export default async function AnimalDetallePage({
       </div>
 
       <div>
-        <Link
-          href="/animales"
-          className="no-print -ml-1 mb-2 inline-flex items-center gap-0.5 rounded-lg py-1.5 pl-1 pr-2 text-sm text-stone-500 hover:text-marca-700 active:bg-stone-200/60 dark:text-stone-400 dark:hover:text-marca-400"
-        >
-          <IconoAtras className="h-4 w-4" />
-          Animales
-        </Link>
-        <div className="flex flex-col gap-4 rounded-xl border border-stone-200/80 bg-white p-4 shadow-card sm:flex-row sm:items-start sm:justify-between sm:p-5 dark:border-stone-800 dark:bg-stone-900">
-          <div className="flex items-center gap-4">
-            <FotoAnimal
-              animalId={animal.id}
-              fotoUrl={animal.fotoMiniatura}
-              sexo={animal.sexo}
-              alt={etiquetaAnimal}
-            />
-            <div className="min-w-0">
-              <h1 className="text-2xl font-bold leading-tight tracking-tight text-stone-800 dark:text-stone-100">
-                {animal.nombre ? `${animal.nombre} ` : ""}
-                <span className="text-stone-500 dark:text-stone-400">{identAnimal}</span>
-              </h1>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                <SexoBadge sexo={animal.sexo} />
-                <Badge tono="neutral">{MODULO_LABEL[animal.modulo] ?? animal.modulo}</Badge>
-                {esVacaLeche && animal.categoria && (
-                  <Badge tono="neutral">{CATEGORIA_LABEL[animal.categoria] ?? animal.categoria}</Badge>
+        <EnlaceVolver href="/animales">Animales</EnlaceVolver>
+        <div className={`${claseSuperficie} overflow-hidden`}>
+          <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
+            <div className="flex min-w-0 items-center gap-4">
+              <FotoAnimal
+                animalId={animal.id}
+                fotoUrl={animal.fotoMiniatura}
+                sexo={animal.sexo}
+                alt={etiquetaAnimal}
+              />
+              <div className="min-w-0">
+                <h1 className="text-2xl font-bold leading-tight tracking-tight text-stone-900 sm:text-[1.75rem] dark:text-stone-50">
+                  {animal.nombre ? `${animal.nombre} ` : ""}
+                  <span className="font-semibold text-stone-500 dark:text-stone-400">{identAnimal}</span>
+                </h1>
+                {/* Datos fijos en una línea de texto (no compiten con los estados). */}
+                <p className="mt-1 flex items-start gap-1.5 text-sm text-stone-600 dark:text-stone-400">
+                  {animal.sexo === "MACHO" ? (
+                    <IconoMacho className="mt-0.5 h-4 w-4 shrink-0 text-stone-500" strokeWidth={2} />
+                  ) : (
+                    <IconoHembra className="mt-0.5 h-4 w-4 shrink-0 text-stone-500" strokeWidth={2} />
+                  )}
+                  <span className="min-w-0">
+                  {[
+                    SEXO_LABEL[animal.sexo],
+                    MODULO_LABEL[animal.modulo] ?? animal.modulo,
+                    esVacaLeche && animal.categoria ? CATEGORIA_LABEL[animal.categoria] ?? animal.categoria : null,
+                    animal.raza,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                  </span>
+                </p>
+                {/* Estados: lo que cambia y pide atención, con su color. */}
+                {(animal.estado !== "ACTIVO" || situacionTexto || situacionVaca.partoEstimado) && (
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    {animal.estado !== "ACTIVO" && <EstadoBadge estado={animal.estado} />}
+                    {situacionTexto && (
+                      <Badge tono={etapaActual ? "neutral" : TONO_REPRO[situacionVaca.estado ?? ""] ?? "neutral"} punto>
+                        {situacionTexto}
+                        {situacionVaca.manual ? " (manual)" : ""}
+                      </Badge>
+                    )}
+                    {situacionVaca.listaParaMontar && situacionVaca.estado !== "LISTA_MONTAR" && (
+                      <Badge tono="verde" punto>
+                        {etiquetaEstadoRepro("LISTA_MONTAR")}
+                      </Badge>
+                    )}
+                    {situacionVaca.partoEstimado && (
+                      <Badge tono="ambar" punto>
+                        Parto estimado: {formatearFecha(situacionVaca.partoEstimado)}
+                      </Badge>
+                    )}
+                  </div>
                 )}
-                <EstadoBadge estado={animal.estado} />
-                {situacionTexto && (
-                  <Badge tono={etapaActual ? "azul" : "verde"} punto>
-                    {situacionTexto}
-                    {situacionVaca.manual ? " (manual)" : ""}
-                  </Badge>
-                )}
-                {situacionVaca.partoEstimado && (
-                  <Badge tono="ambar" punto>
-                    Parto estimado: {formatearFecha(situacionVaca.partoEstimado)}
-                  </Badge>
-                )}
-                {animal.raza && <Badge tono="neutral">{animal.raza}</Badge>}
               </div>
             </div>
-          </div>
-          <div className="flex flex-col gap-3 sm:items-end">
             <AccionesAnimal animalId={animal.id} etiqueta={etiquetaAnimal} />
-            {/* Cantidad de partos de la vaca (gemelos = un parto), bien visible. */}
-            {animal.sexo === "HEMBRA" && (
-              <div className="inline-flex items-center gap-2.5 self-start rounded-lg bg-marca-50 px-3 py-1.5 ring-1 ring-inset ring-marca-200 sm:self-end dark:bg-marca-950/40 dark:ring-marca-900">
-                <span className="text-2xl font-bold leading-none text-marca-700 dark:text-marca-300">
-                  {animal.partosComoVaca.length}
-                </span>
-                <span className="text-sm leading-tight text-stone-700 dark:text-stone-200">
-                  {animal.partosComoVaca.length === 1 ? "parto" : "partos"}
-                  {animal.partosComoVaca[0] && (
-                    <span className="block text-xs text-stone-500 dark:text-stone-400">
-                      Último: {formatearFecha(animal.partosComoVaca[0].fecha)}
-                    </span>
-                  )}
-                </span>
-              </div>
-            )}
           </div>
+          {/* Cantidad de partos de la vaca (gemelos = un parto), bien visible. */}
+          {animal.sexo === "HEMBRA" && (
+            <div className="flex items-baseline gap-2 border-t border-stone-100 bg-stone-50/70 px-4 py-2.5 text-sm sm:px-5 dark:border-stone-800 dark:bg-stone-800/30">
+              <span className="text-lg font-bold leading-none text-stone-900 dark:text-stone-50">{animal.partosComoVaca.length}</span>
+              <span className="text-stone-700 dark:text-stone-300">{animal.partosComoVaca.length === 1 ? "parto" : "partos"}</span>
+              {animal.partosComoVaca[0] && (
+                <span className="text-stone-500 dark:text-stone-400">
+                  · último el {formatearFecha(animal.partosComoVaca[0].fecha)}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       <FichaTabs
         info={
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
             {/* Gestión reproductiva: estado actual y cambio manual (solo vacas de lechería). */}
             {esVacaLeche && (
               <Card>
@@ -448,7 +458,7 @@ export default async function AnimalDetallePage({
             )}
             <Card>
               <SectionTitle>Datos básicos</SectionTitle>
-              <dl className="space-y-1 text-sm">
+              <dl className="-my-1.5 divide-y divide-stone-100 text-sm dark:divide-stone-800">
                 <Dato k="Arete" v={animal.sinArete ? "Sin arete (identificado por SENASA)" : animal.arete} />
                 <Dato k="Nombre" v={animal.nombre ?? "—"} />
                 <Dato k="Módulo" v={MODULO_LABEL[animal.modulo] ?? animal.modulo} />
@@ -479,17 +489,17 @@ export default async function AnimalDetallePage({
 
             <Card>
               <SectionTitle>Padres y abuelos</SectionTitle>
-              <dl className="space-y-1 text-sm">
-                <div className="flex justify-between gap-2">
+              <dl className="-my-1.5 divide-y divide-stone-100 text-sm dark:divide-stone-800">
+                <div className="flex justify-between gap-3 py-2">
                   <dt className="text-stone-500 dark:text-stone-400">Padre</dt>
                   <dd className="text-right"><TextoProgenitor p={padreTexto} /></dd>
                 </div>
-                <div className="flex justify-between gap-2">
+                <div className="flex justify-between gap-3 py-2">
                   <dt className="text-stone-500 dark:text-stone-400">Madre</dt>
                   <dd className="text-right"><TextoProgenitor p={madreTexto} /></dd>
                 </div>
                 {ascendencia.slice(2).map((a, i) => (
-                  <div key={i} className="flex justify-between gap-2">
+                  <div key={i} className="flex justify-between gap-3 py-2">
                     <dt className="text-stone-500 dark:text-stone-400">{a.relacion}</dt>
                     <dd className="text-right"><TextoProgenitor p={a.progenitor} /></dd>
                   </div>
@@ -500,9 +510,13 @@ export default async function AnimalDetallePage({
             <Card>
               <SectionTitle>Familia</SectionTitle>
               <div className="text-sm">
-                <p className="text-stone-500 dark:text-stone-400">Hijos ({hijos.length})</p>
+                <h3 className="text-sm font-medium text-stone-700 dark:text-stone-300">
+                  Hijos <span className="font-normal text-stone-500 dark:text-stone-400">{hijos.length}</span>
+                </h3>
                 <ListaParientes animales={hijos} />
-                <p className="mt-3 text-stone-500 dark:text-stone-400">Hermanos ({hermanos.length})</p>
+                <h3 className="mt-4 text-sm font-medium text-stone-700 dark:text-stone-300">
+                  Hermanos <span className="font-normal text-stone-500 dark:text-stone-400">{hermanos.length}</span>
+                </h3>
                 <ListaParientes animales={hermanos} />
                 <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
                   Se consideran hermanos si comparten el mismo padre o la misma madre.
@@ -578,14 +592,14 @@ export default async function AnimalDetallePage({
                 <EtapaAutomatica etapaActual={etapaActual} inicios={iniciosEtapas} />
                 {etapasOrdenadas.length > 0 && (
                   <>
-                  <p className="mb-2 mt-5 text-xs font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                  <h3 className="mb-2 mt-5 text-sm font-medium text-stone-700 dark:text-stone-300">
                     Etapas registradas a mano (historial)
-                  </p>
+                  </h3>
                   <ol className="space-y-3">
                     {etapasOrdenadas.map((et) => {
                       const actual = !et.fechaFin;
                       return (
-                        <li key={et.id} className="relative border-l-2 border-marca-200 pl-4 dark:border-marca-800">
+                        <li key={et.id} className="relative border-l border-stone-200 pl-4 dark:border-stone-700">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-stone-700 dark:text-stone-200">
@@ -651,7 +665,7 @@ function ListaParientes({
         <li key={h.id}>
           <Link
             href={`/animales/${h.id}`}
-            className="flex items-center justify-between gap-2 rounded-lg px-2 py-2 font-medium text-marca-700 hover:bg-stone-50 active:bg-stone-100 dark:text-marca-400 dark:hover:bg-stone-800/50 dark:active:bg-stone-800"
+            className="flex min-h-11 items-center justify-between gap-2 rounded-xl px-2 py-2 font-medium text-marca-700 transition-colors hover:bg-stone-50 active:bg-stone-100 dark:text-marca-400 dark:hover:bg-stone-800/50 dark:active:bg-stone-800"
           >
             <span>
               {h.nombre ?? etiquetaArete(h)}
@@ -667,9 +681,9 @@ function ListaParientes({
 
 function Dato({ k, v }: { k: string; v: string }) {
   return (
-    <div className="flex justify-between gap-2">
-      <dt className="text-stone-500 dark:text-stone-400">{k}</dt>
-      <dd className="text-right dark:text-stone-200">{v}</dd>
+    <div className="flex justify-between gap-3 py-2">
+      <dt className="shrink-0 text-stone-500 dark:text-stone-400">{k}</dt>
+      <dd className="min-w-0 text-right text-stone-900 [overflow-wrap:anywhere] dark:text-stone-100">{v}</dd>
     </div>
   );
 }

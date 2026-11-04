@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { listarAnimales, opcionesToro } from "@/lib/genealogia";
-import { Card } from "@/components/ui";
+import { Card, EnlaceVolver, PageHeader } from "@/components/ui";
 import { FormularioAnimal } from "@/components/FormularioAnimal";
 import { MODULO_LABEL } from "@/lib/tipos";
 import { MODULOS } from "@/lib/validar";
@@ -27,15 +26,11 @@ export default async function NuevoAnimalPage({
 
   return (
     <div className="mx-auto max-w-2xl">
-      <Link
-        href="/animales"
-        className="mb-3 inline-flex items-center gap-1 text-sm text-stone-500 hover:text-marca-700 dark:text-stone-400 dark:hover:text-marca-400"
-      >
-        ← Todos los animales
-      </Link>
-      <h1 className="mb-5 text-2xl font-bold tracking-tight text-stone-800 dark:text-stone-100">
-        Agregar animal{moduloInicial ? ` · ${MODULO_LABEL[moduloInicial]}` : ""}
-      </h1>
+      <EnlaceVolver href="/animales">Todos los animales</EnlaceVolver>
+      <PageHeader
+        titulo={`Agregar animal${moduloInicial ? ` · ${MODULO_LABEL[moduloInicial]}` : ""}`}
+        subtitulo="Los campos con * son obligatorios."
+      />
       <Card>
         <FormularioAnimal machos={machos} hembras={hembras} moduloInicial={moduloInicial} />
       </Card>

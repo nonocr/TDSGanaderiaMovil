@@ -49,13 +49,11 @@ export function ResumenPartos({ partos }: { partos: PartoResumen[] }) {
           valor={machos}
           texto={machos === 1 ? "macho" : "machos"}
           icono={<IconoMacho className="h-4 w-4" />}
-          acento="bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:ring-sky-900"
         />
         <Conteo
           valor={hembras}
           texto={hembras === 1 ? "hembra" : "hembras"}
           icono={<IconoHembra className="h-4 w-4" />}
-          acento="bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-900"
         />
         {sinSexo > 0 && <Conteo valor={sinSexo} texto="sin sexo registrado" />}
       </div>
@@ -68,7 +66,7 @@ export function ResumenPartos({ partos }: { partos: PartoResumen[] }) {
             <li key={p.id}>
               <Link
                 href={`/partos/${p.id}`}
-                className="flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800"
+                className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/50 dark:active:bg-stone-800"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline gap-x-2">
@@ -91,7 +89,7 @@ export function ResumenPartos({ partos }: { partos: PartoResumen[] }) {
                     </div>
                   )}
                 </div>
-                <IconoFlecha className="h-4 w-4 shrink-0 text-stone-300 dark:text-stone-600" />
+                <IconoFlecha className="h-4 w-4 shrink-0 text-stone-400 dark:text-stone-600" />
               </Link>
             </li>
           ))}
@@ -110,7 +108,7 @@ export function FotoCria({ cria, grande = false }: { cria: CriaResumen; grande?:
       <img
         src={cria.fotoMiniatura}
         alt=""
-        className={`${tam} shrink-0 rounded-lg object-cover ring-1 ring-stone-200 dark:ring-stone-700`}
+        className={`${tam} shrink-0 rounded-lg object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10`}
       />
     );
   }

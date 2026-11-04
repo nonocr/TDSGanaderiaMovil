@@ -59,8 +59,24 @@ export function EstadoConexion() {
   }, [recargar, router]);
 
   useEffect(() => {
-    if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    if ("serviceWorker" in navigator) {
+      if (process.env.NODE_ENV === "production") {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      } else {
+        // En desarrollo no debe haber service worker: si quedó uno registrado de la versión de
+        // producción en el mismo puerto (p. ej. localhost:3000), se anula y se borran sus copias.
+        // Si no, podía servir chunks viejos y romper la página ("reading 'call'").
+        navigator.serviceWorker
+          .getRegistrations()
+          .then((regs) => Promise.all(regs.map((r) => r.unregister())))
+          .catch(() => {});
+        if ("caches" in window) {
+          caches
+            .keys()
+            .then((ks) => Promise.all(ks.filter((k) => k.startsWith("tds-")).map((k) => caches.delete(k))))
+            .catch(() => {});
+        }
+      }
     }
     setEnLinea(navigator.onLine);
     recargar().then(enviar);

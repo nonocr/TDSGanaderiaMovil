@@ -7,6 +7,8 @@ import { VisorArbol } from "@/components/VisorArbol";
 import { IconoAnimal, IconoCerrar } from "@/components/iconos";
 import { etiquetaArete } from "@/lib/tipos";
 import { useModalAccesible } from "@/lib/usar-modal";
+import { usePresencia } from "@/lib/usar-presencia";
+import { claseBoton, claseBotonIcono } from "@/components/ui";
 
 // Árbol de ascendencia de izquierda (este animal) a derecha (bisabuelos). Cada generación es
 // una columna de ancho fijo; las ramas padre/madre se unen con conectores en corchete.
@@ -28,20 +30,18 @@ function Nodo({ p, raiz }: { p: Progenitor; raiz: boolean }) {
   if (p.tipo === "registrado") {
     const { animal } = p;
     const macho = animal.sexo === "MACHO";
-    // Franja de color a la izquierda según el sexo (mismos tonos que SexoBadge).
-    // (con variante dark y hover para que el color de borde general no la tape).
-    const franja = macho
-      ? "border-l-sky-500 hover:border-l-sky-500 dark:border-l-sky-500"
-      : "border-l-amber-500 hover:border-l-amber-500 dark:border-l-amber-500";
+    // El sexo se ve en el icono (toro / vaca) y en el texto: el color queda para los estados
+    // (ver "Tonos" en ui.tsx), así que el recuadro va en neutro.
     const contenido = (
       <>
         <span
           className={
             "grid h-9 w-9 shrink-0 place-items-center rounded-full " +
-            (macho
-              ? "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
-              : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300")
+            (raiz
+              ? "bg-white text-marca-700 dark:bg-marca-900 dark:text-marca-200"
+              : "bg-stone-100 text-stone-600 dark:bg-stone-700 dark:text-stone-300")
           }
+          title={macho ? "Macho" : "Hembra"}
         >
           <IconoAnimal sexo={animal.sexo} className="h-5 w-5" />
         </span>
@@ -62,7 +62,7 @@ function Nodo({ p, raiz }: { p: Progenitor; raiz: boolean }) {
       return (
         <div
           title={titulo}
-          className={`${base} flex items-center gap-2.5 border-l-4 border-marca-300 ${franja} bg-marca-50 py-3 shadow-sm ring-2 ring-marca-500/30 dark:border-marca-800 dark:bg-marca-950`}
+          className={`${base} flex items-center gap-2.5 border-marca-400 bg-marca-50 py-3 shadow-card ring-2 ring-marca-500/25 dark:border-marca-700 dark:bg-marca-950`}
         >
           {contenido}
         </div>
@@ -72,7 +72,7 @@ function Nodo({ p, raiz }: { p: Progenitor; raiz: boolean }) {
       <Link
         href={`/animales/${animal.id}`}
         title={titulo}
-        className={`${base} flex items-center gap-2.5 border-l-4 border-stone-200 ${franja} bg-white py-2.5 shadow-sm transition-colors hover:border-marca-300 hover:bg-marca-50/50 active:bg-marca-50 dark:border-stone-700 dark:bg-stone-800 dark:hover:bg-stone-700`}
+        className={`${base} flex items-center gap-2.5 border-stone-200 bg-white py-2.5 shadow-card transition-colors hover:border-marca-300 hover:bg-marca-50/50 active:bg-marca-50 dark:border-stone-700 dark:bg-stone-800 dark:hover:border-marca-700 dark:hover:bg-stone-700`}
       >
         {contenido}
       </Link>
@@ -184,6 +184,7 @@ export function ArbolGenealogico({ arbol }: { arbol: NodoArbol }) {
   // scroll del fondo y devuelve el foco al abridor al cerrar (ver src/lib/usar-modal.ts).
   const cerrarAmpliado = useCallback(() => setAmpliado(false), []);
   useModalAccesible(ampliado, panelRef, cerrarAmpliado);
+  const modal = usePresencia(ampliado, 150);
 
   if (sinAncestros) {
     return (
@@ -197,19 +198,11 @@ export function ArbolGenealogico({ arbol }: { arbol: NodoArbol }) {
     <>
       {/* Leyenda + pantalla completa */}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-3 text-xs text-stone-500 dark:text-stone-400">
-          <span className="flex items-center gap-1.5">
-            <span className="h-3 w-1 rounded-full bg-sky-500" /> Macho
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-3 w-1 rounded-full bg-amber-500" /> Hembra
-          </span>
-          <span className="hidden sm:inline">· Toca un animal para ver su ficha</span>
-        </div>
+        <p className="text-xs text-stone-500 dark:text-stone-400">Toca un animal para ver su ficha.</p>
         <button
           type="button"
           onClick={() => setAmpliado(true)}
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 shadow-sm transition-colors hover:border-marca-300 hover:text-marca-700 active:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:border-marca-700 dark:hover:text-marca-300"
+          className={claseBoton("secundario", "sm")}
         >
           <IconoExpandir />
           Pantalla completa
@@ -234,17 +227,21 @@ export function ArbolGenealogico({ arbol }: { arbol: NodoArbol }) {
       )}
 
       {/* Pantalla completa: visor con zoom (pellizco/rueda) y arrastre. */}
-      {ampliado && (
+      {modal.montado && (
         <div
-          className="fixed inset-0 z-50 flex flex-col p-2 sm:p-6"
+          className="fixed inset-0 z-50 flex flex-col p-2 pt-[calc(env(safe-area-inset-top)+0.5rem)] sm:p-6"
           role="dialog"
           aria-modal="true"
           aria-labelledby="titulo-arbol-completo"
         >
-          <div className="absolute inset-0 bg-black/50" onClick={() => setAmpliado(false)} />
-          <div ref={panelRef} className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-stone-200 bg-white shadow-xl dark:border-stone-800 dark:bg-stone-900">
-            <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3 dark:border-stone-800">
-              <h3 id="titulo-arbol-completo" className="text-sm font-semibold text-stone-700 dark:text-stone-200">Árbol genealógico</h3>
+          <div className="t-fondo absolute inset-0 bg-stone-950/50" data-estado={modal.estado} onClick={() => setAmpliado(false)} />
+          <div
+            ref={panelRef}
+            data-estado={modal.estado}
+            className="t-modal relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-white shadow-flotante ring-1 ring-stone-900/5 dark:bg-stone-900 dark:ring-white/10"
+          >
+            <div className="flex items-center justify-between px-4 py-2 shadow-[0_1px_0_rgb(28_25_23/0.07)] dark:shadow-[0_1px_0_rgb(255_255_255/0.07)]">
+              <h3 id="titulo-arbol-completo" className="text-base font-semibold text-stone-900 dark:text-stone-50">Árbol genealógico</h3>
               <div className="flex items-center gap-3">
                 <span className="hidden text-xs text-stone-500 sm:inline dark:text-stone-400">
                   Rueda del mouse o pellizca para acercar · arrastra para mover
@@ -252,7 +249,7 @@ export function ArbolGenealogico({ arbol }: { arbol: NodoArbol }) {
                 <button
                   type="button"
                   onClick={() => setAmpliado(false)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-200"
+                  className={`${claseBotonIcono("discreto")} -mr-2`}
                   aria-label="Cerrar"
                 >
                   <IconoCerrar className="h-5 w-5" />
