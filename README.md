@@ -4,16 +4,6 @@ Aplicación web para llevar el registro del ganado de la finca: animales, su fam
 peso, la producción de leche y los eventos importantes (montas, inseminaciones, partos y
 etapas de crecimiento). Pensada para el día a día, sobre todo desde el celular.
 
-## Cómo se usa
-
-- **En internet**: publicada en **Vercel**. Cada `git push` a `master` despliega una versión
-  nueva sola (ver `docs/13-despliegue-vercel.md`).
-- **En el celular**: se puede instalar como app. En Android, con un APK (Capacitor); en iPhone,
-  desde Safari con "Agregar a pantalla de inicio". Abre la misma web, así que cada `push` también
-  la actualiza (ver `docs/14-app-movil.md`).
-- **En la red local de la finca**: `npm run prod` sirve la misma app en el puerto 3000.
-- Todas usan la **misma base de datos** (PostgreSQL en Supabase) y la misma contraseña.
-
 ## ¿Qué permite hacer?
 
 El ganado está organizado en **tres módulos**. Cada animal pertenece a uno solo y no se mueve
@@ -61,54 +51,6 @@ entre ellos:
 - [sharp](https://sharp.pixelplumbing.com/) para las fotos (sin EXIF, con miniaturas)
 - Acceso con una contraseña compartida y medidas de seguridad: ver `docs/11-seguridad.md`
 - Despliegue en [Vercel](https://vercel.com/) (región `cle1`, junto a la base en `us-east-2`)
-
-## Puesta en marcha (desarrollo)
-
-Requisitos: [Node.js](https://nodejs.org/) 20.9 o superior y acceso al proyecto de Supabase.
-
-```bash
-# 1. Instalar dependencias
-npm install
-
-# 2. Conectar a Supabase: copiar .env.example a .env, completarlo y crear las tablas
-npm run db:push
-#    Una sola vez por base nueva, activar RLS en Supabase (ver docs/10-supabase.md):
-npx prisma db execute --file prisma/supabase-rls.sql --schema prisma/schema.prisma
-
-# 3. Definir la contraseña para entrar a la app (se guarda solo su hash)
-npm run clave
-
-# 4. Arrancar en modo desarrollo
-npm run dev
-```
-
-Luego abre http://localhost:3000 en el navegador.
-
-> **Windows / PowerShell:** si la ejecución de scripts está restringida, usa
-> `npm.cmd` y `npx.cmd` en lugar de `npm` y `npx`.
-
-> **Importante:** la base de `.env` es la **de producción** (la misma que usa Vercel).
-> Lo que se haga en desarrollo afecta los datos reales.
-
-## Scripts disponibles
-
-| Comando | Qué hace |
-| --- | --- |
-| `npm run dev` | Servidor de desarrollo (http://localhost:3000) |
-| `npm run build` / `npm run start` | Compila / sirve la versión de producción |
-| `npm run prod` | Compila y sirve la app "en uso" en la red local, puerto 3000 (`.next-produccion`) |
-| `npm run prod:build` / `npm run prod:start` | Solo compila / solo sirve esa versión local |
-| `npm run clave` | Define o cambia la contraseña de acceso (también renueva `SESSION_SECRET`) |
-| `npm run db:push` | Crea/actualiza las tablas según `prisma/schema.prisma` |
-| `npm run db:studio` | Abre Prisma Studio para ver/editar la base |
-
-En el repositorio solo están los scripts que la app necesita (`scripts/produccion.mjs` y
-`scripts/cambiar-clave.mjs`). Las utilidades auxiliares (datos de prueba, vaciar la base,
-probar la conexión, regenerar el favicon, asistente de conexión a Supabase) se guardan solo en
-el equipo de desarrollo, fuera del repo (están en `.gitignore`).
-
-Al cambiar la contraseña con `npm run clave`, hay que copiar `APP_PASSWORD_HASH` y
-`SESSION_SECRET` nuevos a Vercel y volver a desplegar (ver `docs/13-despliegue-vercel.md`).
 
 ## Estructura del proyecto
 
