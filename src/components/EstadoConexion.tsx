@@ -15,7 +15,7 @@ import {
 // - Si el servidor rechaza un registro (p. ej. ordeño repetido), lo muestra hasta que se descarte.
 // (Componente funcional del backend; Kiro puede ajustar su diseño. Ver docs/14-app-movil.md.)
 
-const PAGINAS = "tds-paginas-v1"; // = PAGINAS en public/sw.js
+const PAGINAS = "tds-paginas-v2"; // = PAGINAS en public/sw.js (cambiar junto con su VERSION)
 
 function haceCuanto(ms: number): string {
   const min = Math.round((Date.now() - ms) / 60000);

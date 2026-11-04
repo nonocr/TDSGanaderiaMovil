@@ -13,6 +13,7 @@
 // Al cambiar este archivo, subir VERSION: así se borran las copias de la versión anterior.
 
 // v2: no guarda archivos de /_next/static/ sin hash (ver arriba). Al activarse borra las copias v1.
+// Al cambiarla, cambiar también PAGINAS en src/components/EstadoConexion.tsx.
 const VERSION = "v2";
 const PAGINAS = "tds-paginas-" + VERSION;
 const ESTATICOS = "tds-estaticos-" + VERSION;
